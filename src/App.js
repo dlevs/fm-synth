@@ -7,10 +7,11 @@ import { css } from 'emotion';
 import { findClosestIndex } from 'find-closest';
 
 const POINT_RADIUS = 2;
-const POINT_RADIUS_ACTIVE = 6;
+const POINT_RADIUS_ACTIVE = 4;
 const BLUR = 20;
 const RADIUS_WITH_BLUR = POINT_RADIUS_ACTIVE + (BLUR / 2);
 const POINT_HITBOX_SIZE = 30;
+const INPUT_MAX = 127;
 let uniqueIDCounter = 0;
 // TODO: make a standard for referencing x, y coordinates. E.g., ALWAYS use an array, or ALWAYS an object. not both
 
@@ -55,7 +56,7 @@ const ADSRInput = ({ id, label, inputRef, ...otherProps }) => (
       type="range"
       step="1"
       min="0"
-      max="127"
+      max={INPUT_MAX}
       ref={inputRef}
       {...otherProps}
     />
@@ -73,20 +74,36 @@ class ADSR extends Component {
   getCurrentCoordinates = (props) => {
     const { attack, decay, sustain, release } = props;
     const { canvas } = this;
-    // TODO: rename
-    const offset = value => (value * 30) + RADIUS_WITH_BLUR;
+    // TODO: maybe abstract away the need to manually specify RADIUS_WITH_BLUR offset
+    const heightStep = (canvas.height - (2 * RADIUS_WITH_BLUR)) / INPUT_MAX;
+    const widthPerParam = (canvas.width - (2 * RADIUS_WITH_BLUR)) / params.length;
+    const widthStep = widthPerParam / INPUT_MAX;
     const xTop = RADIUS_WITH_BLUR;
     const xBottom = canvas.height - RADIUS_WITH_BLUR;
-    // TODO: Got lost in this one... make sure it makes sense:
-    const ySustain = canvas.height - ((sustain * (canvas.height - (2 * RADIUS_WITH_BLUR))) + RADIUS_WITH_BLUR)
-    const widthSustain = 50;
+    const ySustain = canvas.height - (sustain * heightStep) - RADIUS_WITH_BLUR;
+    const offset = value => (value * widthStep) + RADIUS_WITH_BLUR;
 
     return [
-      [RADIUS_WITH_BLUR, xBottom],
-      [offset(attack), xTop],
-      [offset(attack + decay), ySustain],
-      [offset(attack + decay) + widthSustain, ySustain],
-      [offset(attack + decay + release) + widthSustain, xBottom],
+      [
+        RADIUS_WITH_BLUR,
+        xBottom
+      ],
+      [
+        (attack * widthStep) + RADIUS_WITH_BLUR,
+        xTop
+      ],
+      [
+        ((attack + decay) * widthStep) + RADIUS_WITH_BLUR,
+        ySustain
+      ],
+      [
+        ((attack + decay) * widthStep) + widthPerParam + RADIUS_WITH_BLUR,
+        ySustain
+      ],
+      [
+        ((attack + decay + release) * widthStep) + widthPerParam + RADIUS_WITH_BLUR,
+        xBottom
+      ],
     ]
   }
 
@@ -234,7 +251,7 @@ class ADSR extends Component {
         <canvas
           ref={el => this.canvas = el}
           width="500"
-          height="400"
+          height="200"
           className={classnames(adsrCanvas, {[adsrCanvasGrabbing]: isMouseDown})}
           onMouseMove={this.onCanvasMouseMove}
           onMouseDown={this.onMouseDown}
@@ -248,10 +265,10 @@ class ADSR extends Component {
 class App extends Component {
   state = {
     adsrParams: {
-      attack: 1,
-      decay: 1,
-      sustain: 0.4,
-      release: 2,
+      attack: 3,
+      decay: 20,
+      sustain: 43,
+      release: 120,
     },
   }
 
