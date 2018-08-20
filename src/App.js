@@ -1,7 +1,8 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import logo from './logo.svg';
 import './App.css';
 import classnames from 'classnames';
+import upperFirst from 'lodash/upperFirst';
 import { css } from 'emotion';
 import { findClosestIndex } from 'find-closest';
 
@@ -10,9 +11,13 @@ const POINT_RADIUS_ACTIVE = 6;
 const BLUR = 20;
 const RADIUS_WITH_BLUR = POINT_RADIUS_ACTIVE + (BLUR / 2);
 const POINT_HITBOX_SIZE = 30;
-
+let uniqueIDCounter = 0;
 // TODO: make a standard for referencing x, y coordinates. E.g., ALWAYS use an array, or ALWAYS an object. not both
 
+const params = ['attack', 'decay', 'sustain', 'release'].map(name => ({
+  name,
+  label: upperFirst(name),
+}));
 
 const adsrCanvas = css`
   cursor: grab;
@@ -42,12 +47,28 @@ const getRelativeMouseCoordinates = (event) => {
   };
 }
 
+const ADSRInput = ({ id, label, inputRef, ...otherProps }) => (
+  <Fragment>
+    <label htmlFor={id}>{label}</label>
+    <input
+      id={id}
+      type="range"
+      step="1"
+      min="0"
+      max="127"
+      ref={inputRef}
+      {...otherProps}
+    />
+  </Fragment>
+)
+
 class ADSR extends Component {
   state = {
     isMouseDown: false,
     isMouseOver: false,
     activeInput: null
   };
+  id = uniqueIDCounter++;
 
   getCurrentCoordinates = (props) => {
     const { attack, decay, sustain, release } = props;
@@ -122,7 +143,7 @@ class ADSR extends Component {
     return {
       distance: distances[index],
       point: points[index],
-      inputElement: this.pointIndexMap[index],
+      inputElement: this.getPointIndexMap()[index],
       index
     }
   }
@@ -145,17 +166,17 @@ class ADSR extends Component {
     state = state || this.state;
     if (!state.activeInput) return null;
 
-    return this.pointIndexMap.indexOf(state.activeInput);
+    return this.getPointIndexMap().indexOf(state.activeInput);
+  }
+
+  getPointIndexMap() {
+  	return [
+      undefined,
+      ...params.map(({ name }) => this[name]),
+    ]
   }
 
   componentDidMount() {
-    this.pointIndexMap = [
-      undefined,
-      this.attack,
-      this.decay,
-      this.sustain,
-      this.release,
-    ]
     this.updateCanvas(this.props, this.state);
   }
 
@@ -166,7 +187,6 @@ class ADSR extends Component {
   onMouseDown = (event) => {
     this.setState({ isMouseDown: true });
     event.preventDefault();
-    console.log('oh dear')
   }
 
   onMouseUp = () => {
@@ -182,38 +202,35 @@ class ADSR extends Component {
   }
 
   onFocus = () => {
-    console.log('focusing!')
     this.setState({ activeInput: document.activeElement })
   }
 
   onBlur = () => {
-    console.log('blurring!')
-
     this.setState({ activeInput: null })
   }
 
   render() {
-    const {
-      attack,
-      decay,
-      sustain,
-      release,
-      onChange,
-    } = this.props;
+    const { onChange } = this.props;
     const { isMouseDown } = this.state;
 
     return (
       <div
-        onChange={onChange}
         onFocus={this.onFocus}
         onBlur={this.onBlur}
         onMouseEnter={this.onMouseEnter}
         onMouseLeave={this.onMouseLeave}
       >
-        <input type="range" step="0.05" min="0" max="2" name="attack" value={attack} ref={el => this.attack = el} />
-        <input type="range" step="0.05" min="0" max="2" name="decay" value={decay} ref={el => this.decay = el} />
-        <input type="range" step="0.05" min="0" max="1" name="sustain" value={sustain} ref={el => this.sustain = el} />
-        <input type="range" step="0.05" min="0" max="2" name="release" value={release} ref={el => this.release = el} />
+        {params.map(({ label, name }) => (
+          <ADSRInput
+            id={`adsr-${name}-${this.id}`}
+            label={label}
+            key={name}
+            name={name}
+            value={this.props[name]}
+            onChange={onChange}
+            inputRef={el => this[name] = el}
+          />
+        ))}
         <canvas
           ref={el => this.canvas = el}
           width="500"
@@ -255,6 +272,8 @@ class App extends Component {
           <img src={logo} className="App-logo" alt="logo" />
           <h1 className="App-title">Are you looking at my screen, Bay?</h1>
         </header>
+        <ADSR {...this.state.adsrParams} onChange={this.onAdsrChange} />
+        <ADSR {...this.state.adsrParams} onChange={this.onAdsrChange} />
         <ADSR {...this.state.adsrParams} onChange={this.onAdsrChange} />
       </div>
     );
