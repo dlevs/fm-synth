@@ -106,24 +106,24 @@ export default class InputADSR extends Component {
     ]
   }
 
+  applyUserCanvasContext(props, state, step) {
+    if (props.setCanvasContext) {
+      props.setCanvasContext(this.ctx, {
+        isActive: state.activeInput || state.isMouseOver,
+        step
+      });
+    }
+  }
+
   updateCanvas = (props, state) => {
-    const { canvas } = this;
-    const ctx = canvas.getContext('2d');
+    const { ctx, canvas } = this;
+    const points = this.getCurrentCoordinates(props);
     const focusedPointIndex = this.getFocusedElemIndex(state);
-    // TODO: move these out to  a styling fn
-
-    ctx.lineJoin  = 'bevel';
-    ctx.lineWidth = 2;
-    ctx.fillStyle = '#4286f4';
-    ctx.strokeStyle = '#4286f4';
-    ctx.shadowBlur = BLUR;
-    ctx.shadowColor = '#4286f4';
-
 
     clearCanvas(ctx);
+    ctx.lineJoin  = 'bevel';
 
-    const points = this.getCurrentCoordinates(props);
-
+    this.applyUserCanvasContext(props, state, 'pre-draw-lines');
     ctx.beginPath();
     points.forEach(([x, y], i) => {
       if (i === 0) {
@@ -134,14 +134,7 @@ export default class InputADSR extends Component {
     });
     ctx.stroke();
 
-    // TODO: make this an external fn for on active/ hover
-    if (state.activeInput || state.isMouseOver) {
-      ctx.save();
-      ctx.globalAlpha = 0.08
-      ctx.fill()
-      ctx.restore();
-    }
-
+    this.applyUserCanvasContext(props, state, 'pre-draw-points');
     points.forEach(([x, y], i) => {
       const radius = i === focusedPointIndex
         ? POINT_RADIUS_ACTIVE
@@ -187,13 +180,21 @@ export default class InputADSR extends Component {
 
   getPointIndexMap() {
   	return [
+      // First point on the canvas is not interactive, so it should be undefined
       undefined,
       ...params.map(({ name }) => this[name]),
     ]
   }
 
   componentDidMount() {
+    this.ctx = this.canvas.getContext('2d');
     this.updateCanvas(this.props, this.state);
+    document.addEventListener('mouseup', this.onDocumentMouseUp)
+  }
+
+  componentWillUnmount() {
+    // TODO: Look for an npm package that will handle event definition + teardown do reduce this duplication
+    document.removeEventListener('mouseup', this.onDocumentMouseUp)
   }
 
   componentWillUpdate(props, state) {
@@ -205,7 +206,7 @@ export default class InputADSR extends Component {
     event.preventDefault();
   }
 
-  onMouseUp = () => {
+  onDocumentMouseUp = () => {
     this.setState({ isMouseDown: false });
   }
 
@@ -254,7 +255,6 @@ export default class InputADSR extends Component {
           className={classnames(adsrCanvas, {[adsrCanvasGrabbing]: isMouseDown})}
           onMouseMove={this.onCanvasMouseMove}
           onMouseDown={this.onMouseDown}
-          onMouseUp={this.onMouseUp}
         />
       </div>
     )
