@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from 'react';
 import classnames from 'classnames';
-import upperFirst from 'lodash/upperFirst';
+import sumBy from 'lodash/sumBy';
 import { css } from 'emotion';
 import { findClosestIndex } from 'find-closest';
 
@@ -10,14 +10,74 @@ const BLUR = 20;
 const RADIUS_WITH_BLUR = POINT_RADIUS_ACTIVE + (BLUR / 2);
 const POINT_HITBOX_SIZE = 30;
 const INPUT_MAX = 127;
-const SUSTAIN_WIDTH = 0.5;
 let uniqueIDCounter = 0;
 // TODO: make a standard for referencing x, y coordinates. E.g., ALWAYS use an array, or ALWAYS an object. not both
 
-const params = ['attack', 'decay', 'sustain', 'release'].map(name => ({
-  name,
-  label: upperFirst(name),
-}));
+const calculateSustainY = ({ canvas, sustain }) => {
+  const heightStep = (canvas.height - (2 * RADIUS_WITH_BLUR)) / INPUT_MAX;
+  return canvas.height - (sustain * heightStep) - RADIUS_WITH_BLUR;
+}
+const calculateXForParam = ({ canvas, value, i }) => {
+  return (value / INPUT_MAX) * getPointRangeX(canvas, i);
+}
+const getOffsetCanvasWidth = (canvas) => {
+  return canvas.width - (2 * RADIUS_WITH_BLUR)
+}
+// TODO: These are grim. Tidy.
+const getPointRangeX = (canvas, i) => {
+  return ((params[i].width / paramWidthTotal) * getOffsetCanvasWidth(canvas)) + RADIUS_WITH_BLUR;
+}
+
+// TODO: consistent ordering of properties
+const params = [
+  {
+    name: 'attack',
+    label: 'Attack',
+    calculateX: args => calculateXForParam(args) + RADIUS_WITH_BLUR,
+    calculateY: () => RADIUS_WITH_BLUR,
+    width: 1,
+    editable: true
+  },
+  {
+    name: 'decay',
+    label: 'Decay',
+    mapY: 'sustain',
+    calculateX: calculateXForParam,
+    calculateY: calculateSustainY,
+    width: 1,
+    editable: true
+  },
+  {
+    name: 'sustain',
+    label: 'Sustain',
+    mapY: 'sustain',
+    calculateX: args => calculateXForParam({...args, value: INPUT_MAX}),
+    calculateY: calculateSustainY,
+    mapX: null,
+    width: 0.5,
+    editable: false
+  },
+  {
+    name: 'release',
+    label: 'Release',
+    calculateX: calculateXForParam,
+    calculateY: ({ canvas }) => canvas.height - RADIUS_WITH_BLUR,
+    width: 1,
+    editable: true
+  },
+].map((param, index, array) => {
+  const mapX = param.mapX || param.name;
+  const mapXIndex = array.findIndex(({ name }) => name === mapX);
+  const mapYIndex = array.findIndex(({ name }) => name === param.mapY);
+
+  return {
+    ...param,
+    mapX,
+    mapXIndex,
+    mapYIndex: mapYIndex !== -1 ? mapYIndex : null
+  }
+});
+const paramWidthTotal = sumBy(params, 'width');
 
 const adsrCanvas = css`
   cursor: grab;
@@ -66,59 +126,58 @@ export default class InputADSR extends Component {
   state = {
     isMouseDown: false,
     isMouseOver: false,
-    activeInput: null
+    focusedInput: null,
+    activePointIndex: null
   };
   id = uniqueIDCounter++;
 
-  getCurrentCoordinates = (props) => {
-    const { attack, decay, sustain, release } = props;
-    const { canvas } = this;
-    // TODO: maybe abstract away the need to manually specify RADIUS_WITH_BLUR offset
-    const heightStep = (canvas.height - (2 * RADIUS_WITH_BLUR)) / INPUT_MAX;
-    const widthPerParam = (canvas.width - (2 * RADIUS_WITH_BLUR)) / (params.length - 1 + SUSTAIN_WIDTH);
-    const widthStep = widthPerParam / INPUT_MAX;
-    const xTop = RADIUS_WITH_BLUR;
-    const xBottom = canvas.height - RADIUS_WITH_BLUR;
-    const ySustain = canvas.height - (sustain * heightStep) - RADIUS_WITH_BLUR;
-    const offset = value => (value * widthStep) + RADIUS_WITH_BLUR;
+  getPointOffsetX(i) {
+    const point = this.getCurrentCoordinates(this.props)[i - 1];
+    const rawPointX = point ? point[0] : 0;
 
-    return [
-      [
-        RADIUS_WITH_BLUR,
-        xBottom
-      ],
-      [
-        (attack * widthStep) + RADIUS_WITH_BLUR,
-        xTop
-      ],
-      [
-        ((attack + decay) * widthStep) + RADIUS_WITH_BLUR,
-        ySustain
-      ],
-      [
-        ((attack + decay) * widthStep) + (widthPerParam * SUSTAIN_WIDTH) + RADIUS_WITH_BLUR,
-        ySustain
-      ],
-      [
-        ((attack + decay + release) * widthStep) + (widthPerParam * SUSTAIN_WIDTH) + RADIUS_WITH_BLUR,
-        xBottom
-      ],
-    ]
+    return Math.max(rawPointX, RADIUS_WITH_BLUR);
+  }
+
+  // TODO: Break this class down into smaller helper functions.
+
+  getCurrentCoordinates = (props) => {
+    // TODO: Maybe use a single loop here, or reduce
+    return params.reduce((points, { name, calculateX, calculateY }, i) => {
+      const calculationParams = {
+        ...props,
+        value: props[name],
+        canvas: this.canvas,
+        i,
+      };
+      let x = calculateX(calculationParams);
+      let y = calculateY(calculationParams);
+
+      if (i !== 0) {
+        const [lastX] = points[i - 1];
+        x += lastX;
+      }
+
+      return points.concat([[x, y]]);
+    }, []);
   }
 
   applyUserCanvasContext(props, state, step) {
     if (props.setCanvasContext) {
       props.setCanvasContext(this.ctx, {
-        isActive: state.activeInput || state.isMouseOver,
+        isActive: (state.activePointIndex && state.isMouseDown) || state.isMouseOver,
         step
       });
     }
   }
 
   updateCanvas = (props, state) => {
+    console.log(props)
     const { ctx, canvas } = this;
-    const points = this.getCurrentCoordinates(props);
-    const focusedPointIndex = this.getFocusedElemIndex(state);
+    const { activePointIndex } = state;
+    // TODO: extract to another fn
+    const points = [
+      [RADIUS_WITH_BLUR, canvas.height - RADIUS_WITH_BLUR]
+    ].concat(this.getCurrentCoordinates(props));
 
     clearCanvas(ctx);
     ctx.lineJoin  = 'bevel';
@@ -136,12 +195,23 @@ export default class InputADSR extends Component {
 
     this.applyUserCanvasContext(props, state, 'pre-draw-points');
     points.forEach(([x, y], i) => {
-      const radius = i === focusedPointIndex
+      const param = params[i - 1];
+      if (!param || !param.editable) {
+        return;
+      }
+
+      const radius = i - 1 === activePointIndex
         ? POINT_RADIUS_ACTIVE
         : POINT_RADIUS;
 
       drawCircle(ctx, x, y, radius);
     });
+  }
+
+  // TODO: be consistent with parameter naming "index" vs "i"
+  getPoint(index) {
+    // TODO: Be consistent with naming "point" vs "coordinate"
+    return this.getCurrentCoordinates()[index];
   }
 
   getClosestPoint(x, y) {
@@ -157,33 +227,80 @@ export default class InputADSR extends Component {
     }
   }
 
-  onCanvasMouseMove = (event) => {
+  // TODO: hitbox param should be a level above
+  getClosestPointToEvent(event, hitbox) {
     const { x, y } = getRelativeMouseCoordinates(event);
-    const { inputElement, distance } = this.getClosestPoint(x, y);
+    const point = this.getClosestPoint(x, y);
 
-    if (inputElement && distance < POINT_HITBOX_SIZE) {
-      if (inputElement !== document.activeElement) {
-        inputElement.focus();
+    if (typeof hitbox !== 'number' || point.distance < hitbox) {
+      return point;
+    }
+
+    return null;
+  }
+
+  onCanvasMouseMove = (event) => {
+    // TODO: Both these call `getRelativeMouseCoordinates`. Prevent duplication.
+    const { x, y } = getRelativeMouseCoordinates(event);
+
+    if (!this.state.isMouseDown) {
+      const point = this.getClosestPointToEvent(event, POINT_HITBOX_SIZE);
+      this.setState({ activePointIndex: point ? point.index : null });
+      return;
+    }
+
+    const { activePointIndex } = this.state;
+
+    if (typeof activePointIndex === 'number') {
+      const { mapX, mapY, mapXIndex, mapYIndex } = params[activePointIndex];
+      let xMidiValue;
+      let yMidiValue;
+
+      // TODO: Ohhh dear...
+      {
+        const range = getPointRangeX(this.canvas, activePointIndex);
+        const offset = this.getPointOffsetX(activePointIndex);
+        const multiplier = (x - offset) / range;
+        // TODO: Util method for this range limiting:
+        xMidiValue = Math.max(
+          Math.min(multiplier * INPUT_MAX, INPUT_MAX),
+          0
+        )
       }
-    } else if (this.state.activeInput && !this.state.isMouseDown) {
-      this.state.activeInput.blur();
+      {
+        const range = this.canvas.height - (2 * RADIUS_WITH_BLUR);
+        const multiplier = 1 - ((y - RADIUS_WITH_BLUR) / range);
+        // TODO: Util method for this range limiting:
+        yMidiValue = Math.max(
+          Math.min(multiplier * INPUT_MAX, INPUT_MAX),
+          0
+        )
+      }
+
+      // TODO: This is terrible
+
+      if (mapX) {
+        this.props.onChange({
+          target: {
+            name: mapX,
+            value: xMidiValue
+          }
+        })
+      }
+      if (mapY) {
+        this.props.onChange({
+          target: {
+            name: mapY,
+            value: yMidiValue
+          }
+        })
+      }
     }
   }
 
-  getFocusedElemIndex(state) {
-    // TODO: This fn is naff now it has an argument. May be wrong abstraction
-    state = state || this.state;
-    if (!state.activeInput) return null;
-
-    return this.getPointIndexMap().indexOf(state.activeInput);
-  }
-
+  // TODO: yuck
   getPointIndexMap() {
-  	return [
-      // First point on the canvas is not interactive, so it should be undefined
-      undefined,
-      ...params.map(({ name }) => this[name]),
-    ]
+  	return params.map(({ name }) => this[name]);
   }
 
   componentDidMount() {
@@ -202,8 +319,16 @@ export default class InputADSR extends Component {
   }
 
   onMouseDown = (event) => {
-    this.setState({ isMouseDown: true });
+    const point = this.getClosestPointToEvent(event, POINT_HITBOX_SIZE);
+
     event.preventDefault();
+    this.setState({ isMouseDown: true });
+
+    if (point) {
+      point.inputElement.focus();
+    } else if (this.state.focusedInput) {
+      this.state.focusedInput.blur();
+    }
   }
 
   onDocumentMouseUp = () => {
@@ -219,11 +344,14 @@ export default class InputADSR extends Component {
   }
 
   onFocus = () => {
-    this.setState({ activeInput: document.activeElement })
+    const activePointIndex = this.getPointIndexMap().indexOf(document.activeElement);
+    if (activePointIndex !== -1) {
+      this.setState({ activePointIndex })
+    }
   }
 
   onBlur = () => {
-    this.setState({ activeInput: null })
+    this.setState({ activePointIndex: null })
   }
 
   render() {
