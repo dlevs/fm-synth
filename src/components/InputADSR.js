@@ -81,6 +81,7 @@ const paramWidthTotal = sumBy(params, 'width');
 
 const adsrCanvas = css`
   cursor: grab;
+  touch-action: none;
 `;
 const adsrCanvasGrabbing = css`
   cursor: grabbing;
@@ -90,10 +91,14 @@ const adsrCanvasGrabbing = css`
 // TODO: Move to util file
 const getRelativeMouseCoordinates = (event, element) => {
   const bounds = (element || event.target).getBoundingClientRect();
+  const touch = event.touches ? event.touches[0] : null;
+  // TODO: Can "pageY" be used instead of "clientY" for mouse events? for consistency
+  const pageX = touch ? touch.pageX : event.clientX;
+  const pageY = touch ? touch.pageY : event.clientY;
 
   return {
-    x: event.clientX - bounds.left,
-    y: event.clientY - bounds.top
+    x: pageX - bounds.left,
+    y: pageY - bounds.top
   };
 }
 
@@ -249,21 +254,22 @@ export default class InputADSR extends Component {
   onCanvasMouseMove = (event) => {
     if (
       event.target !== this.canvas &&
+      // TODO: Do we need to check mouseDown status?
       !(this.state.isMouseDown && this.state.activePointIndex)
     ) {
       return;
     }
 
-    // TODO: Both these call `getRelativeMouseCoordinates`. Prevent duplication.
     const { x, y } = getRelativeMouseCoordinates(event, this.canvas);
+
+    // For mobile, we need to capture the movement instead of scrolling
+    const { activePointIndex } = this.state;
 
     if (!this.state.isMouseDown) {
       const point = this.getClosestPointToEvent(event, this.props.pointHitboxMouse);
       this.setState({ activePointIndex: point ? point.index : null });
       return;
     }
-
-    const { activePointIndex } = this.state;
 
     if (typeof activePointIndex === 'number') {
       const { mapX, mapY, mapXIndex, mapYIndex, editable } = params[activePointIndex];
@@ -325,13 +331,18 @@ export default class InputADSR extends Component {
     this.ctx = this.canvas.getContext('2d');
     this.updateCanvas(this.props, this.state);
     document.addEventListener('mouseup', this.onDocumentMouseUp)
+    document.addEventListener('touchend', this.onDocumentMouseUp)
     document.addEventListener('mousemove', this.onCanvasMouseMove)
+    // TODO: duplicating mousemove for touchmove OK here?
+    document.addEventListener('touchmove', this.onCanvasMouseMove)
   }
 
   componentWillUnmount() {
     // TODO: Look for an npm package that will handle event definition + teardown do reduce this duplication
     document.removeEventListener('mouseup', this.onDocumentMouseUp)
+    document.removeEventListener('touchend', this.onDocumentMouseUp)
     document.removeEventListener('mousemove', this.onCanvasMouseMove)
+    document.removeEventListener('touchmove', this.onCanvasMouseMove)
   }
 
   componentWillUpdate(props, state) {
@@ -339,7 +350,12 @@ export default class InputADSR extends Component {
   }
 
   onMouseDown = (event) => {
-    const point = this.getClosestPointToEvent(event, this.props.pointHitboxMouse);
+    // TODO: Tidy this. Maybe move param a level deeper, or something to avoid "undefined" ternary result
+    const hitbox = event.type === 'touchstart'
+      ? this.props.pointHitboxMouse
+      : undefined;
+
+    const point = this.getClosestPointToEvent(event, hitbox);
 
     event.preventDefault();
     this.setState({ isMouseDown: true });
@@ -398,12 +414,14 @@ export default class InputADSR extends Component {
               inputRef={el => this[name] = el}
             />
           ))}
+        {/* TODO: Is duplicating the mouseDown event for touch OK here? */}
         <canvas
           ref={el => this.canvas = el}
           width="500"
           height="200"
           className={classnames(adsrCanvas, {[adsrCanvasGrabbing]: isMouseDown})}
           onMouseDown={this.onMouseDown}
+          onTouchStart={this.onMouseDown}
         />
       </div>
     )
