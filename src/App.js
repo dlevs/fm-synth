@@ -48,10 +48,18 @@ class App extends Component {
   render() {
     return (
       <Fragment>
-        {/* TODO: Implement padding, pointRadius and pointRadiusActive */}
-        {/* TODO: Or... account also for the largest point */}
-        <InputADSR padding={BLUR / 2} setCanvasContext={createAdsrStyle('#4286f4')} {...this.state.adsrParams} onChange={this.onAdsrChange} />
-        <InputADSR padding={BLUR / 2} setCanvasContext={createAdsrStyle('#f44d41')} {...this.state.adsrParams} onChange={this.onAdsrChange} />
+        <InputADSR
+          padding={BLUR}
+          setCanvasContext={createAdsrStyle('#4286f4')}
+          {...this.state.adsrParams}
+          onChange={this.onAdsrChange}
+        />
+        <InputADSR
+          padding={BLUR}
+          setCanvasContext={createAdsrStyle('#f44d41')}
+          {...this.state.adsrParams}
+          onChange={this.onAdsrChange}
+        />
         <InputADSR {...this.state.adsrParams} onChange={this.onAdsrChange} />
       </Fragment>
     );

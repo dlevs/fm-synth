@@ -6,30 +6,25 @@ import { css } from 'emotion';
 import { findClosestIndex } from 'find-closest';
 import { clearCanvas, drawCircle } from '../lib/canvasUtils';
 
-const POINT_RADIUS = 2;
-const POINT_RADIUS_ACTIVE = 4;
-const BLUR = 20;
-const RADIUS_WITH_BLUR = POINT_RADIUS_ACTIVE + (BLUR / 2);
-const POINT_HITBOX_SIZE = 30;
-const INPUT_MAX = 127;
 let uniqueIDCounter = 0;
 // TODO: make a standard for referencing x, y coordinates. E.g., ALWAYS use an array, or ALWAYS an object. not both
 
-const calculateSustainY = ({ canvas, sustain }) => {
-  const heightStep = (canvas.height - (2 * RADIUS_WITH_BLUR)) / INPUT_MAX;
-  return canvas.height - (sustain * heightStep) - RADIUS_WITH_BLUR;
+const calculateSustainY = ({ canvas, sustain, inputMax, offset }) => {
+  const heightStep = (canvas.height - (2 * offset)) / inputMax;
+  return canvas.height - (sustain * heightStep) - offset;
 }
-const calculateBottomY = ({ canvas }) => canvas.height - RADIUS_WITH_BLUR;
-const calculateXForParam = ({ canvas, value, i }) => {
-  return (value / INPUT_MAX) * getPointRangeX(canvas, i);
+const calculateBottomY = ({ canvas, offset }) => canvas.height - offset;
+const calculateXForParam = ({ canvas, value, inputMax, i, offset }) => {
+  // TODO: passing all this to getPointRangeX is silly
+  return (value / inputMax) * getPointRangeX(canvas, i, offset);
 }
-const calculateMaxXForParam =  args => calculateXForParam({...args, value: INPUT_MAX});
-const getOffsetCanvasWidth = (canvas) => {
-  return canvas.width - (2 * RADIUS_WITH_BLUR)
+const calculateMaxXForParam =  args => calculateXForParam({...args, value: args.inputMax});
+const getOffsetCanvasWidth = (canvas, offset) => {
+  return canvas.width - (2 * offset)
 }
 // TODO: These are grim. Tidy.
-const getPointRangeX = (canvas, i) => {
-  return (params[i].width / paramWidthTotal) * getOffsetCanvasWidth(canvas);
+const getPointRangeX = (canvas, i, offset) => {
+  return (params[i].width / paramWidthTotal) * getOffsetCanvasWidth(canvas, offset);
 }
 
 // TODO: Rename
@@ -39,12 +34,12 @@ const params = [
     hasControls: false,
     editable: false,
     width: 0,
-    calculateX: () => RADIUS_WITH_BLUR,
+    calculateX: ({ offset }) => offset,
     calculateY: calculateBottomY,
   },
   {
     name: 'attack',
-    calculateY: () => RADIUS_WITH_BLUR,
+    calculateY: ({ offset }) => offset,
   },
   {
     name: 'decay',
@@ -102,15 +97,15 @@ const getRelativeMouseCoordinates = (event) => {
   };
 }
 
-const ADSRInputField = ({ id, label, inputRef, ...otherProps }) => (
+const ADSRInputField = ({ id, label, inputRef, inputMin, inputMax, ...otherProps }) => (
   <Fragment>
     <label htmlFor={id}>{label}</label>
     <input
       id={id}
       type="range"
       step="1"
-      min="0"
-      max={INPUT_MAX}
+      min={inputMin}
+      max={inputMax}
       ref={inputRef}
       {...otherProps}
     />
@@ -124,13 +119,33 @@ export default class InputADSR extends Component {
     focusedInput: null,
     activePointIndex: null
   };
+
   id = uniqueIDCounter++;
+
+  static defaultProps = {
+    inputMin: 0,
+    inputMax: 127,
+    pointHitboxMouse: 30,
+    pointRadius: 2,
+    pointRadiusActive: 4,
+    padding: 0,
+  }
+
+  getMaxPointRadius(props) {
+    const { pointRadius, pointRadiusActive } = props || this.props;
+    return Math.max(pointRadius, pointRadiusActive);
+  }
+
+  getOffset(props) {
+    props = props || this.props;
+    return this.getMaxPointRadius(props) + props.padding;
+  }
 
   getPointOffsetX(i) {
     const point = this.getCurrentCoordinates(this.props)[i - 1];
     const rawPointX = point ? point[0] : 0;
 
-    return Math.max(rawPointX, RADIUS_WITH_BLUR);
+    return Math.max(rawPointX, this.getOffset());
   }
 
   // TODO: Break this class down into smaller helper functions.
@@ -143,6 +158,7 @@ export default class InputADSR extends Component {
         value: props[name],
         canvas: this.canvas,
         i,
+        offset: this.getOffset(props)
       };
       let x = calculateX(calculationParams);
       let y = calculateY(calculationParams);
@@ -170,7 +186,6 @@ export default class InputADSR extends Component {
     const { activePointIndex } = state;
     // TODO: extract to another fn
     const points = this.getCurrentCoordinates(props);
-
     clearCanvas(ctx);
     ctx.lineJoin  = 'bevel';
 
@@ -193,8 +208,8 @@ export default class InputADSR extends Component {
       }
 
       const radius = i === activePointIndex
-        ? POINT_RADIUS_ACTIVE
-        : POINT_RADIUS;
+        ? props.pointRadiusActive
+        : props.pointRadius;
 
       drawCircle(ctx, x, y, radius);
     });
@@ -236,7 +251,7 @@ export default class InputADSR extends Component {
     const { x, y } = getRelativeMouseCoordinates(event);
 
     if (!this.state.isMouseDown) {
-      const point = this.getClosestPointToEvent(event, POINT_HITBOX_SIZE);
+      const point = this.getClosestPointToEvent(event, this.props.pointHitboxMouse);
       this.setState({ activePointIndex: point ? point.index : null });
       return;
     }
@@ -252,22 +267,22 @@ export default class InputADSR extends Component {
 
         // TODO: Ohhh dear...
         {
-          const range = getPointRangeX(this.canvas, activePointIndex);
+          const range = getPointRangeX(this.canvas, activePointIndex, this.getOffset());
           const offset = this.getPointOffsetX(activePointIndex);
 
           const multiplier = (x - offset) / range;
           // TODO: Util method for this range limiting:
           xMidiValue = Math.max(
-            Math.min(multiplier * INPUT_MAX, INPUT_MAX),
+            Math.min(multiplier * this.props.inputMax, this.props.inputMax),
             0
           )
         }
         {
-          const range = this.canvas.height - (2 * RADIUS_WITH_BLUR);
-          const multiplier = 1 - ((y - RADIUS_WITH_BLUR) / range);
+          const range = this.canvas.height - (2 * this.getOffset());
+          const multiplier = 1 - ((y - this.getOffset()) / range);
           // TODO: Util method for this range limiting:
           yMidiValue = Math.max(
-            Math.min(multiplier * INPUT_MAX, INPUT_MAX),
+            Math.min(multiplier * this.props.inputMax, this.props.inputMax),
             0
           )
         }
@@ -315,7 +330,7 @@ export default class InputADSR extends Component {
   }
 
   onMouseDown = (event) => {
-    const point = this.getClosestPointToEvent(event, POINT_HITBOX_SIZE);
+    const point = this.getClosestPointToEvent(event, this.props.pointHitboxMouse);
 
     event.preventDefault();
     this.setState({ isMouseDown: true });
