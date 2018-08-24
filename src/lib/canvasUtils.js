@@ -10,3 +10,10 @@ export const drawCircle = (ctx, x, y, radius) => {
   ctx.fill();
   ctx.stroke();
 }
+
+export const resizeCanvas = (ctx) => {
+  const { canvas } = ctx;
+
+  canvas.width = canvas.clientWidth;
+  canvas.height = canvas.clientHeight;
+}

@@ -4,7 +4,7 @@ import sumBy from 'lodash/sumBy';
 import upperFirst from 'lodash/upperFirst';
 import { css } from 'emotion';
 import { findClosestIndex } from 'find-closest';
-import { clearCanvas, drawCircle } from '../lib/canvasUtils';
+import { clearCanvas, drawCircle, resizeCanvas } from '../lib/canvasUtils';
 
 let uniqueIDCounter = 0;
 // TODO: make a standard for referencing x, y coordinates. E.g., ALWAYS use an array, or ALWAYS an object. not both
@@ -82,6 +82,7 @@ const paramWidthTotal = sumBy(params, 'width');
 const adsrCanvas = css`
   cursor: grab;
   touch-action: none;
+  width: 100%;
 `;
 const adsrCanvasGrabbing = css`
   cursor: grabbing;
@@ -134,6 +135,10 @@ export default class InputADSR extends Component {
     pointRadius: 2,
     pointRadiusActive: 4,
     padding: 0,
+
+    // TODO: Are these good default values?
+    width: 400,
+    height: 200
   }
 
   getMaxPointRadius(props) {
@@ -189,9 +194,13 @@ export default class InputADSR extends Component {
   updateCanvas = (props, state) => {
     const { ctx, canvas } = this;
     const { activePointIndex } = state;
+
+    resizeCanvas(ctx);
+    clearCanvas(ctx);
+
     // TODO: extract to another fn
     const points = this.getCurrentCoordinates(props);
-    clearCanvas(ctx);
+
     ctx.lineJoin  = 'bevel';
 
     this.applyUserCanvasContext(props, state, 'pre-draw-lines');
@@ -335,6 +344,7 @@ export default class InputADSR extends Component {
     document.addEventListener('mousemove', this.onCanvasMouseMove)
     // TODO: duplicating mousemove for touchmove OK here?
     document.addEventListener('touchmove', this.onCanvasMouseMove)
+    this.canvas.addEventListener('resize', this.updateCanvas)
   }
 
   componentWillUnmount() {
@@ -343,6 +353,7 @@ export default class InputADSR extends Component {
     document.removeEventListener('touchend', this.onDocumentMouseUp)
     document.removeEventListener('mousemove', this.onCanvasMouseMove)
     document.removeEventListener('touchmove', this.onCanvasMouseMove)
+    this.canvas.removeEventListener('resize', this.updateCanvas)
   }
 
   componentWillUpdate(props, state) {
@@ -391,7 +402,7 @@ export default class InputADSR extends Component {
   }
 
   render() {
-    const { onChange } = this.props;
+    const { width, height, onChange } = this.props;
     const { isMouseDown } = this.state;
 
     return (
@@ -417,11 +428,11 @@ export default class InputADSR extends Component {
         {/* TODO: Is duplicating the mouseDown event for touch OK here? */}
         <canvas
           ref={el => this.canvas = el}
-          width="500"
-          height="200"
           className={classnames(adsrCanvas, {[adsrCanvasGrabbing]: isMouseDown})}
           onMouseDown={this.onMouseDown}
           onTouchStart={this.onMouseDown}
+          width={width}
+          height={height}
         />
       </div>
     )
