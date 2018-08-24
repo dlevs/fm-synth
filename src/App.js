@@ -28,10 +28,10 @@ const createAdsrStyle = (color) => (ctx, { step, isActive }) => {
 class App extends Component {
   state = {
     adsrParams: {
-      attack: 40,
-      decay: 40,
-      sustain: 43,
-      release: 120,
+      attack: 127,
+      decay: 127,
+      sustain: 80,
+      release: 127,
     },
   }
 

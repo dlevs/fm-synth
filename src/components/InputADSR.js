@@ -1,8 +1,10 @@
 import React, { Component, Fragment } from 'react';
 import classnames from 'classnames';
 import sumBy from 'lodash/sumBy';
+import upperFirst from 'lodash/upperFirst';
 import { css } from 'emotion';
 import { findClosestIndex } from 'find-closest';
+import { clearCanvas, drawCircle } from '../lib/canvasUtils';
 
 const POINT_RADIUS = 2;
 const POINT_RADIUS_ACTIVE = 4;
@@ -17,41 +19,42 @@ const calculateSustainY = ({ canvas, sustain }) => {
   const heightStep = (canvas.height - (2 * RADIUS_WITH_BLUR)) / INPUT_MAX;
   return canvas.height - (sustain * heightStep) - RADIUS_WITH_BLUR;
 }
+const calculateBottomY = ({ canvas }) => canvas.height - RADIUS_WITH_BLUR;
 const calculateXForParam = ({ canvas, value, i }) => {
   return (value / INPUT_MAX) * getPointRangeX(canvas, i);
 }
+const calculateMaxXForParam =  args => calculateXForParam({...args, value: INPUT_MAX});
 const getOffsetCanvasWidth = (canvas) => {
   return canvas.width - (2 * RADIUS_WITH_BLUR)
 }
 // TODO: These are grim. Tidy.
 const getPointRangeX = (canvas, i) => {
-  return ((params[i].width / paramWidthTotal) * getOffsetCanvasWidth(canvas)) + RADIUS_WITH_BLUR;
+  return (params[i].width / paramWidthTotal) * getOffsetCanvasWidth(canvas);
 }
 
-// TODO: consistent ordering of properties
+// TODO: Rename
 const params = [
   {
+    name: 'start',
+    hasControls: false,
+    editable: false,
+    width: 0,
+    calculateX: () => RADIUS_WITH_BLUR,
+    calculateY: calculateBottomY,
+  },
+  {
     name: 'attack',
-    label: 'Attack',
-    calculateX: args => calculateXForParam(args) + RADIUS_WITH_BLUR,
     calculateY: () => RADIUS_WITH_BLUR,
-    width: 1,
-    editable: true
   },
   {
     name: 'decay',
-    label: 'Decay',
     mapY: 'sustain',
-    calculateX: calculateXForParam,
     calculateY: calculateSustainY,
-    width: 1,
-    editable: true
   },
   {
     name: 'sustain',
-    label: 'Sustain',
     mapY: 'sustain',
-    calculateX: args => calculateXForParam({...args, value: INPUT_MAX}),
+    calculateX: calculateMaxXForParam,
     calculateY: calculateSustainY,
     mapX: null,
     width: 0.5,
@@ -59,11 +62,7 @@ const params = [
   },
   {
     name: 'release',
-    label: 'Release',
-    calculateX: calculateXForParam,
-    calculateY: ({ canvas }) => canvas.height - RADIUS_WITH_BLUR,
-    width: 1,
-    editable: true
+    calculateY: calculateBottomY,
   },
 ].map((param, index, array) => {
   const mapX = param.mapX || param.name;
@@ -71,10 +70,16 @@ const params = [
   const mapYIndex = array.findIndex(({ name }) => name === param.mapY);
 
   return {
-    ...param,
+    label: upperFirst(param.name),
     mapX,
     mapXIndex,
-    mapYIndex: mapYIndex !== -1 ? mapYIndex : null
+    mapYIndex: mapYIndex !== -1 ? mapYIndex : null,
+    calculateX: calculateXForParam,
+    width: 1,
+    editable: true,
+    // TODO: Be consistent with the property naming
+    hasControls: true,
+    ...param
   }
 });
 const paramWidthTotal = sumBy(params, 'width');
@@ -86,17 +91,7 @@ const adsrCanvasGrabbing = css`
   cursor: grabbing;
 `;
 
-const clearCanvas = (ctx) => {
-  const { canvas } = ctx;
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
-}
-const drawCircle = (ctx, x, y, radius) => {
-  ctx.beginPath();
-  ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
-  ctx.fill();
-  ctx.stroke();
-}
 
 const getRelativeMouseCoordinates = (event) => {
   const bounds = event.target.getBoundingClientRect();
@@ -171,13 +166,10 @@ export default class InputADSR extends Component {
   }
 
   updateCanvas = (props, state) => {
-    console.log(props)
     const { ctx, canvas } = this;
     const { activePointIndex } = state;
     // TODO: extract to another fn
-    const points = [
-      [RADIUS_WITH_BLUR, canvas.height - RADIUS_WITH_BLUR]
-    ].concat(this.getCurrentCoordinates(props));
+    const points = this.getCurrentCoordinates(props);
 
     clearCanvas(ctx);
     ctx.lineJoin  = 'bevel';
@@ -195,12 +187,12 @@ export default class InputADSR extends Component {
 
     this.applyUserCanvasContext(props, state, 'pre-draw-points');
     points.forEach(([x, y], i) => {
-      const param = params[i - 1];
+      const param = params[i];
       if (!param || !param.editable) {
         return;
       }
 
-      const radius = i - 1 === activePointIndex
+      const radius = i === activePointIndex
         ? POINT_RADIUS_ACTIVE
         : POINT_RADIUS;
 
@@ -252,48 +244,52 @@ export default class InputADSR extends Component {
     const { activePointIndex } = this.state;
 
     if (typeof activePointIndex === 'number') {
-      const { mapX, mapY, mapXIndex, mapYIndex } = params[activePointIndex];
-      let xMidiValue;
-      let yMidiValue;
+      const { mapX, mapY, mapXIndex, mapYIndex, editable } = params[activePointIndex];
 
-      // TODO: Ohhh dear...
-      {
-        const range = getPointRangeX(this.canvas, activePointIndex);
-        const offset = this.getPointOffsetX(activePointIndex);
-        const multiplier = (x - offset) / range;
-        // TODO: Util method for this range limiting:
-        xMidiValue = Math.max(
-          Math.min(multiplier * INPUT_MAX, INPUT_MAX),
-          0
-        )
-      }
-      {
-        const range = this.canvas.height - (2 * RADIUS_WITH_BLUR);
-        const multiplier = 1 - ((y - RADIUS_WITH_BLUR) / range);
-        // TODO: Util method for this range limiting:
-        yMidiValue = Math.max(
-          Math.min(multiplier * INPUT_MAX, INPUT_MAX),
-          0
-        )
-      }
+      if (editable) {
+        let xMidiValue;
+        let yMidiValue;
 
-      // TODO: This is terrible
+        // TODO: Ohhh dear...
+        {
+          const range = getPointRangeX(this.canvas, activePointIndex);
+          const offset = this.getPointOffsetX(activePointIndex);
 
-      if (mapX) {
-        this.props.onChange({
-          target: {
-            name: mapX,
-            value: xMidiValue
-          }
-        })
-      }
-      if (mapY) {
-        this.props.onChange({
-          target: {
-            name: mapY,
-            value: yMidiValue
-          }
-        })
+          const multiplier = (x - offset) / range;
+          // TODO: Util method for this range limiting:
+          xMidiValue = Math.max(
+            Math.min(multiplier * INPUT_MAX, INPUT_MAX),
+            0
+          )
+        }
+        {
+          const range = this.canvas.height - (2 * RADIUS_WITH_BLUR);
+          const multiplier = 1 - ((y - RADIUS_WITH_BLUR) / range);
+          // TODO: Util method for this range limiting:
+          yMidiValue = Math.max(
+            Math.min(multiplier * INPUT_MAX, INPUT_MAX),
+            0
+          )
+        }
+
+        // TODO: This is terrible
+
+        if (mapX) {
+          this.props.onChange({
+            target: {
+              name: mapX,
+              value: xMidiValue
+            }
+          })
+        }
+        if (mapY) {
+          this.props.onChange({
+            target: {
+              name: mapY,
+              value: yMidiValue
+            }
+          })
+        }
       }
     }
   }
@@ -324,7 +320,7 @@ export default class InputADSR extends Component {
     event.preventDefault();
     this.setState({ isMouseDown: true });
 
-    if (point) {
+    if (point && point.inputElement) {
       point.inputElement.focus();
     } else if (this.state.focusedInput) {
       this.state.focusedInput.blur();
@@ -365,17 +361,19 @@ export default class InputADSR extends Component {
         onMouseEnter={this.onMouseEnter}
         onMouseLeave={this.onMouseLeave}
       >
-        {params.map(({ label, name }) => (
-          <ADSRInputField
-            id={`adsr-${name}-${this.id}`}
-            label={label}
-            key={name}
-            name={name}
-            value={this.props[name]}
-            onChange={onChange}
-            inputRef={el => this[name] = el}
-          />
-        ))}
+        {params
+          .filter(({ hasControls }) => hasControls)
+          .map(({ label, name }) => (
+            <ADSRInputField
+              id={`adsr-${name}-${this.id}`}
+              label={label}
+              key={name}
+              name={name}
+              value={this.props[name]}
+              onChange={onChange}
+              inputRef={el => this[name] = el}
+            />
+          ))}
         <canvas
           ref={el => this.canvas = el}
           width="500"
