@@ -87,9 +87,9 @@ const adsrCanvasGrabbing = css`
 `;
 
 
-
-const getRelativeMouseCoordinates = (event) => {
-  const bounds = event.target.getBoundingClientRect();
+// TODO: Move to util file
+const getRelativeMouseCoordinates = (event, element) => {
+  const bounds = (element || event.target).getBoundingClientRect();
 
   return {
     x: event.clientX - bounds.left,
@@ -247,8 +247,15 @@ export default class InputADSR extends Component {
   }
 
   onCanvasMouseMove = (event) => {
+    if (
+      event.target !== this.canvas &&
+      !(this.state.isMouseDown && this.state.activePointIndex)
+    ) {
+      return;
+    }
+
     // TODO: Both these call `getRelativeMouseCoordinates`. Prevent duplication.
-    const { x, y } = getRelativeMouseCoordinates(event);
+    const { x, y } = getRelativeMouseCoordinates(event, this.canvas);
 
     if (!this.state.isMouseDown) {
       const point = this.getClosestPointToEvent(event, this.props.pointHitboxMouse);
@@ -318,11 +325,13 @@ export default class InputADSR extends Component {
     this.ctx = this.canvas.getContext('2d');
     this.updateCanvas(this.props, this.state);
     document.addEventListener('mouseup', this.onDocumentMouseUp)
+    document.addEventListener('mousemove', this.onCanvasMouseMove)
   }
 
   componentWillUnmount() {
     // TODO: Look for an npm package that will handle event definition + teardown do reduce this duplication
     document.removeEventListener('mouseup', this.onDocumentMouseUp)
+    document.removeEventListener('mousemove', this.onCanvasMouseMove)
   }
 
   componentWillUpdate(props, state) {
@@ -394,7 +403,6 @@ export default class InputADSR extends Component {
           width="500"
           height="200"
           className={classnames(adsrCanvas, {[adsrCanvasGrabbing]: isMouseDown})}
-          onMouseMove={this.onCanvasMouseMove}
           onMouseDown={this.onMouseDown}
         />
       </div>
