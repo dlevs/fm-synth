@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import classnames from 'classnames';
 import sumBy from 'lodash/sumBy';
 import upperFirst from 'lodash/upperFirst';
+import findIndex from 'lodash/findIndex';
 import { css } from 'emotion';
 import { findClosestIndex } from 'find-closest';
 import { EventManager, getRelativeMouseCoordinates } from '../lib/eventUtils';
@@ -12,58 +13,76 @@ let uniqueIDCounter = 0;
 // TODO: make a standard for referencing x, y coordinates. E.g., ALWAYS use an array, or ALWAYS an object. not both
 
 // TODO: Better name?
-const getParamMultiplier = name =>
-  ({ inputMax, ...params }) => params[name] / inputMax;
-
+const getParamMultiplier = (inputs, name) => ({ inputMax, ...params }) => inputs[name].value / inputMax;
 // TODO: Rename
-const params = [
+
+class PointConfig {
+  constructor({
+    name,
+    label,
+    mapX,
+    mapY,
+    calculateX,
+    calculateY,
+    canvasControl = true,
+    inputControl = true,
+    inputs,
+    width = 1,
+  }) {
+    this.name = name;
+    this.label = label || upperFirst(name);
+
+    this.mapX = mapX || name;
+    this.mapY = mapY || null;
+
+    // TODO:
+    this.calculateX = calculateX || getParamMultiplier(inputs, name);
+    this.calculateY = calculateY || null;
+
+    this.canvasControl = canvasControl;
+    this.inputControl = inputControl;
+
+    // TODO: Width is a bit confusing. Can it be incorporated into calculateX?
+    this.width = width;
+    this.inputs = inputs;
+  }
+
+  get input() {
+    return this.inputs[this.name];
+  }
+}
+
+const createPointsConfig = (inputs) => [
   {
     name: 'start',
-    hasControls: false,
-    editable: false,
-    width: 0,
     calculateX: () => 0,
-    calculateY: () => 1,
+    calculateY: () => 0,
+    inputControl: false,
+    canvasControl: false,
+    width: 0,
   },
   {
     name: 'attack',
-    calculateY: () => 0,
+    calculateY: () => 1,
   },
   {
     name: 'decay',
     mapY: 'sustain',
-    calculateY: getParamMultiplier('sustain'),
+    calculateY: getParamMultiplier(inputs, 'sustain'),
   },
   {
     name: 'sustain',
-    mapY: 'sustain',
-    calculateY: getParamMultiplier('sustain'),
     calculateX: () => 1,
-    mapX: null,
+    calculateY: getParamMultiplier(inputs, 'sustain'),
+    canvasControl: false,
     width: 0.5,
-    editable: false
   },
   {
     name: 'release',
-    calculateY: () => 1,
+    calculateY: () => 0,
   },
-].map((param, index, array) => {
-  const mapX = param.mapX || param.name;
+].map(options => new PointConfig({ ...options, inputs }));
 
-  return {
-    label: upperFirst(param.name),
-    mapX,
-    calculateX: getParamMultiplier(param.name),
-    // TODO: Hmmm
-    getInput: instance => instance[param.name] || null,
-    width: 1,
-    editable: true,
-    // TODO: Be consistent with the property naming
-    hasControls: true,
-    ...param
-  }
-});
-const paramWidthTotal = sumBy(params, 'width');
 
 const adsrCanvas = css`
   cursor: grab;
@@ -111,14 +130,27 @@ export default class InputADSR extends Component {
 
   id = uniqueIDCounter++;
 
-  getMaxPointRadius() {
+  points = createPointsConfig(this);
+
+  get pointWidthTotal() {
+    return sumBy(this.points, 'width');
+  }
+
+  get maxPointRadius() {
     const { pointRadius, pointRadiusActive } = this.props;
     return Math.max(pointRadius, pointRadiusActive);
   }
 
-  getOffset() {
-    const { padding } = this.props;
-    return this.getMaxPointRadius() + padding;
+  get offset() {
+    return this.maxPointRadius + this.props.padding;
+  }
+
+  get canvasOffsetWidth() {
+    return this.canvas.width - (2 * this.offset);
+  }
+
+  get canvasOffsetHeight() {
+    return this.canvas.height - (2 * this.offset);
   }
 
   getPointOffsetX(i) {
@@ -128,26 +160,15 @@ export default class InputADSR extends Component {
     return rawPointX;
   }
 
-  getCanvasOffsetWidth() {
-    return this.canvas.width - (2 * this.getOffset());
-  }
-
-  getCanvasOffsetHeight() {
-    return this.canvas.height - (2 * this.getOffset());
-  }
-
   // TODO: Break this class down into smaller helper functions.
   getCurrentCoordinates = () => {
-    const offset = this.getOffset();
-    const width = this.getCanvasOffsetWidth();
-    const height = this.getCanvasOffsetHeight();
+    const { offset, canvasOffsetWidth, canvasOffsetHeight } = this;
 
-    // TODO: Maybe use a single loop here, or reduce
-    return params
+    return this.points
       .reduce((points, { name, calculateX, calculateY }, i) => {
-        // TODO: Should these calculations with "paramWidthTotal" and "params[i].width" be higher up?
-        let x = (calculateX(this.props) / paramWidthTotal) * params[i].width;
-        let y = calculateY(this.props);
+        // TODO: Should these calculations with "this.pointWidthTotal" and "params[i].width" be higher up?
+        let x = (calculateX(this.props) / this.pointWidthTotal) * this.points[i].width;
+        let y = 1 - calculateY(this.props);
 
         if (i !== 0) {
           const [lastX] = points[i - 1];
@@ -158,8 +179,8 @@ export default class InputADSR extends Component {
       }, [])
       // Do we need another loop for this?
       .map(([x, y]) => [
-        (x * width) + offset,
-        (y * height) + offset
+        (x * canvasOffsetWidth) + offset,
+        (y * canvasOffsetHeight) + offset
       ]);
   }
 
@@ -201,19 +222,13 @@ export default class InputADSR extends Component {
 
     this.applyUserCanvasContext('pre-draw-points');
     points.forEach(([x, y], i) => {
-      const param = params[i];
+      const param = this.points[i];
       const radius = i === activePointIndex ? pointRadiusActive : pointRadius;
 
-      if (param && param.editable) {
+      if (param && param.canvasControl) {
         drawCircle(ctx, x, y, radius);
       }
     });
-  }
-
-  // TODO: be consistent with parameter naming "index" vs "i"
-  getPoint(index) {
-    // TODO: Be consistent with naming "point" vs "coordinate"
-    return this.getCurrentCoordinates()[index];
   }
 
   getClosestPoint(x, y) {
@@ -262,15 +277,15 @@ export default class InputADSR extends Component {
     }
 
     if (typeof activePointIndex === 'number') {
-      const { mapX, mapY, editable } = params[activePointIndex];
+      const { mapX, mapY, canvasControl } = this.points[activePointIndex];
 
-      if (editable) {
+      if (canvasControl) {
         let xMidiValue;
         let yMidiValue;
 
         // TODO: Ohhh dear...
         {
-          const range = (params[activePointIndex].width / paramWidthTotal) * this.getCanvasOffsetWidth();
+          const range = (this.points[activePointIndex].width / this.pointWidthTotal) * this.canvasOffsetWidth;
           const multiplier = (x - this.getPointOffsetX(activePointIndex)) / range;
           xMidiValue = Math.max(
             Math.min(multiplier * inputMax, inputMax),
@@ -278,9 +293,9 @@ export default class InputADSR extends Component {
           )
         }
         {
-          const multiplier = (y - this.getOffset()) / this.getCanvasOffsetHeight();
+          const multiplier = (y - this.offset) / this.canvasOffsetHeight;
           // TODO: Util method for this range limiting:
-          yMidiValue = Math.max(
+          yMidiValue = inputMax - Math.max(
             Math.min(multiplier * inputMax, inputMax),
             0
           )
@@ -335,13 +350,13 @@ export default class InputADSR extends Component {
     const hitbox = event.type === 'touchstart' ? pointHitboxMouse : undefined;
     const point = this.getClosestPointToEvent(event, hitbox);
     // TODO: tidy:
-    const input = point && params[point.index] && params[point.index].getInput(this);
+    const pointConfig = point && this.points[point.index];
 
     event.preventDefault();
     this.setState({ isMouseDown: true });
 
-    if (input) {
-      input.focus();
+    if (pointConfig.input) {
+      pointConfig.input.focus();
     } else if (focusedInput) {
       focusedInput.blur();
     }
@@ -360,9 +375,7 @@ export default class InputADSR extends Component {
   }
 
   onFocus = () => {
-    const activePointIndex = params.findIndex(({ getInput }) => {
-      return getInput(this) === document.activeElement;
-    });
+    const activePointIndex = findIndex(this.points, { input: document.activeElement });
     if (activePointIndex !== -1) {
       this.setState({ activePointIndex })
     }
@@ -383,8 +396,8 @@ export default class InputADSR extends Component {
         onMouseEnter={this.onMouseEnter}
         onMouseLeave={this.onMouseLeave}
       >
-        {params
-          .filter(({ hasControls }) => hasControls)
+        {this.points
+          .filter(({ inputControl }) => inputControl)
           .map(({ label, name }) => (
             <ADSRInputField
               id={`adsr-${name}-${this.id}`}
