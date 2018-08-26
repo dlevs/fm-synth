@@ -8,6 +8,7 @@ import { findClosestIndex } from 'find-closest';
 import { EventManager, getRelativeMouseCoordinates } from '../lib/eventUtils';
 import { clearCanvas, drawCircle, resizeCanvas } from '../lib/canvasUtils';
 import { visuallyHidden } from '../lib/utilityStyles';
+import withMouseTracking from './higherOrder/withMouseTracking';
 
 let uniqueIDCounter = 0;
 // TODO: make a standard for referencing x, y coordinates. E.g., ALWAYS use an array, or ALWAYS an object. not both
@@ -109,7 +110,7 @@ const ADSRInputField = ({ id, label, inputRef, inputMin, inputMax, ...otherProps
   </div>
 )
 
-export default class InputADSR extends Component {
+class InputADSR extends Component {
   static defaultProps = {
     inputMin: 0,
     inputMax: 127,
@@ -122,8 +123,6 @@ export default class InputADSR extends Component {
   }
 
   state = {
-    isMouseDown: false,
-    isMouseOver: false,
     focusedInput: null,
     activePointIndex: null
   };
@@ -185,8 +184,8 @@ export default class InputADSR extends Component {
   }
 
   applyUserCanvasContext(step) {
-    const { setCanvasContext } = this.props;
-    const { activePointIndex, isMouseDown, isMouseOver } = this.state;
+    const { setCanvasContext, isMouseDown, isMouseOver } = this.props;
+    const { activePointIndex } = this.state;
 
     if (setCanvasContext) {
       setCanvasContext(this.ctx, {
@@ -258,8 +257,8 @@ export default class InputADSR extends Component {
 
   onCanvasMouseMove = (event) => {
     const { canvas } = this;
-    const { pointHitboxMouse, inputMax, onChange } = this.props;
-    const { isMouseDown, activePointIndex } = this.state;
+    const { pointHitboxMouse, inputMax, onChange, isMouseDown } = this.props;
+    const { activePointIndex } = this.state;
     const { x, y } = getRelativeMouseCoordinates(event, canvas);
 
     if (
@@ -302,7 +301,7 @@ export default class InputADSR extends Component {
         }
 
         // TODO: Don't pass pseudo event. Make consistent
-        if (typeof xMidiValue === 'number') {
+        if (mapX) {
           onChange({
             target: {
               name: mapX,
@@ -310,7 +309,7 @@ export default class InputADSR extends Component {
             }
           })
         }
-        if (typeof yMidiValue === 'number') {
+        if (mapY) {
           onChange({
             target: {
               name: mapY,
@@ -325,8 +324,6 @@ export default class InputADSR extends Component {
   componentDidMount() {
     this.ctx = this.canvas.getContext('2d');
     this.events = new EventManager([
-      [document, 'mouseup', this.onDocumentMouseUp],
-      [document, 'touchend', this.onDocumentMouseUp],
       [document, 'mousemove', this.onCanvasMouseMove],
       [document, 'touchmove', this.onCanvasMouseMove],
       [window, 'resize', this.updateCanvas],
@@ -353,25 +350,12 @@ export default class InputADSR extends Component {
     const pointConfig = point && this.points[point.index];
 
     event.preventDefault();
-    this.setState({ isMouseDown: true });
 
     if (pointConfig.input) {
       pointConfig.input.focus();
     } else if (focusedInput) {
       focusedInput.blur();
     }
-  }
-
-  onDocumentMouseUp = () => {
-    this.setState({ isMouseDown: false });
-  }
-
-  onMouseEnter = () => {
-    this.setState({ isMouseOver: true })
-  }
-
-  onMouseLeave = () => {
-    this.setState({ isMouseOver: false })
   }
 
   onFocus = () => {
@@ -386,8 +370,7 @@ export default class InputADSR extends Component {
   }
 
   render() {
-    const { onChange } = this.props;
-    const { isMouseDown } = this.state;
+    const { isMouseDown, onChange } = this.props;
 
     return (
       <div
@@ -420,3 +403,5 @@ export default class InputADSR extends Component {
     )
   }
 }
+
+export default withMouseTracking(InputADSR);
