@@ -4,14 +4,16 @@ import sumBy from 'lodash/sumBy';
 import upperFirst from 'lodash/upperFirst';
 import { css } from 'emotion';
 import { findClosestIndex } from 'find-closest';
-import EventManager from '../lib/EventManager';
+import { EventManager, getRelativeMouseCoordinates } from '../lib/eventUtils';
 import { clearCanvas, drawCircle, resizeCanvas } from '../lib/canvasUtils';
+import { visuallyHidden } from '../lib/utilityStyles';
 
 let uniqueIDCounter = 0;
 // TODO: make a standard for referencing x, y coordinates. E.g., ALWAYS use an array, or ALWAYS an object. not both
 
 // TODO: Better name?
-const getParamMultiplier = name => ({ inputMax, ...params }) => params[name] / inputMax;
+const getParamMultiplier = name =>
+  ({ inputMax, ...params }) => params[name] / inputMax;
 
 // TODO: Rename
 const params = [
@@ -56,6 +58,8 @@ const params = [
     mapXIndex,
     mapYIndex: mapYIndex !== -1 ? mapYIndex : null,
     calculateX: getParamMultiplier(param.name),
+    // TODO: Hmmm
+    getInput: instance => instance[param.name] || null,
     width: 1,
     editable: true,
     // TODO: Be consistent with the property naming
@@ -74,29 +78,6 @@ const adsrCanvas = css`
 const adsrCanvasGrabbing = css`
   cursor: grabbing;
 `;
-// TODO: Move me
-const visuallyHidden = css`
-  position: absolute;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  height: 1px; width: 1px;
-  margin: -1px; padding: 0; border: 0;
-`;
-
-
-// TODO: Move to util file
-const getRelativeMouseCoordinates = (event, element) => {
-  const bounds = (element || event.target).getBoundingClientRect();
-  const touch = event.touches ? event.touches[0] : null;
-  // TODO: Can "pageY" be used instead of "clientY" for mouse events? for consistency
-  const pageX = touch ? touch.pageX : event.clientX;
-  const pageY = touch ? touch.pageY : event.clientY;
-
-  return {
-    x: pageX - bounds.left,
-    y: pageY - bounds.top
-  };
-}
 
 const ADSRInputField = ({ id, label, inputRef, inputMin, inputMax, ...otherProps }) => (
   <div className={visuallyHidden}>
@@ -114,6 +95,17 @@ const ADSRInputField = ({ id, label, inputRef, inputMin, inputMax, ...otherProps
 )
 
 export default class InputADSR extends Component {
+  static defaultProps = {
+    inputMin: 0,
+    inputMax: 127,
+    pointHitboxMouse: 30,
+    pointRadius: 2,
+    pointRadiusActive: 4,
+    padding: 0,
+    width: 'fill',
+    height: 200
+  }
+
   state = {
     isMouseDown: false,
     isMouseOver: false,
@@ -122,19 +114,6 @@ export default class InputADSR extends Component {
   };
 
   id = uniqueIDCounter++;
-
-  static defaultProps = {
-    inputMin: 0,
-    inputMax: 127,
-    pointHitboxMouse: 30,
-    pointRadius: 2,
-    pointRadiusActive: 4,
-    padding: 0,
-
-    // TODO: Are these good default values?
-    width: 'fill',
-    height: 200
-  }
 
   getMaxPointRadius(props) {
     const { pointRadius, pointRadiusActive } = props || this.props;
@@ -246,10 +225,10 @@ export default class InputADSR extends Component {
     const distances = points.map(([x2, y2]) => Math.abs(x - x2) + Math.abs(y - y2));
     const index = findClosestIndex(distances, 0);
 
+    // TODO: Hitbox as param in this fn, to avoid needing to leak distance out of this fn
     return {
       distance: distances[index],
       point: points[index],
-      inputElement: this.getPointIndexMap()[index],
       index
     }
   }
@@ -333,11 +312,6 @@ export default class InputADSR extends Component {
     }
   }
 
-  // TODO: yuck
-  getPointIndexMap() {
-  	return params.map(({ name }) => this[name]);
-  }
-
   componentDidMount() {
     this.ctx = this.canvas.getContext('2d');
     this.events = new EventManager([
@@ -372,8 +346,11 @@ export default class InputADSR extends Component {
     event.preventDefault();
     this.setState({ isMouseDown: true });
 
-    if (point && point.inputElement) {
-      point.inputElement.focus();
+    const input = point && params[point.index] && params[point.index].getInput(this);
+    console.log(input)
+
+    if (input) {
+      input.focus();
     } else if (this.state.focusedInput) {
       this.state.focusedInput.blur();
     }
@@ -392,7 +369,9 @@ export default class InputADSR extends Component {
   }
 
   onFocus = () => {
-    const activePointIndex = this.getPointIndexMap().indexOf(document.activeElement);
+    const activePointIndex = params.findIndex(({ getInput }) => {
+      return getInput(this) === document.activeElement;
+    });
     if (activePointIndex !== -1) {
       this.setState({ activePointIndex })
     }
