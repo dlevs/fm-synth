@@ -1,19 +1,13 @@
 import React, { Component } from 'react';
+import flow from 'lodash/flow';
 import { EventManager } from '../../lib/eventUtils';
 
-// TODO: This could be 2 HOC: withMouseDownTracking and withMouseOverTracking
-const withMouseTracking = (WrappedComponent) => {
-  class MouseTracking extends Component {
+export const withMouseDownTracking = (WrappedComponent) => {
+  class MouseDownTracking extends Component {
     onMouseDown = () => this.setState({ isMouseDown: true });
     onMouseUp = () => this.setState({ isMouseDown: false });
 
-    onMouseEnter = () => this.setState({ isMouseOver: true });
-    onMouseLeave = () => this.setState({ isMouseOver: false });
-
-    state = {
-      isMouseDown: false,
-      isMouseOver: false,
-    }
+    state = { isMouseDown: false };
 
     events = new EventManager([
       [document, 'mouseup', this.onMouseUp],
@@ -30,19 +24,35 @@ const withMouseTracking = (WrappedComponent) => {
 
     render() {
       return (
-        <div
-          onMouseDown={this.onMouseDown}
-          onTouchStart={this.onMouseDown}
-          onMouseEnter={this.onMouseEnter}
-          onMouseLeave={this.onMouseLeave}
-        >
+        <div onMouseDown={this.onMouseDown} onTouchStart={this.onMouseDown}>
           <WrappedComponent {...this.props} {...this.state} />;
         </div>
       )
     }
   }
 
-  return MouseTracking;
+  return MouseDownTracking;
 };
+
+export const withMouseOverTracking = (WrappedComponent) => {
+  class MouseOverTracking extends Component {
+    onMouseEnter = () => this.setState({ isMouseOver: true });
+    onMouseLeave = () => this.setState({ isMouseOver: false });
+
+    state = { isMouseOver: false };
+
+    render() {
+      return (
+        <div onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
+          <WrappedComponent {...this.props} {...this.state} />;
+        </div>
+      )
+    }
+  }
+
+  return MouseOverTracking;
+};
+
+const withMouseTracking = flow(withMouseDownTracking, withMouseOverTracking);
 
 export default withMouseTracking;
