@@ -1,4 +1,4 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component } from 'react';
 import classnames from 'classnames';
 import sumBy from 'lodash/sumBy';
 import upperFirst from 'lodash/upperFirst';
@@ -49,14 +49,10 @@ const params = [
   },
 ].map((param, index, array) => {
   const mapX = param.mapX || param.name;
-  const mapXIndex = array.findIndex(({ name }) => name === mapX);
-  const mapYIndex = array.findIndex(({ name }) => name === param.mapY);
 
   return {
     label: upperFirst(param.name),
     mapX,
-    mapXIndex,
-    mapYIndex: mapYIndex !== -1 ? mapYIndex : null,
     calculateX: getParamMultiplier(param.name),
     // TODO: Hmmm
     getInput: instance => instance[param.name] || null,
@@ -115,18 +111,18 @@ export default class InputADSR extends Component {
 
   id = uniqueIDCounter++;
 
-  getMaxPointRadius(props) {
-    const { pointRadius, pointRadiusActive } = props || this.props;
+  getMaxPointRadius() {
+    const { pointRadius, pointRadiusActive } = this.props;
     return Math.max(pointRadius, pointRadiusActive);
   }
 
-  getOffset(props) {
-    props = props || this.props;
-    return this.getMaxPointRadius(props) + props.padding;
+  getOffset() {
+    const { padding } = this.props;
+    return this.getMaxPointRadius() + padding;
   }
 
   getPointOffsetX(i) {
-    const point = this.getCurrentCoordinates(this.props)[i - 1];
+    const point = this.getCurrentCoordinates()[i - 1];
     const rawPointX = point ? point[0] : 0;
 
     return rawPointX;
@@ -141,8 +137,8 @@ export default class InputADSR extends Component {
   }
 
   // TODO: Break this class down into smaller helper functions.
-  getCurrentCoordinates = (props) => {
-    const offset = this.getOffset(props);
+  getCurrentCoordinates = () => {
+    const offset = this.getOffset();
     const width = this.getCanvasOffsetWidth();
     const height = this.getCanvasOffsetHeight();
 
@@ -150,8 +146,8 @@ export default class InputADSR extends Component {
     return params
       .reduce((points, { name, calculateX, calculateY }, i) => {
         // TODO: Should these calculations with "paramWidthTotal" and "params[i].width" be higher up?
-        let x = (calculateX(props) / paramWidthTotal) * params[i].width;
-        let y = calculateY(props);
+        let x = (calculateX(this.props) / paramWidthTotal) * params[i].width;
+        let y = calculateY(this.props);
 
         if (i !== 0) {
           const [lastX] = points[i - 1];
@@ -167,28 +163,32 @@ export default class InputADSR extends Component {
       ]);
   }
 
-  applyUserCanvasContext(props, state, step) {
-    if (props.setCanvasContext) {
-      props.setCanvasContext(this.ctx, {
-        isActive: (state.activePointIndex && state.isMouseDown) || state.isMouseOver,
+  applyUserCanvasContext(step) {
+    const { setCanvasContext } = this.props;
+    const { activePointIndex, isMouseDown, isMouseOver } = this.state;
+
+    if (setCanvasContext) {
+      setCanvasContext(this.ctx, {
+        isActive: (activePointIndex && isMouseDown) || isMouseOver,
         step
       });
     }
   }
 
-  updateCanvas = (props, state) => {
-    const { ctx, canvas } = this;
-    const { activePointIndex } = state;
+  updateCanvas = () => {
+    const { ctx } = this;
+    const { width, height, pointRadiusActive, pointRadius } = this.props;
+    const { activePointIndex } = this.state;
 
-    resizeCanvas(ctx, props.width, props.height);
+    resizeCanvas(ctx, width, height);
     clearCanvas(ctx);
 
     // TODO: extract to another fn
-    const points = this.getCurrentCoordinates(props);
+    const points = this.getCurrentCoordinates();
 
     ctx.lineJoin = 'bevel';
 
-    this.applyUserCanvasContext(props, state, 'pre-draw-lines');
+    this.applyUserCanvasContext('pre-draw-lines');
     ctx.beginPath();
     points.forEach(([x, y], i) => {
       if (i === 0) {
@@ -199,18 +199,14 @@ export default class InputADSR extends Component {
     });
     ctx.stroke();
 
-    this.applyUserCanvasContext(props, state, 'pre-draw-points');
+    this.applyUserCanvasContext('pre-draw-points');
     points.forEach(([x, y], i) => {
       const param = params[i];
-      if (!param || !param.editable) {
-        return;
+      const radius = i === activePointIndex ? pointRadiusActive : pointRadius;
+
+      if (param && param.editable) {
+        drawCircle(ctx, x, y, radius);
       }
-
-      const radius = i === activePointIndex
-        ? props.pointRadiusActive
-        : props.pointRadius;
-
-      drawCircle(ctx, x, y, radius);
     });
   }
 
@@ -221,7 +217,7 @@ export default class InputADSR extends Component {
   }
 
   getClosestPoint(x, y) {
-    const points = this.getCurrentCoordinates(this.props);
+    const points = this.getCurrentCoordinates();
     const distances = points.map(([x2, y2]) => Math.abs(x - x2) + Math.abs(y - y2));
     const index = findClosestIndex(distances, 0);
 
@@ -246,27 +242,27 @@ export default class InputADSR extends Component {
   }
 
   onCanvasMouseMove = (event) => {
+    const { canvas } = this;
+    const { pointHitboxMouse, inputMax, onChange } = this.props;
+    const { isMouseDown, activePointIndex } = this.state;
+    const { x, y } = getRelativeMouseCoordinates(event, canvas);
+
     if (
-      event.target !== this.canvas &&
+      event.target !== canvas &&
       // TODO: Do we need to check mouseDown status?
-      !(this.state.isMouseDown && this.state.activePointIndex)
+      !(isMouseDown && activePointIndex)
     ) {
       return;
     }
 
-    const { x, y } = getRelativeMouseCoordinates(event, this.canvas);
-
-    // For mobile, we need to capture the movement instead of scrolling
-    const { activePointIndex } = this.state;
-
-    if (!this.state.isMouseDown) {
-      const point = this.getClosestPointToEvent(event, this.props.pointHitboxMouse);
+    if (!isMouseDown) {
+      const point = this.getClosestPointToEvent(event, pointHitboxMouse);
       this.setState({ activePointIndex: point ? point.index : null });
       return;
     }
 
     if (typeof activePointIndex === 'number') {
-      const { mapX, mapY, mapXIndex, mapYIndex, editable } = params[activePointIndex];
+      const { mapX, mapY, editable } = params[activePointIndex];
 
       if (editable) {
         let xMidiValue;
@@ -277,7 +273,7 @@ export default class InputADSR extends Component {
           const range = (params[activePointIndex].width / paramWidthTotal) * this.getCanvasOffsetWidth();
           const multiplier = (x - this.getPointOffsetX(activePointIndex)) / range;
           xMidiValue = Math.max(
-            Math.min(multiplier * this.props.inputMax, this.props.inputMax),
+            Math.min(multiplier * inputMax, inputMax),
             0
           )
         }
@@ -285,15 +281,14 @@ export default class InputADSR extends Component {
           const multiplier = (y - this.getOffset()) / this.getCanvasOffsetHeight();
           // TODO: Util method for this range limiting:
           yMidiValue = Math.max(
-            Math.min(multiplier * this.props.inputMax, this.props.inputMax),
+            Math.min(multiplier * inputMax, inputMax),
             0
           )
         }
 
-        // TODO: This is terrible
-
+        // TODO: Don't pass pseudo event. Make consistent
         if (typeof xMidiValue === 'number') {
-          this.props.onChange({
+          onChange({
             target: {
               name: mapX,
               value: xMidiValue
@@ -301,7 +296,7 @@ export default class InputADSR extends Component {
           })
         }
         if (typeof yMidiValue === 'number') {
-          this.props.onChange({
+          onChange({
             target: {
               name: mapY,
               value: yMidiValue
@@ -319,11 +314,9 @@ export default class InputADSR extends Component {
       [document, 'touchend', this.onDocumentMouseUp],
       [document, 'mousemove', this.onCanvasMouseMove],
       [document, 'touchmove', this.onCanvasMouseMove],
-      // TODO: This one not great..:
-      [window, 'resize', () => {console.log('resize'), this.updateCanvas(this.props, this.state)}],
+      [window, 'resize', this.updateCanvas],
     ]);
-
-    this.updateCanvas(this.props, this.state);
+    this.updateCanvas();
     this.events.listen();
   }
 
@@ -331,28 +324,26 @@ export default class InputADSR extends Component {
     this.events.stopListening();
   }
 
-  componentWillUpdate(props, state) {
-    this.updateCanvas(props, state);
+  componentDidUpdate() {
+    this.updateCanvas();
   }
 
   onMouseDown = (event) => {
+    const { pointHitboxMouse } = this.props;
+    const { focusedInput } = this.state;
     // TODO: Tidy this. Maybe move param a level deeper, or something to avoid "undefined" ternary result
-    const hitbox = event.type === 'touchstart'
-      ? this.props.pointHitboxMouse
-      : undefined;
-
+    const hitbox = event.type === 'touchstart' ? pointHitboxMouse : undefined;
     const point = this.getClosestPointToEvent(event, hitbox);
+    // TODO: tidy:
+    const input = point && params[point.index] && params[point.index].getInput(this);
 
     event.preventDefault();
     this.setState({ isMouseDown: true });
 
-    const input = point && params[point.index] && params[point.index].getInput(this);
-    console.log(input)
-
     if (input) {
       input.focus();
-    } else if (this.state.focusedInput) {
-      this.state.focusedInput.blur();
+    } else if (focusedInput) {
+      focusedInput.blur();
     }
   }
 
@@ -382,7 +373,7 @@ export default class InputADSR extends Component {
   }
 
   render() {
-    const { width, height, onChange } = this.props;
+    const { onChange } = this.props;
     const { isMouseDown } = this.state;
 
     return (
