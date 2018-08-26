@@ -11,9 +11,9 @@ export const drawCircle = (ctx, x, y, radius) => {
   ctx.stroke();
 }
 
-export const resizeCanvas = (ctx) => {
+export const resizeCanvas = (ctx, width, height) => {
   const { canvas } = ctx;
 
-  canvas.width = canvas.clientWidth;
-  canvas.height = canvas.clientHeight;
+  canvas.height = height === 'fill' ? canvas.clientHeight : height;
+  canvas.width = width === 'fill' ? canvas.offsetWidth : width;
 }

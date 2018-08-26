@@ -49,13 +49,13 @@ class App extends Component {
     return (
       <Fragment>
         <InputADSR
-          padding={BLUR}
+          padding={BLUR / 2}
           setCanvasContext={createAdsrStyle('#4286f4')}
           {...this.state.adsrParams}
           onChange={this.onAdsrChange}
         />
         <InputADSR
-          padding={BLUR}
+          padding={BLUR / 2}
           setCanvasContext={createAdsrStyle('#f44d41')}
           {...this.state.adsrParams}
           onChange={this.onAdsrChange}

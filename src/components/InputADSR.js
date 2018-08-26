@@ -4,28 +4,14 @@ import sumBy from 'lodash/sumBy';
 import upperFirst from 'lodash/upperFirst';
 import { css } from 'emotion';
 import { findClosestIndex } from 'find-closest';
+import EventManager from '../lib/EventManager';
 import { clearCanvas, drawCircle, resizeCanvas } from '../lib/canvasUtils';
 
 let uniqueIDCounter = 0;
 // TODO: make a standard for referencing x, y coordinates. E.g., ALWAYS use an array, or ALWAYS an object. not both
 
-const calculateSustainY = ({ canvas, sustain, inputMax, offset }) => {
-  const heightStep = (canvas.height - (2 * offset)) / inputMax;
-  return canvas.height - (sustain * heightStep) - offset;
-}
-const calculateBottomY = ({ canvas, offset }) => canvas.height - offset;
-const calculateXForParam = ({ canvas, value, inputMax, i, offset }) => {
-  // TODO: passing all this to getPointRangeX is silly
-  return (value / inputMax) * getPointRangeX(canvas, i, offset);
-}
-const calculateMaxXForParam =  args => calculateXForParam({...args, value: args.inputMax});
-const getOffsetCanvasWidth = (canvas, offset) => {
-  return canvas.width - (2 * offset)
-}
-// TODO: These are grim. Tidy.
-const getPointRangeX = (canvas, i, offset) => {
-  return (params[i].width / paramWidthTotal) * getOffsetCanvasWidth(canvas, offset);
-}
+// TODO: Better name?
+const getParamMultiplier = name => ({ inputMax, ...params }) => params[name] / inputMax;
 
 // TODO: Rename
 const params = [
@@ -34,30 +20,30 @@ const params = [
     hasControls: false,
     editable: false,
     width: 0,
-    calculateX: ({ offset }) => offset,
-    calculateY: calculateBottomY,
+    calculateX: () => 0,
+    calculateY: () => 1,
   },
   {
     name: 'attack',
-    calculateY: ({ offset }) => offset,
+    calculateY: () => 0,
   },
   {
     name: 'decay',
     mapY: 'sustain',
-    calculateY: calculateSustainY,
+    calculateY: getParamMultiplier('sustain'),
   },
   {
     name: 'sustain',
     mapY: 'sustain',
-    calculateX: calculateMaxXForParam,
-    calculateY: calculateSustainY,
+    calculateY: getParamMultiplier('sustain'),
+    calculateX: () => 1,
     mapX: null,
     width: 0.5,
     editable: false
   },
   {
     name: 'release',
-    calculateY: calculateBottomY,
+    calculateY: () => 1,
   },
 ].map((param, index, array) => {
   const mapX = param.mapX || param.name;
@@ -69,7 +55,7 @@ const params = [
     mapX,
     mapXIndex,
     mapYIndex: mapYIndex !== -1 ? mapYIndex : null,
-    calculateX: calculateXForParam,
+    calculateX: getParamMultiplier(param.name),
     width: 1,
     editable: true,
     // TODO: Be consistent with the property naming
@@ -83,9 +69,18 @@ const adsrCanvas = css`
   cursor: grab;
   touch-action: none;
   width: 100%;
+  display: block;
 `;
 const adsrCanvasGrabbing = css`
   cursor: grabbing;
+`;
+// TODO: Move me
+const visuallyHidden = css`
+  position: absolute;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  height: 1px; width: 1px;
+  margin: -1px; padding: 0; border: 0;
 `;
 
 
@@ -104,7 +99,7 @@ const getRelativeMouseCoordinates = (event, element) => {
 }
 
 const ADSRInputField = ({ id, label, inputRef, inputMin, inputMax, ...otherProps }) => (
-  <Fragment>
+  <div className={visuallyHidden}>
     <label htmlFor={id}>{label}</label>
     <input
       id={id}
@@ -115,7 +110,7 @@ const ADSRInputField = ({ id, label, inputRef, inputMin, inputMax, ...otherProps
       ref={inputRef}
       {...otherProps}
     />
-  </Fragment>
+  </div>
 )
 
 export default class InputADSR extends Component {
@@ -137,7 +132,7 @@ export default class InputADSR extends Component {
     padding: 0,
 
     // TODO: Are these good default values?
-    width: 400,
+    width: 'fill',
     height: 200
   }
 
@@ -155,31 +150,42 @@ export default class InputADSR extends Component {
     const point = this.getCurrentCoordinates(this.props)[i - 1];
     const rawPointX = point ? point[0] : 0;
 
-    return Math.max(rawPointX, this.getOffset());
+    return rawPointX;
+  }
+
+  getCanvasOffsetWidth() {
+    return this.canvas.width - (2 * this.getOffset());
+  }
+
+  getCanvasOffsetHeight() {
+    return this.canvas.height - (2 * this.getOffset());
   }
 
   // TODO: Break this class down into smaller helper functions.
-
   getCurrentCoordinates = (props) => {
+    const offset = this.getOffset(props);
+    const width = this.getCanvasOffsetWidth();
+    const height = this.getCanvasOffsetHeight();
+
     // TODO: Maybe use a single loop here, or reduce
-    return params.reduce((points, { name, calculateX, calculateY }, i) => {
-      const calculationParams = {
-        ...props,
-        value: props[name],
-        canvas: this.canvas,
-        i,
-        offset: this.getOffset(props)
-      };
-      let x = calculateX(calculationParams);
-      let y = calculateY(calculationParams);
+    return params
+      .reduce((points, { name, calculateX, calculateY }, i) => {
+        // TODO: Should these calculations with "paramWidthTotal" and "params[i].width" be higher up?
+        let x = (calculateX(props) / paramWidthTotal) * params[i].width;
+        let y = calculateY(props);
 
-      if (i !== 0) {
-        const [lastX] = points[i - 1];
-        x += lastX;
-      }
+        if (i !== 0) {
+          const [lastX] = points[i - 1];
+          x += lastX;
+        }
 
-      return points.concat([[x, y]]);
-    }, []);
+        return points.concat([[x, y]]);
+      }, [])
+      // Do we need another loop for this?
+      .map(([x, y]) => [
+        (x * width) + offset,
+        (y * height) + offset
+      ]);
   }
 
   applyUserCanvasContext(props, state, step) {
@@ -195,13 +201,13 @@ export default class InputADSR extends Component {
     const { ctx, canvas } = this;
     const { activePointIndex } = state;
 
-    resizeCanvas(ctx);
+    resizeCanvas(ctx, props.width, props.height);
     clearCanvas(ctx);
 
     // TODO: extract to another fn
     const points = this.getCurrentCoordinates(props);
 
-    ctx.lineJoin  = 'bevel';
+    ctx.lineJoin = 'bevel';
 
     this.applyUserCanvasContext(props, state, 'pre-draw-lines');
     ctx.beginPath();
@@ -289,19 +295,15 @@ export default class InputADSR extends Component {
 
         // TODO: Ohhh dear...
         {
-          const range = getPointRangeX(this.canvas, activePointIndex, this.getOffset());
-          const offset = this.getPointOffsetX(activePointIndex);
-
-          const multiplier = (x - offset) / range;
-          // TODO: Util method for this range limiting:
+          const range = (params[activePointIndex].width / paramWidthTotal) * this.getCanvasOffsetWidth();
+          const multiplier = (x - this.getPointOffsetX(activePointIndex)) / range;
           xMidiValue = Math.max(
             Math.min(multiplier * this.props.inputMax, this.props.inputMax),
             0
           )
         }
         {
-          const range = this.canvas.height - (2 * this.getOffset());
-          const multiplier = 1 - ((y - this.getOffset()) / range);
+          const multiplier = (y - this.getOffset()) / this.getCanvasOffsetHeight();
           // TODO: Util method for this range limiting:
           yMidiValue = Math.max(
             Math.min(multiplier * this.props.inputMax, this.props.inputMax),
@@ -311,7 +313,7 @@ export default class InputADSR extends Component {
 
         // TODO: This is terrible
 
-        if (mapX) {
+        if (typeof xMidiValue === 'number') {
           this.props.onChange({
             target: {
               name: mapX,
@@ -319,7 +321,7 @@ export default class InputADSR extends Component {
             }
           })
         }
-        if (mapY) {
+        if (typeof yMidiValue === 'number') {
           this.props.onChange({
             target: {
               name: mapY,
@@ -338,22 +340,21 @@ export default class InputADSR extends Component {
 
   componentDidMount() {
     this.ctx = this.canvas.getContext('2d');
+    this.events = new EventManager([
+      [document, 'mouseup', this.onDocumentMouseUp],
+      [document, 'touchend', this.onDocumentMouseUp],
+      [document, 'mousemove', this.onCanvasMouseMove],
+      [document, 'touchmove', this.onCanvasMouseMove],
+      // TODO: This one not great..:
+      [window, 'resize', () => {console.log('resize'), this.updateCanvas(this.props, this.state)}],
+    ]);
+
     this.updateCanvas(this.props, this.state);
-    document.addEventListener('mouseup', this.onDocumentMouseUp)
-    document.addEventListener('touchend', this.onDocumentMouseUp)
-    document.addEventListener('mousemove', this.onCanvasMouseMove)
-    // TODO: duplicating mousemove for touchmove OK here?
-    document.addEventListener('touchmove', this.onCanvasMouseMove)
-    this.canvas.addEventListener('resize', this.updateCanvas)
+    this.events.listen();
   }
 
   componentWillUnmount() {
-    // TODO: Look for an npm package that will handle event definition + teardown do reduce this duplication
-    document.removeEventListener('mouseup', this.onDocumentMouseUp)
-    document.removeEventListener('touchend', this.onDocumentMouseUp)
-    document.removeEventListener('mousemove', this.onCanvasMouseMove)
-    document.removeEventListener('touchmove', this.onCanvasMouseMove)
-    this.canvas.removeEventListener('resize', this.updateCanvas)
+    this.events.stopListening();
   }
 
   componentWillUpdate(props, state) {
@@ -431,8 +432,6 @@ export default class InputADSR extends Component {
           className={classnames(adsrCanvas, {[adsrCanvasGrabbing]: isMouseDown})}
           onMouseDown={this.onMouseDown}
           onTouchStart={this.onMouseDown}
-          width={width}
-          height={height}
         />
       </div>
     )
