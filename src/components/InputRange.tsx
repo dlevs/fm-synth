@@ -1,7 +1,13 @@
-import React, { Fragment } from 'react';
+import React, { Fragment, Ref } from 'react';
 import withUniqueId from './higherOrder/withUniqueId';
 
-const InputRange = ({ id, label, inputRef, ...otherProps }) => (
+interface Props {
+  id: string
+  label: string
+  inputRef?: Ref<HTMLInputElement>
+}
+
+const InputRange = ({ id, label, inputRef, ...otherProps }: Props) => (
   <Fragment>
     <label htmlFor={id}>{label}</label>
     <input

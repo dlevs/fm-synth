@@ -1,11 +1,14 @@
+import fromPairs from 'lodash/fromPairs';
 import React, { Component, Fragment } from 'react';
 import InputADSR from './components/InputADSR';
-import fromPairs from 'lodash/fromPairs';
 
 // TODO: Make a generic "padding" property to widget to allow us space for this blur
 const BLUR = 20;
 
-const createAdsrStyle = (color) => (ctx, { step, isActive }) => {
+const createAdsrStyle = (color: string) => (
+  ctx: CanvasRenderingContext2D,
+  { step, isActive }: { step: string, isActive: boolean }
+ ) => {
   switch(step) {
     case 'pre-draw-lines':
       ctx.lineWidth = 2;
@@ -30,25 +33,26 @@ const createAdsrStyle = (color) => (ctx, { step, isActive }) => {
 }
 
 class App extends Component {
-  state = {
+  public state = {
     adsrParams: {
       attack: 127,
       decay: 127,
-      sustain: 80,
       release: 127,
+      sustain: 80,
     },
   }
 
-  onAdsrChange = (changes) => {
-    this.setState(({ adsrParams }) => ({
+  public onAdsrChange = (changes: Array<[string, number]>) => {
+    // TODO: Use function for updating state based on previous state
+    this.setState({
       adsrParams: {
-        ...adsrParams,
+        ...this.state.adsrParams,
         ...fromPairs(changes),
       }
-    }));
+    });
   }
 
-  render() {
+  public render() {
     return (
       <Fragment>
         <InputADSR
