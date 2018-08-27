@@ -1,4 +1,4 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component } from 'react';
 import classnames from 'classnames';
 import sumBy from 'lodash/sumBy';
 import upperFirst from 'lodash/upperFirst';
@@ -96,6 +96,9 @@ const adsrCanvasGrabbing = css`
 `;
 
 class InputADSR extends Component {
+  //--------------------------------------------
+  // Static properties
+  //--------------------------------------------
   static defaultProps = {
     inputMin: 0,
     inputMax: 127,
@@ -107,6 +110,9 @@ class InputADSR extends Component {
     height: 200
   }
 
+  //--------------------------------------------
+  // Class instance properties
+  //--------------------------------------------
   state = {
     focusedInput: null,
     activePointIndex: null
@@ -114,6 +120,9 @@ class InputADSR extends Component {
 
   points = createPointsConfig(this);
 
+  //--------------------------------------------
+  // Getter methods
+  //--------------------------------------------
   get pointWidthTotal() {
     return sumBy(this.points, 'width');
   }
@@ -135,15 +144,8 @@ class InputADSR extends Component {
     return this.canvas.height - (2 * this.offset);
   }
 
-  getPointOffsetX(i) {
-    const point = this.getCurrentCoordinates()[i - 1];
-    const rawPointX = point ? point[0] : 0;
-
-    return rawPointX;
-  }
-
   // TODO: Break this class down into smaller helper functions.
-  getCurrentCoordinates = () => {
+  get currentCoordinates() {
     const { offset, canvasOffsetWidth, canvasOffsetHeight } = this;
 
     return this.points
@@ -168,18 +170,41 @@ class InputADSR extends Component {
       ]);
   }
 
-  applyUserCanvasContext(step) {
-    const { setCanvasContext, isMouseDown, isMouseOver } = this.props;
-    const { activePointIndex } = this.state;
+  getPointOffsetX(i) {
+    const point = this.currentCoordinates[i - 1];
+    const rawPointX = point ? point[0] : 0;
 
-    if (setCanvasContext) {
-      setCanvasContext(this.ctx, {
-        isActive: (activePointIndex && isMouseDown) || isMouseOver,
-        step
-      });
+    return rawPointX;
+  }
+
+  getClosestPoint(x, y) {
+    const points = this.currentCoordinates;
+    const distances = points.map(([x2, y2]) => Math.abs(x - x2) + Math.abs(y - y2));
+    const index = findClosestIndex(distances, 0);
+
+    // TODO: Hitbox as param in this fn, to avoid needing to leak distance out of this fn
+    return {
+      distance: distances[index],
+      point: points[index],
+      index
     }
   }
 
+  // TODO: hitbox param should be a level above
+  getClosestPointToEvent(event, hitbox) {
+    const { x, y } = getRelativeMouseCoordinates(event);
+    const point = this.getClosestPoint(x, y);
+
+    if (typeof hitbox !== 'number' || point.distance < hitbox) {
+      return point;
+    }
+
+    return null;
+  }
+
+  //--------------------------------------------
+  // Methods
+  //--------------------------------------------
   updateCanvas = () => {
     const { ctx } = this;
     const { width, height, pointRadiusActive, pointRadius } = this.props;
@@ -189,7 +214,7 @@ class InputADSR extends Component {
     clearCanvas(ctx);
 
     // TODO: extract to another fn
-    const points = this.getCurrentCoordinates();
+    const points = this.currentCoordinates;
 
     ctx.lineJoin = 'bevel';
 
@@ -215,29 +240,16 @@ class InputADSR extends Component {
     });
   }
 
-  getClosestPoint(x, y) {
-    const points = this.getCurrentCoordinates();
-    const distances = points.map(([x2, y2]) => Math.abs(x - x2) + Math.abs(y - y2));
-    const index = findClosestIndex(distances, 0);
+  applyUserCanvasContext(step) {
+    const { setCanvasContext, isMouseDown, isMouseOver } = this.props;
+    const { activePointIndex } = this.state;
 
-    // TODO: Hitbox as param in this fn, to avoid needing to leak distance out of this fn
-    return {
-      distance: distances[index],
-      point: points[index],
-      index
+    if (setCanvasContext) {
+      setCanvasContext(this.ctx, {
+        isActive: (activePointIndex && isMouseDown) || isMouseOver,
+        step
+      });
     }
-  }
-
-  // TODO: hitbox param should be a level above
-  getClosestPointToEvent(event, hitbox) {
-    const { x, y } = getRelativeMouseCoordinates(event);
-    const point = this.getClosestPoint(x, y);
-
-    if (typeof hitbox !== 'number' || point.distance < hitbox) {
-      return point;
-    }
-
-    return null;
   }
 
   handleChangeEvent = ({ target }) => {
@@ -246,7 +258,41 @@ class InputADSR extends Component {
     ]);
   }
 
-  onCanvasMouseMove = (event) => {
+  //--------------------------------------------
+  // Event listener callbacks
+  //--------------------------------------------
+  onFocus = () => {
+    const activePointIndex = findIndex(this.points, {
+      input: document.activeElement
+    });
+    if (activePointIndex !== -1) {
+      this.setState({ activePointIndex })
+    }
+  }
+
+  onBlur = () => {
+    this.setState({ activePointIndex: null })
+  }
+
+  onMouseDown = (event) => {
+    const { pointHitboxMouse } = this.props;
+    const { focusedInput } = this.state;
+    // TODO: Tidy this. Maybe move param a level deeper, or something to avoid "undefined" ternary result
+    const hitbox = event.type === 'touchstart' ? pointHitboxMouse : undefined;
+    const point = this.getClosestPointToEvent(event, hitbox);
+    // TODO: tidy:
+    const pointConfig = point && this.points[point.index];
+
+    event.preventDefault();
+
+    if (pointConfig.input) {
+      pointConfig.input.focus();
+    } else if (focusedInput) {
+      focusedInput.blur();
+    }
+  }
+
+  onMouseMove = (event) => {
     const { canvas } = this;
     const { pointHitboxMouse, inputMax, onChange, isMouseDown } = this.props;
     const { activePointIndex } = this.state;
@@ -306,11 +352,14 @@ class InputADSR extends Component {
     }
   }
 
+  //--------------------------------------------
+  // Lifecycle methods
+  //--------------------------------------------
   componentDidMount() {
     this.ctx = this.canvas.getContext('2d');
     this.events = new EventManager([
-      [document, 'mousemove', this.onCanvasMouseMove],
-      [document, 'touchmove', this.onCanvasMouseMove],
+      [document, 'mousemove', this.onMouseMove],
+      [document, 'touchmove', this.onMouseMove],
       [window, 'resize', this.updateCanvas],
     ]);
     this.updateCanvas();
@@ -323,35 +372,6 @@ class InputADSR extends Component {
 
   componentDidUpdate() {
     this.updateCanvas();
-  }
-
-  onMouseDown = (event) => {
-    const { pointHitboxMouse } = this.props;
-    const { focusedInput } = this.state;
-    // TODO: Tidy this. Maybe move param a level deeper, or something to avoid "undefined" ternary result
-    const hitbox = event.type === 'touchstart' ? pointHitboxMouse : undefined;
-    const point = this.getClosestPointToEvent(event, hitbox);
-    // TODO: tidy:
-    const pointConfig = point && this.points[point.index];
-
-    event.preventDefault();
-
-    if (pointConfig.input) {
-      pointConfig.input.focus();
-    } else if (focusedInput) {
-      focusedInput.blur();
-    }
-  }
-
-  onFocus = () => {
-    const activePointIndex = findIndex(this.points, { input: document.activeElement });
-    if (activePointIndex !== -1) {
-      this.setState({ activePointIndex })
-    }
-  }
-
-  onBlur = () => {
-    this.setState({ activePointIndex: null })
   }
 
   render() {
@@ -379,8 +399,7 @@ class InputADSR extends Component {
                 inputRef={el => this[name] = el}
               />
             ))}
-          </div>
-        {/* TODO: Is duplicating the mouseDown event for touch OK here? */}
+        </div>
         <canvas
           ref={el => this.canvas = el}
           className={classnames(adsrCanvas, {[adsrCanvasGrabbing]: isMouseDown})}

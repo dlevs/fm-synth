@@ -1,4 +1,4 @@
-import React, { Component, Fragment } from 'react';
+import React, { Fragment } from 'react';
 import withUniqueId from './higherOrder/withUniqueId';
 
 const InputRange = ({ id, label, inputRef, ...otherProps }) => (

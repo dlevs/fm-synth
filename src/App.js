@@ -23,6 +23,9 @@ const createAdsrStyle = (color) => (ctx, { step, isActive }) => {
         ctx.restore();
       }
       break;
+
+    default:
+      break;
   }
 }
 
@@ -37,12 +40,10 @@ class App extends Component {
   }
 
   onAdsrChange = (changes) => {
-    const newParams = fromPairs(changes);
-    // TODO: Does this need some abstraction, or just plain event?
     this.setState(({ adsrParams }) => ({
       adsrParams: {
         ...adsrParams,
-        ...newParams,
+        ...fromPairs(changes),
       }
     }));
   }
