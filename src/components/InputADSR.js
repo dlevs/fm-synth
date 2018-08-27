@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import classnames from 'classnames';
 import sumBy from 'lodash/sumBy';
 import upperFirst from 'lodash/upperFirst';
@@ -9,8 +9,8 @@ import { EventManager, getRelativeMouseCoordinates } from '../lib/eventUtils';
 import { clearCanvas, drawCircle, resizeCanvas } from '../lib/canvasUtils';
 import { visuallyHidden } from '../lib/utilityStyles';
 import withMouseTracking from './higherOrder/withMouseTracking';
+import InputRange from './InputRange';
 
-let uniqueIDCounter = 0;
 // TODO: make a standard for referencing x, y coordinates. E.g., ALWAYS use an array, or ALWAYS an object. not both
 
 // TODO: Better name?
@@ -95,21 +95,6 @@ const adsrCanvasGrabbing = css`
   cursor: grabbing;
 `;
 
-const ADSRInputField = ({ id, label, inputRef, inputMin, inputMax, ...otherProps }) => (
-  <div className={visuallyHidden}>
-    <label htmlFor={id}>{label}</label>
-    <input
-      id={id}
-      type="range"
-      step="1"
-      min={inputMin}
-      max={inputMax}
-      ref={inputRef}
-      {...otherProps}
-    />
-  </div>
-)
-
 class InputADSR extends Component {
   static defaultProps = {
     inputMin: 0,
@@ -126,8 +111,6 @@ class InputADSR extends Component {
     focusedInput: null,
     activePointIndex: null
   };
-
-  id = uniqueIDCounter++;
 
   points = createPointsConfig(this);
 
@@ -168,6 +151,8 @@ class InputADSR extends Component {
         // TODO: Should these calculations with "this.pointWidthTotal" and "params[i].width" be higher up?
         let x = (calculateX(this.props) / this.pointWidthTotal) * this.points[i].width;
         let y = 1 - calculateY(this.props);
+
+        if (name === 'sustain') console.log(y)
 
         if (i !== 0) {
           const [lastX] = points[i - 1];
@@ -255,6 +240,12 @@ class InputADSR extends Component {
     return null;
   }
 
+  handleChangeEvent = ({ target }) => {
+    this.props.onChange([
+      [target.name, target.value]
+    ]);
+  }
+
   onCanvasMouseMove = (event) => {
     const { canvas } = this;
     const { pointHitboxMouse, inputMax, onChange, isMouseDown } = this.props;
@@ -298,24 +289,18 @@ class InputADSR extends Component {
             Math.min(multiplier * inputMax, inputMax),
             0
           )
+          console.log(yMidiValue)
         }
 
-        // TODO: Don't pass pseudo event. Make consistent
+        const changes = [];
         if (mapX) {
-          onChange({
-            target: {
-              name: mapX,
-              value: xMidiValue
-            }
-          })
+          changes.push([mapX, xMidiValue]);
         }
         if (mapY) {
-          onChange({
-            target: {
-              name: mapY,
-              value: yMidiValue
-            }
-          })
+          changes.push([mapY, yMidiValue]);
+        }
+        if (changes.length) {
+          onChange(changes);
         }
       }
     }
@@ -370,7 +355,7 @@ class InputADSR extends Component {
   }
 
   render() {
-    const { isMouseDown, onChange } = this.props;
+    const { isMouseDown, inputMin, inputMax } = this.props;
 
     return (
       <div
@@ -379,19 +364,22 @@ class InputADSR extends Component {
         onMouseEnter={this.onMouseEnter}
         onMouseLeave={this.onMouseLeave}
       >
-        {this.points
-          .filter(({ inputControl }) => inputControl)
-          .map(({ label, name }) => (
-            <ADSRInputField
-              id={`adsr-${name}-${this.id}`}
-              label={label}
-              key={name}
-              name={name}
-              value={this.props[name]}
-              onChange={onChange}
-              inputRef={el => this[name] = el}
-            />
-          ))}
+        <div className={visuallyHidden}>
+          {this.points
+            .filter(({ inputControl }) => inputControl)
+            .map(({ label, name }) => (
+              <InputRange
+                label={label}
+                key={name}
+                name={name}
+                min={inputMin}
+                max={inputMax}
+                value={this.props[name]}
+                onChange={this.handleChangeEvent}
+                inputRef={el => this[name] = el}
+              />
+            ))}
+          </div>
         {/* TODO: Is duplicating the mouseDown event for touch OK here? */}
         <canvas
           ref={el => this.canvas = el}

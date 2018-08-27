@@ -25,7 +25,7 @@ export const withMouseDownTracking = (WrappedComponent) => {
     render() {
       return (
         <div onMouseDown={this.onMouseDown} onTouchStart={this.onMouseDown}>
-          <WrappedComponent {...this.props} {...this.state} />;
+          <WrappedComponent {...this.props} {...this.state} />
         </div>
       )
     }
@@ -44,7 +44,7 @@ export const withMouseOverTracking = (WrappedComponent) => {
     render() {
       return (
         <div onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-          <WrappedComponent {...this.props} {...this.state} />;
+          <WrappedComponent {...this.props} {...this.state} />
         </div>
       )
     }

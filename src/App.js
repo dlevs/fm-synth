@@ -1,5 +1,6 @@
 import React, { Component, Fragment } from 'react';
 import InputADSR from './components/InputADSR';
+import fromPairs from 'lodash/fromPairs';
 
 // TODO: Make a generic "padding" property to widget to allow us space for this blur
 const BLUR = 20;
@@ -35,12 +36,13 @@ class App extends Component {
     },
   }
 
-  onAdsrChange = ({ target }) => {
+  onAdsrChange = (changes) => {
+    const newParams = fromPairs(changes);
     // TODO: Does this need some abstraction, or just plain event?
     this.setState(({ adsrParams }) => ({
       adsrParams: {
         ...adsrParams,
-        [target.name]: Number(target.value),
+        ...newParams,
       }
     }));
   }
@@ -62,7 +64,7 @@ class App extends Component {
         />
         <InputADSR {...this.state.adsrParams} onChange={this.onAdsrChange} />
       </Fragment>
-    );
+    )
   }
 }
 
