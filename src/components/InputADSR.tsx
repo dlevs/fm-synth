@@ -160,7 +160,6 @@ export interface Props extends DefaultProps {
 
 export class State {
   public activePointIndex: number | null = null;
-  public focusedInput: HTMLInputElement | null = null;
 }
 
 class InputADSR extends Component<Props, State> {
@@ -402,7 +401,7 @@ class InputADSR extends Component<Props, State> {
   // Event listener callbacks
   // --------------------------------------------
   private onFocus = () => {
-    const activePointIndex = findIndex(this.points, ['input', document.activeElement]);
+    const activePointIndex = findIndex(this.points, ['input.current', document.activeElement]);
     if (activePointIndex !== -1) {
       this.setState({ activePointIndex })
     }
@@ -414,7 +413,6 @@ class InputADSR extends Component<Props, State> {
 
   private onMouseDown = (event: MouseEvent<HTMLCanvasElement> | TouchEvent<HTMLCanvasElement>) => {
     const { pointHitboxMouse } = this.props;
-    const { focusedInput } = this.state;
     // TODO: Tidy this. Maybe move param a level deeper, or something to avoid "undefined" ternary result
     const hitbox = event.type === 'touchstart' ? pointHitboxMouse : undefined;
     const point = this.getClosestPointToEvent(event, hitbox);
@@ -425,8 +423,6 @@ class InputADSR extends Component<Props, State> {
 
     if (pointConfig && pointConfig.input && pointConfig.input.current) {
       pointConfig.input.current.focus();
-    } else if (focusedInput) {
-      focusedInput.blur();
     }
   }
 
