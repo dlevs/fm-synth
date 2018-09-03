@@ -9,6 +9,7 @@
   },
   "rules": {
     "interface-name": [false],
-    "max-classes-per-file": [false]
+    "max-classes-per-file": [false],
+    "no-console": false
   }
 }

@@ -1,6 +1,13 @@
-type EventDefinition = [EventTarget, string, () => void];
+import React from 'react';
 
-export const getRelativeMouseCoordinates = (event: MouseEvent | TouchEvent, element?: HTMLElement) => {
+type LooseMouseEvent = MouseEvent | TouchEvent | React.MouseEvent | React.TouchEvent;
+type LooseMouseEventListener = (event: LooseMouseEvent) => void;
+type EventDefinition = [EventTarget, string, LooseMouseEventListener];
+
+export const getRelativeMouseCoordinates = (
+	event: LooseMouseEvent,
+	element?: HTMLElement
+) => {
   const bounds = (element || event.target as HTMLElement).getBoundingClientRect();
 	const { pageX, pageY } = 'touches' in event
 		? event.touches[0]
@@ -21,14 +28,14 @@ export class EventManager {
 
 	public listen() {
 		this.events.forEach(([element, eventType, callback]: EventDefinition) => {
-			element.addEventListener(eventType, callback);
+			element.addEventListener(eventType, callback as EventListener);
 		});
 		return this;
 	}
 
 	public stopListening() {
 		this.events.forEach(([element, eventType, callback]: EventDefinition) => {
-			element.removeEventListener(eventType, callback);
+			element.removeEventListener(eventType, callback as EventListener);
 		});
 		return this;
 	}

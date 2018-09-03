@@ -1,10 +1,15 @@
-import React, { Fragment, Ref } from 'react';
+import React, { ChangeEvent, Fragment, RefObject } from 'react';
 import withUniqueId from './higherOrder/withUniqueId';
 
 interface Props {
-  id: string
+  id?: string
   label: string
-  inputRef?: Ref<HTMLInputElement>
+  name: string
+  min: number
+  max: number
+  value: number
+  onChange: (event: ChangeEvent<HTMLInputElement>) => void,
+  inputRef?: RefObject<HTMLInputElement>
 }
 
 const InputRange = ({ id, label, inputRef, ...otherProps }: Props) => (

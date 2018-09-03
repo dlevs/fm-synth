@@ -1,12 +1,16 @@
 import React, { Component, ComponentType } from 'react';
 import { EventManager } from '../../lib/eventUtils';
 
+// TODO Move these things:
+type Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
+type Subtract<T, K> = Omit<T, keyof K>;
+
 export class State {
   public isMouseDown: boolean = false;
 }
 
 export default <Props extends {}>(WrappedComponent: ComponentType<Props>) => {
-  class MouseDownTracking extends Component<Props, State> {
+  class MouseDownTracking extends Component<Subtract<Props, State>, State> {
     public state = new State();
 
     public componentDidMount() {

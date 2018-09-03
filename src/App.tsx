@@ -54,6 +54,7 @@ class App extends Component {
 
   public render() {
     return (
+      // TODO: Try the fragment shorthand syntax
       <Fragment>
         <InputADSR
           padding={BLUR / 2}
