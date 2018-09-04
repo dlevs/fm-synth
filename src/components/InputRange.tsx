@@ -2,7 +2,7 @@ import React, { ChangeEvent, RefObject } from 'react';
 import { Omit } from '../lib/types';
 
 // TODO: rename
-import UniqueId from './higherOrder/UniqueId';
+import UniqueId from './util/UniqueId';
 
 interface Props {
   id: string

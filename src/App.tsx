@@ -2,7 +2,6 @@ import fromPairs from 'lodash/fromPairs';
 import React, { Component } from 'react';
 import InputADSR from './components/InputADSR';
 
-// TODO: Make a generic "padding" property to widget to allow us space for this blur
 const BLUR = 20;
 
 const createAdsrStyle = (color: string) => (

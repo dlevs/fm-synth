@@ -7,10 +7,11 @@ import React, { ChangeEvent, Component, createRef, MouseEvent, RefObject, TouchE
 import { defaultProps } from 'recompose';
 import { clearCanvas, drawCircle, resizeCanvas } from '../lib/canvasUtils';
 import { EventManager, getRelativeMouseCoordinates } from '../lib/eventUtils';
+import { Omit } from '../lib/types';
 import { visuallyHidden } from '../lib/utilityStyles';
-import withMouseDownTracking from './higherOrder/withMouseDownTracking';
-import withMouseOverTracking from './higherOrder/withMouseOverTracking';
 import InputRange from './InputRange';
+import MouseDownStatus from './util/MouseDownStatus';
+import MouseOverStatus from './util/MouseOverStatus';
 // TODO: make a standard for referencing x, y coordinates. E.g., ALWAYS use an array, or ALWAYS an object. not both
 
 // TODO: Better name?
@@ -137,10 +138,6 @@ class DefaultProps {
   public height: Dimension = 200
   public inputMax = 127
   public inputMin = 0
-  // TODO: might not need these mouse props
-  public isMouseDown = false
-  public isMouseOver = false
-
   public padding = 0
   public pointHitboxMouse = 30
   public pointRadius = 2
@@ -150,6 +147,8 @@ class DefaultProps {
 
 // TODO: Does it need to be exported?
 export interface Props extends DefaultProps {
+  isMouseDown: boolean
+  isMouseOver: boolean
   onChange: (changes: Array<[string, number]>) => void
   // TODO: export this and use in App.js when defining this callback
   setCanvasContext?: (
@@ -191,7 +190,7 @@ class InputADSR extends Component<Props, State> {
     if (this.canvas && this.canvas.current) {
       this.ctx = this.canvas.current.getContext('2d');
     }
-    this.events = new EventManager([
+    this.events = new EventManager(() => [
       [document, 'mousemove', this.onMouseMove],
       [document, 'touchmove', this.onMouseMove],
       [window, 'resize', this.updateCanvas],
@@ -495,4 +494,16 @@ class InputADSR extends Component<Props, State> {
 // TODO: Move
 const withDefaultProps = defaultProps(new DefaultProps());
 
-export default withMouseDownTracking(withMouseOverTracking(withDefaultProps(InputADSR)));
+// TODO: Tidy
+// TODO: Does this element have a name in the dev tools?
+export default withDefaultProps((props: Omit<Props, 'isMouseDown' | 'isMouseOver'>) =>
+  <MouseDownStatus>{({ isMouseDown }) =>
+    <MouseOverStatus>{({ isMouseOver }) =>
+      <InputADSR
+        {...props}
+        isMouseDown={isMouseDown}
+        isMouseOver={isMouseOver}
+      />
+    }</MouseOverStatus>
+  }</MouseDownStatus>
+);
