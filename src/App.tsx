@@ -31,24 +31,26 @@ const createAdsrStyle = (color: string) => (
   }
 }
 
-class App extends Component {
-  public state = {
-    adsrParams: {
-      attack: 127,
-      decay: 127,
-      release: 127,
-      sustain: 80,
-    },
+class State {
+  public adsrParams = {
+    attack: 127,
+    decay: 127,
+    release: 127,
+    sustain: 80,
   }
+}
+
+class App extends Component {
+  public state = new State;
 
   public onAdsrChange = (changes: Array<[string, number]>) => {
     // TODO: Use function for updating state based on previous state
-    this.setState({
+    this.setState((prevState: State) => ({
       adsrParams: {
-        ...this.state.adsrParams,
+        ...prevState.adsrParams,
         ...fromPairs(changes),
       }
-    });
+    }));
   }
 
   public render() {

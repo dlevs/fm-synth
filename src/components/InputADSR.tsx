@@ -161,7 +161,7 @@ export class State {
   public activePointIndex: number | null = null;
 }
 
-class InputADSR extends Component<Props, State> {
+class InputADSRBase extends Component<Props, State> {
   // --------------------------------------------
   // Static properties
   // --------------------------------------------
@@ -495,15 +495,15 @@ class InputADSR extends Component<Props, State> {
 const withDefaultProps = defaultProps(new DefaultProps());
 
 // TODO: Tidy
-// TODO: Does this element have a name in the dev tools?
-export default withDefaultProps((props: Omit<Props, 'isMouseDown' | 'isMouseOver'>) =>
+const InputADSR = (props: Omit<Props, 'isMouseDown' | 'isMouseOver'>) =>
   <MouseDownStatus>{({ isMouseDown }) =>
     <MouseOverStatus>{({ isMouseOver }) =>
-      <InputADSR
+      <InputADSRBase
         {...props}
         isMouseDown={isMouseDown}
         isMouseOver={isMouseOver}
       />
     }</MouseOverStatus>
   }</MouseDownStatus>
-);
+
+export default withDefaultProps(InputADSR);
