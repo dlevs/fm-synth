@@ -1,8 +1,8 @@
-import React, { ChangeEvent, Fragment, RefObject } from 'react';
+import React, { ChangeEvent, RefObject } from 'react';
 import { Omit } from '../lib/types';
 
 // TODO: rename
-import UniqueId from './higherOrder/withUniqueId';
+import UniqueId from './higherOrder/UniqueId';
 
 interface Props {
   id: string
@@ -15,8 +15,8 @@ interface Props {
   inputRef?: RefObject<HTMLInputElement>
 }
 
-const InputRange = ({ id, label, inputRef, ...otherProps }: Props) => (
-  <Fragment>
+const InputRange = ({ id, label, inputRef, ...otherProps }: Props) =>
+  <>
     <label htmlFor={id}>{label}</label>
     <input
       id={id}
@@ -25,10 +25,11 @@ const InputRange = ({ id, label, inputRef, ...otherProps }: Props) => (
       ref={inputRef}
       {...otherProps}
     />
-  </Fragment>
-);
+  </>
+
 
 // TODO: Check if we end up creating a new instance of Unique ID class each time... ID should remain same
+// TODO: Check the name of this component in dev tools
 export default (props: Omit<Props, 'id'>) =>
   <UniqueId>
     {({ id }) => <InputRange {...props} id={id} />}

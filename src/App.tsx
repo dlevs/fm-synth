@@ -1,5 +1,5 @@
 import fromPairs from 'lodash/fromPairs';
-import React, { Component, Fragment } from 'react';
+import React, { Component } from 'react';
 import InputADSR from './components/InputADSR';
 
 // TODO: Make a generic "padding" property to widget to allow us space for this blur
@@ -54,8 +54,7 @@ class App extends Component {
 
   public render() {
     return (
-      // TODO: Try the fragment shorthand syntax
-      <Fragment>
+      <>
         <InputADSR
           padding={BLUR / 2}
           setCanvasContext={createAdsrStyle('#4286f4')}
@@ -69,7 +68,7 @@ class App extends Component {
           onChange={this.onAdsrChange}
         />
         <InputADSR {...this.state.adsrParams} onChange={this.onAdsrChange} />
-      </Fragment>
+      </>
     )
   }
 }
