@@ -1,10 +1,5 @@
 import React, { Component, ComponentType } from 'react';
-
-// TODO: This doesn't need to be exported
-
-// TODO Move these things:
-type Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
-type Subtract<T, K> = Omit<T, keyof K>;
+import { Subtract } from '../../lib/types';
 
 class State {
   public isMouseOver: boolean = false;

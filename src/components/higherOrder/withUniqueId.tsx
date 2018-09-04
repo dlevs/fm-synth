@@ -1,26 +1,18 @@
-import React, { Component, ComponentType } from 'react';
+import { Component } from 'react';
+import { RenderPropComponentProps } from '../../lib/types';
 
 let uniqueIdCounter = 0;
 
-export interface InjectedProps {
-  id: string
+class State {
+  public id: string = `unique-id-input-${uniqueIdCounter++}`
 }
 
-const withUniqueId = <Props extends {}>(WrappedComponent: ComponentType<Props & InjectedProps>) => {
-  class WithUniqueId extends Component<Props> {
-    private id = `unique-id-input-${uniqueIdCounter++}`;
+class UniqueId extends Component<RenderPropComponentProps<State>, State> {
+  public state = new State();
 
-    public render() {
-      return (
-        <WrappedComponent
-          id={this.id}
-          {...this.props}
-        />
-      )
-    }
+  public render() {
+    return this.props.children(this.state);
   }
-
-  return WithUniqueId;
 }
 
-export default withUniqueId;
+export default UniqueId;

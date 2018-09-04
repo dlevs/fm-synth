@@ -1,9 +1,6 @@
 import React, { Component, ComponentType } from 'react';
 import { EventManager } from '../../lib/eventUtils';
-
-// TODO Move these things:
-type Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
-type Subtract<T, K> = Omit<T, keyof K>;
+import { Subtract } from '../../lib/types';
 
 export class State {
   public isMouseDown: boolean = false;
