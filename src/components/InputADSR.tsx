@@ -1,6 +1,7 @@
 import classnames from 'classnames';
 import { css } from 'emotion';
 import findIndex from 'lodash/findIndex';
+import clamp from 'lodash/clamp';
 import sumBy from 'lodash/sumBy';
 import upperFirst from 'lodash/upperFirst';
 import React, { ChangeEvent, Component, createRef, MouseEvent, RefObject, TouchEvent } from 'react';
@@ -387,6 +388,11 @@ class InputADSRBase extends Component<Props, State> {
     }
   }
 
+  private clampValue(value: number) {
+    const { inputMin, inputMax } = this.props;
+    return clamp(value, inputMin, inputMax);
+  }
+
   private handleChangeEvent = ({ target }: ChangeEvent<HTMLInputElement>) => {
     // TODO: Do I really need all this?
     if (target && target instanceof HTMLInputElement) {
@@ -461,18 +467,11 @@ class InputADSRBase extends Component<Props, State> {
         {
           const range = (this.points[activePointIndex].width / this.pointWidthTotal) * this.canvasOffsetWidth;
           const multiplier = (x - this.getPointOffsetX(activePointIndex)) / range;
-          xMidiValue = Math.max(
-            Math.min(multiplier * inputMax, inputMax),
-            0
-          )
+          xMidiValue = this.clampValue(multiplier * inputMax)
         }
         {
           const multiplier = (y - this.offset) / this.canvasOffsetHeight;
-          // TODO: Util method for this range limiting:
-          yMidiValue = inputMax - Math.max(
-            Math.min(multiplier * inputMax, inputMax),
-            0
-          )
+          yMidiValue = inputMax - this.clampValue(multiplier * inputMax);
         }
 
         // TODO: Make some generic top-level types maybe? Like Array<[string, number]> to reuse

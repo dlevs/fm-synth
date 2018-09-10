@@ -44,7 +44,6 @@ class App extends Component {
   public state = new State;
 
   public onAdsrChange = (changes: Array<[string, number]>) => {
-    // TODO: Use function for updating state based on previous state
     this.setState((prevState: State) => ({
       adsrParams: {
         ...prevState.adsrParams,
