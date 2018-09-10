@@ -1,15 +1,8 @@
 {
-  "extends": ["tslint:recommended", "tslint-react", "tslint-config-prettier"],
-  "linterOptions": {
-    "exclude": [
-      "config/**/*.js",
-      "node_modules/**/*.ts",
-      "coverage/lcov-report/*.js"
-    ]
-  },
+  "extends": ["tslint-react", "tslint-config-prettier", "@dlevs/tslint-config"],
   "rules": {
-    "interface-name": [false],
-    "max-classes-per-file": [false],
-    "no-console": false
+    "comment-format": [true, "check-space"],
+    "variable-name": [true, "ban-keywords", "check-format", "allow-pascal-case"],
+    "react-unused-props-and-state": false
   }
 }

@@ -17,14 +17,14 @@ import MouseOverStatus from './util/MouseOverStatus';
 
 // TODO: Better name?
 const getParamMultiplier = (inputs: Inputs, name: ParamName) =>
-  ({ inputMax }: Props) => {
-    // TODO: Wtf... Do we really need this level of paranoia to use TS?
-    const inputElem = inputs[name] && inputs[name].current;
-    if (inputElem) {
-      return Number(inputElem.value) / inputMax;
-    }
-    return 0;
-  };
+	({ inputMax }: Props) => {
+		// TODO: Wtf... Do we really need this level of paranoia to use TS?
+		const inputElem = inputs[name] && inputs[name].current;
+		if (inputElem) {
+			return Number(inputElem.value) / inputMax;
+		}
+		return 0;
+	};
 // TODO: Rename
 
 type pointCalculation = (options: Props) => number;
@@ -32,462 +32,459 @@ type pointCalculation = (options: Props) => number;
 type ParamName = 'attack' | 'decay' | 'sustain' | 'release';
 
 interface Inputs {
-  attack: RefObject<HTMLInputElement>;
-  decay: RefObject<HTMLInputElement>;
-  release: RefObject<HTMLInputElement>;
-  sustain: RefObject<HTMLInputElement>;
+	attack: RefObject<HTMLInputElement>;
+	decay: RefObject<HTMLInputElement>;
+	release: RefObject<HTMLInputElement>;
+	sustain: RefObject<HTMLInputElement>;
 }
 
 // TODO: Consider putting the rule of 1 class per file back in tslint
 // TODO: wtf is this class...
 class PointConfig {
-  public name: ParamName;
-  public label: string;
-  public mapX: string;
-  public mapY: string | null;
-  public calculateX: pointCalculation;
-  public calculateY: pointCalculation;
-  public canvasControl: boolean;
-  public inputControl: boolean;
-  public inputs: Inputs;
-  public width: number;
+	public name: ParamName;
+	public label: string;
+	public mapX: string;
+	public mapY: string | null;
+	public calculateX: pointCalculation;
+	public calculateY: pointCalculation;
+	public canvasControl: boolean;
+	public inputControl: boolean;
+	public inputs: Inputs;
+	public width: number;
 
-  constructor({
-    name,
-    label,
-    mapX,
-    mapY,
-    calculateX,
-    calculateY,
-    canvasControl = true,
-    inputControl = true,
-    inputs,
-    width = 1,
-    // TODO: Better way to do this Partial? :
-  }: Partial<PointConfig> & { name: ParamName, inputs: Inputs, calculateY: pointCalculation }) {
-    this.name = name;
-    this.label = label || upperFirst(name);
+	constructor({
+		name,
+		label,
+		mapX,
+		mapY,
+		calculateX,
+		calculateY,
+		canvasControl = true,
+		inputControl = true,
+		inputs,
+		width = 1,
+		// TODO: Better way to do this Partial? :
+	}: Partial<PointConfig> & { name: ParamName; inputs: Inputs; calculateY: pointCalculation }) {
+		this.name = name;
+		this.label = label || upperFirst(name);
 
-    this.mapX = mapX || name;
-    this.mapY = mapY || null;
+		this.mapX = mapX || name;
+		this.mapY = mapY || null;
 
-    // TODO:
-    this.calculateX = calculateX || getParamMultiplier(inputs, name);
-    this.calculateY = calculateY;
+		// TODO:
+		this.calculateX = calculateX || getParamMultiplier(inputs, name);
+		this.calculateY = calculateY;
 
-    this.canvasControl = canvasControl;
-    this.inputControl = inputControl;
+		this.canvasControl = canvasControl;
+		this.inputControl = inputControl;
 
-    // TODO: Width is a bit confusing. Can it be incorporated into calculateX?
-    this.width = width;
-    this.inputs = inputs;
-  }
+		// TODO: Width is a bit confusing. Can it be incorporated into calculateX?
+		this.width = width;
+		this.inputs = inputs;
+	}
 
-  get input() {
-    return this.inputs[this.name];
-  }
+	get input() {
+		return this.inputs[this.name];
+	}
 }
 
 const createPointsConfig = (inputs: Inputs): PointConfig[] => [
-  {
-    calculateX: () => 0,
-    calculateY: () => 0,
-    canvasControl: false,
-    inputControl: false,
-    // TODO: "start" is not in ParamName...
-    name: 'start' as ParamName,
-    width: 0,
-  },
-  {
-    calculateY: () => 1,
-    // TODO: Hmmm...
-    name: 'attack' as ParamName,
-  },
-  {
-    calculateY: getParamMultiplier(inputs, 'sustain'),
-    mapY: 'sustain',
-    name: 'decay' as ParamName,
-  },
-  {
-    calculateX: () => 1,
-    calculateY: getParamMultiplier(inputs, 'sustain'),
-    canvasControl: false,
-    name: 'sustain' as ParamName,
-    width: 0.5,
-  },
-  {
-    calculateY: () => 0,
-    name: 'release' as ParamName,
-  },
+	{
+		calculateX: () => 0,
+		calculateY: () => 0,
+		canvasControl: false,
+		inputControl: false,
+		// TODO: "start" is not in ParamName...
+		name: 'start' as ParamName,
+		width: 0,
+	},
+	{
+		calculateY: () => 1,
+		// TODO: Hmmm...
+		name: 'attack' as ParamName,
+	},
+	{
+		calculateY: getParamMultiplier(inputs, 'sustain'),
+		mapY: 'sustain',
+		name: 'decay' as ParamName,
+	},
+	{
+		calculateX: () => 1,
+		calculateY: getParamMultiplier(inputs, 'sustain'),
+		canvasControl: false,
+		name: 'sustain' as ParamName,
+		width: 0.5,
+	},
+	{
+		calculateY: () => 0,
+		name: 'release' as ParamName,
+	},
 ].map(options => new PointConfig({ ...options, inputs }));
 
-
 const adsrCanvas = css`
-  cursor: grab;
-  touch-action: none;
-  width: 100%;
-  display: block;
+	cursor: grab;
+	touch-action: none;
+	width: 100%;
+	display: block;
 `;
 const adsrCanvasGrabbing = css`
-  cursor: grabbing;
+	cursor: grabbing;
 `;
 
 type CtxRenderingStep = 'pre-draw-lines' | 'pre-draw-points';
 
 type Dimension = number | 'fill';
 class DefaultProps {
-  public height: Dimension = 200
-  public inputMax = 127
-  public inputMin = 0
-  public padding = 0
-  public pointHitboxMouse = 30
-  public pointRadius = 2
-  public pointRadiusActive = 4
-  public width: Dimension = 'fill'
+	public height: Dimension = 200;
+	public inputMax = 127;
+	public inputMin = 0;
+	public padding = 0;
+	public pointHitboxMouse = 30;
+	public pointRadius = 2;
+	public pointRadiusActive = 4;
+	public width: Dimension = 'fill';
 }
 
 // TODO: Does it need to be exported?
 export interface Props extends DefaultProps {
-  isMouseDown: boolean
-  isMouseOver: boolean
-  onChange: (changes: Array<[string, number]>) => void
-  // TODO: export this and use in App.js when defining this callback
-  setCanvasContext?: (
-    ctx: CanvasRenderingContext2D,
-    { step, isActive }: { step: CtxRenderingStep, isActive: boolean }
-  ) => void
+	isMouseDown: boolean;
+	isMouseOver: boolean;
+	onChange(changes: [string, number][]): void;
+	// TODO: export this and use in App.js when defining this callback
+	setCanvasContext?(
+			ctx: CanvasRenderingContext2D,
+			{}: { step: CtxRenderingStep; isActive: boolean },
+	): void;
 }
 
 export class State {
-  public activePointIndex: number | null = null;
+	public activePointIndex: number | null = null;
 }
 
 class InputADSRBase extends Component<Props, State> {
-  // --------------------------------------------
-  // Static properties
-  // --------------------------------------------
-  // TODO: Set type on this
-  // public static defaultProps = new DefaultProps();
+	// --------------------------------------------
+	// Static properties
+	// --------------------------------------------
+	// TODO: Set type on this
+	// public static defaultProps = new DefaultProps();
 
-  // --------------------------------------------
-  // Class instance properties
-  // --------------------------------------------
-  public state = new State();
-  // TODO: Can these be private?
-  public attack: RefObject<HTMLInputElement> = createRef();
-  public decay: RefObject<HTMLInputElement> = createRef();
-  public release: RefObject<HTMLInputElement> = createRef();
-  public sustain: RefObject<HTMLInputElement> = createRef();
-  public canvas: RefObject<HTMLCanvasElement> = createRef();
-  public events: EventManager;
-  public ctx: CanvasRenderingContext2D | null = null;
-  private points = createPointsConfig(this as Inputs);
+	// --------------------------------------------
+	// Class instance properties
+	// --------------------------------------------
+	public state = new State();
+	// TODO: Can these be private?
+	public attack: RefObject<HTMLInputElement> = createRef();
+	public decay: RefObject<HTMLInputElement> = createRef();
+	public release: RefObject<HTMLInputElement> = createRef();
+	public sustain: RefObject<HTMLInputElement> = createRef();
+	public canvas: RefObject<HTMLCanvasElement> = createRef();
+	public events: EventManager;
+	public ctx: CanvasRenderingContext2D | null = null;
+	private readonly points = createPointsConfig(this as Inputs);
 
-  // --------------------------------------------
-  // Lifecycle methods
-  // --------------------------------------------
-  public componentDidMount() {
-    // TODO: Is there a better way for this?
-    if (this.canvas && this.canvas.current) {
-      this.ctx = this.canvas.current.getContext('2d');
-    }
-    this.events = new EventManager(() => [
-      [document, 'mousemove', this.onMouseMove],
-      [document, 'touchmove', this.onMouseMove],
-      [window, 'resize', this.updateCanvas],
-    ]);
-    this.updateCanvas();
-    this.events.listen();
-  }
+	// --------------------------------------------
+	// Lifecycle methods
+	// --------------------------------------------
+	public componentDidMount() {
+		// TODO: Is there a better way for this?
+		if (this.canvas && this.canvas.current) {
+			this.ctx = this.canvas.current.getContext('2d');
+		}
+		this.events = new EventManager(() => [
+			[document, 'mousemove', this.onMouseMove],
+			[document, 'touchmove', this.onMouseMove],
+			[window, 'resize', this.updateCanvas],
+		]);
+		this.updateCanvas();
+		this.events.listen();
+	}
 
-  public componentWillUnmount() {
-    this.events.stopListening();
-  }
+	public componentWillUnmount() {
+		this.events.stopListening();
+	}
 
-  public componentDidUpdate() {
-    this.updateCanvas();
-  }
+	public componentDidUpdate() {
+		this.updateCanvas();
+	}
 
-  public render() {
-    const { isMouseDown, inputMin, inputMax } = this.props;
+	public render() {
+		const { isMouseDown, inputMin, inputMax } = this.props;
 
-    return (
-      <div
-        onFocus={this.onFocus}
-        onBlur={this.onBlur}
-      >
-        <div className={visuallyHidden}>
-          {this.points
-            .filter(({ inputControl }) => inputControl)
-            .map(({ label, name }: Pick<PointConfig, 'name' | 'label'>) => (
-              <InputRange
-                label={label}
-                key={name}
-                name={name}
-                min={inputMin}
-                max={inputMax}
-                value={this.props[name]}
-                onChange={this.handleChangeEvent}
-                inputRef={this[name]}
-              />
-            ))}
-        </div>
-        <canvas
-          ref={this.canvas}
-          className={classnames(adsrCanvas, {[adsrCanvasGrabbing]: isMouseDown})}
-          onMouseDown={this.onMouseDown}
-          onTouchStart={this.onMouseDown}
-        />
-      </div>
-    )
-  }
+		return (
+			<div
+				onFocus={this.onFocus}
+				onBlur={this.onBlur}
+			>
+				<div className={visuallyHidden}>
+					{this.points
+						.filter(({ inputControl }) => inputControl)
+						.map(({ label, name }: Pick<PointConfig, 'name' | 'label'>) => (
+							<InputRange
+								label={label}
+								key={name}
+								name={name}
+								min={inputMin}
+								max={inputMax}
+								value={this.props[name]}
+								onChange={this.handleChangeEvent}
+								inputRef={this[name]}
+							/>
+						))}
+				</div>
+				<canvas
+					ref={this.canvas}
+					className={classnames(adsrCanvas, { [adsrCanvasGrabbing]: isMouseDown })}
+					onMouseDown={this.onMouseDown}
+					onTouchStart={this.onMouseDown}
+				/>
+			</div>
+		);
+	}
 
-  // --------------------------------------------
-  // Getter methods
-  // --------------------------------------------
-  private get pointWidthTotal() {
-    return sumBy(this.points, 'width');
-  }
+	// --------------------------------------------
+	// Getter methods
+	// --------------------------------------------
+	private get pointWidthTotal() {
+		return sumBy(this.points, 'width');
+	}
 
-  private get maxPointRadius() {
-    const { pointRadius, pointRadiusActive } = this.props;
-    return Math.max(pointRadius, pointRadiusActive);
-  }
+	private get maxPointRadius() {
+		const { pointRadius, pointRadiusActive } = this.props;
+		return Math.max(pointRadius, pointRadiusActive);
+	}
 
-  private get offset() {
-    return this.maxPointRadius + this.props.padding;
-  }
+	private get offset() {
+		return this.maxPointRadius + this.props.padding;
+	}
 
-  private get canvasOffsetWidth(): number {
-    const { canvas, offset } = this;
+	private get canvasOffsetWidth(): number {
+		if (this.canvas.current) {
+			return this.canvas.current.width - (this.offset * 2);
+		}
 
-    if (canvas.current) {
-      return canvas.current.width - (2 * offset);
-    }
+		return 0;
+	}
 
-    return 0;
-  }
+	private get canvasOffsetHeight(): number {
+		if (this.canvas.current) {
+			return this.canvas.current.height - (this.offset * 2);
+		}
 
-  private get canvasOffsetHeight(): number {
-    const { canvas, offset } = this;
+		return 0;
+	}
 
-    if (canvas.current) {
-      return canvas.current.height - (2 * offset);
-    }
+	// TODO: Break this class down into smaller helper functions.
+	private get currentCoordinates() {
+		return this.points
+			.reduce((points: [number, number][], { calculateX, calculateY }, i) => {
+				// TODO: Should these calculations with "this.pointWidthTotal" and "params[i].width" be higher up?
+				let x = (calculateX(this.props) / this.pointWidthTotal) * this.points[i].width;
+				const y = 1 - calculateY(this.props);
 
-    return 0;
-  }
+				if (i !== 0) {
+					const [lastX] = points[i - 1];
+					x += lastX;
+				}
 
-  // TODO: Break this class down into smaller helper functions.
-  private get currentCoordinates() {
-    const { offset, canvasOffsetWidth, canvasOffsetHeight } = this;
+				return points.concat([[x, y]]);
+			}, [])
+			// Do we need another loop for this?
+			.map(([x, y]) => [
+				(x * this.canvasOffsetWidth) + this.offset,
+				(y * this.canvasOffsetHeight) + this.offset,
+			]);
+	}
 
-    return this.points
-      .reduce((points: Array<[number, number]>, { calculateX, calculateY }, i) => {
-        // TODO: Should these calculations with "this.pointWidthTotal" and "params[i].width" be higher up?
-        let x = (calculateX(this.props) / this.pointWidthTotal) * this.points[i].width;
-        const y = 1 - calculateY(this.props);
+	private getPointOffsetX(i: number) {
+		const point = this.currentCoordinates[i - 1];
+		return point ? point[0] : 0;
+	}
 
-        if (i !== 0) {
-          const [lastX] = points[i - 1];
-          x += lastX;
-        }
+	private getClosestPoint(x: number, y: number) {
+		const points = this.currentCoordinates;
+		const distances = points.map(([x2, y2]) => Math.abs(x - x2) + Math.abs(y - y2));
+		const index = distances.indexOf(Math.min(...distances));
+		// const index = findClosestIndex(distances, 0);
 
-        return points.concat([[x, y]]);
-      }, [])
-      // Do we need another loop for this?
-      .map(([x, y]) => [
-        (x * canvasOffsetWidth) + offset,
-        (y * canvasOffsetHeight) + offset
-      ]);
-  }
+		// TODO: Hitbox as param in this fn, to avoid needing to leak distance out of this fn
+		return {
+			distance: distances[index],
+			index,
+			point: points[index],
+		};
+	}
 
-  private getPointOffsetX(i: number) {
-    const point = this.currentCoordinates[i - 1];
-    const rawPointX = point ? point[0] : 0;
+	// TODO: hitbox param should be a level above
+	private getClosestPointToEvent(event: MouseEvent | TouchEvent, hitbox?: number) {
+		const { x, y } = getRelativeMouseCoordinates(event);
+		const point = this.getClosestPoint(x, y);
 
-    return rawPointX;
-  }
+		if (typeof hitbox !== 'number' || point.distance < hitbox) {
+			return point;
+		}
 
-  private getClosestPoint(x: number, y: number) {
-    const points = this.currentCoordinates;
-    const distances = points.map(([x2, y2]) => Math.abs(x - x2) + Math.abs(y - y2));
-    const index = distances.indexOf(Math.min(...distances));
-    // const index = findClosestIndex(distances, 0);
+		return null;
+	}
 
-    // TODO: Hitbox as param in this fn, to avoid needing to leak distance out of this fn
-    return {
-      distance: distances[index],
-      index,
-      point: points[index],
-    }
-  }
+	// --------------------------------------------
+	// Methods
+	// --------------------------------------------
+	private readonly updateCanvas = () => {
+		// tslint:disable-next-line:no-this-assignment
+		const { ctx } = this;
+		const { width, height, pointRadiusActive, pointRadius } = this.props;
+		const { activePointIndex } = this.state;
 
-  // TODO: hitbox param should be a level above
-  private getClosestPointToEvent(event: MouseEvent | TouchEvent, hitbox?: number) {
-    const { x, y } = getRelativeMouseCoordinates(event);
-    const point = this.getClosestPoint(x, y);
+		if (!ctx) {
+			return;
+		}
 
-    if (typeof hitbox !== 'number' || point.distance < hitbox) {
-      return point;
-    }
+		resizeCanvas(ctx, width, height);
+		clearCanvas(ctx);
 
-    return null;
-  }
+		// TODO: extract to another fn
+		const points = this.currentCoordinates;
+		ctx.lineJoin = 'bevel';
 
-  // --------------------------------------------
-  // Methods
-  // --------------------------------------------
-  private updateCanvas = () => {
-    const { ctx } = this;
-    const { width, height, pointRadiusActive, pointRadius } = this.props;
-    const { activePointIndex } = this.state;
+		this.applyUserCanvasContext('pre-draw-lines');
+		ctx.beginPath();
+		points.forEach(([x, y], i) => {
+			if (i === 0) {
+				ctx.moveTo(x, y);
+			} else {
+				ctx.lineTo(x, y);
+			}
+		});
+		ctx.stroke();
 
-    if (!ctx) {
-      return;
-    }
+		this.applyUserCanvasContext('pre-draw-points');
+		points.forEach(([x, y], i) => {
+			const param = this.points[i];
+			const radius = i === activePointIndex ? pointRadiusActive : pointRadius;
 
-    resizeCanvas(ctx, width, height);
-    clearCanvas(ctx);
+			if (param && param.canvasControl) {
+				drawCircle(ctx, x, y, radius);
+			}
+		});
+	};
 
-    // TODO: extract to another fn
-    const points = this.currentCoordinates;
-    ctx.lineJoin = 'bevel';
+	private applyUserCanvasContext(step: CtxRenderingStep) {
+		const { setCanvasContext, isMouseDown, isMouseOver } = this.props;
+		const { activePointIndex } = this.state;
 
-    this.applyUserCanvasContext('pre-draw-lines');
-    ctx.beginPath();
-    points.forEach(([x, y], i) => {
-      if (i === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
-    });
-    ctx.stroke();
+		if (!this.ctx || !setCanvasContext) {
+			return;
+		}
 
-    this.applyUserCanvasContext('pre-draw-points');
-    points.forEach(([x, y], i) => {
-      const param = this.points[i];
-      const radius = i === activePointIndex ? pointRadiusActive : pointRadius;
+		setCanvasContext(this.ctx, {
+			isActive: (activePointIndex && isMouseDown) || isMouseOver,
+			step,
+		});
+	}
 
-      if (param && param.canvasControl) {
-        drawCircle(ctx, x, y, radius);
-      }
-    });
-  }
+	private clampValue(value: number) {
+		const { inputMin, inputMax } = this.props;
+		return clamp(value, inputMin, inputMax);
+	}
 
-  private applyUserCanvasContext(step: CtxRenderingStep) {
-    const { setCanvasContext, isMouseDown, isMouseOver } = this.props;
-    const { activePointIndex } = this.state;
+	private readonly handleChangeEvent = ({ target }: ChangeEvent<HTMLInputElement>) => {
+		// TODO: Do I really need all this?
+		if (!(target && target instanceof HTMLInputElement)) {
+			return;
+		}
 
-    if (this.ctx && setCanvasContext) {
-      setCanvasContext(this.ctx, {
-        isActive: (activePointIndex && isMouseDown) || isMouseOver,
-        step
-      });
-    }
-  }
+		this.props.onChange([
+			[target.name, Number(target.value)],
+		]);
+	};
 
-  private clampValue(value: number) {
-    const { inputMin, inputMax } = this.props;
-    return clamp(value, inputMin, inputMax);
-  }
+	// --------------------------------------------
+	// Event listener callbacks
+	// --------------------------------------------
+	private readonly onFocus = () => {
+		const activePointIndex = findIndex(this.points, ['input.current', document.activeElement]);
+		if (activePointIndex !== -1) {
+			this.setState({ activePointIndex });
+		}
+	};
 
-  private handleChangeEvent = ({ target }: ChangeEvent<HTMLInputElement>) => {
-    // TODO: Do I really need all this?
-    if (target && target instanceof HTMLInputElement) {
-      this.props.onChange([
-        [target.name, Number(target.value)]
-      ]);
-    }
-  }
+	private readonly onBlur = () => {
+		this.setState({ activePointIndex: null });
+	};
 
-  // --------------------------------------------
-  // Event listener callbacks
-  // --------------------------------------------
-  private onFocus = () => {
-    const activePointIndex = findIndex(this.points, ['input.current', document.activeElement]);
-    if (activePointIndex !== -1) {
-      this.setState({ activePointIndex })
-    }
-  }
+	private readonly onMouseDown = (event: MouseEvent<HTMLCanvasElement> | TouchEvent<HTMLCanvasElement>) => {
+		const { pointHitboxMouse } = this.props;
+		// TODO: Tidy this. Maybe move param a level deeper, or something to avoid "undefined" ternary result
+		const hitbox = event.type === 'touchstart' ? pointHitboxMouse : undefined;
+		const point = this.getClosestPointToEvent(event, hitbox);
+		// TODO: tidy:
+		const pointConfig = point && this.points[point.index];
 
-  private onBlur = () => {
-    this.setState({ activePointIndex: null })
-  }
+		event.preventDefault();
 
-  private onMouseDown = (event: MouseEvent<HTMLCanvasElement> | TouchEvent<HTMLCanvasElement>) => {
-    const { pointHitboxMouse } = this.props;
-    // TODO: Tidy this. Maybe move param a level deeper, or something to avoid "undefined" ternary result
-    const hitbox = event.type === 'touchstart' ? pointHitboxMouse : undefined;
-    const point = this.getClosestPointToEvent(event, hitbox);
-    // TODO: tidy:
-    const pointConfig = point && this.points[point.index];
+		if (pointConfig && pointConfig.input && pointConfig.input.current) {
+			pointConfig.input.current.focus();
+		}
+	};
 
-    event.preventDefault();
+	private readonly onMouseMove = (event: MouseEvent | TouchEvent) => {
+		if (!this.canvas.current) {
+			return;
+		}
 
-    if (pointConfig && pointConfig.input && pointConfig.input.current) {
-      pointConfig.input.current.focus();
-    }
-  }
+		const { pointHitboxMouse, inputMax, onChange, isMouseDown } = this.props;
+		const { activePointIndex } = this.state;
+		const { x, y } = getRelativeMouseCoordinates(event, this.canvas.current);
 
-  private onMouseMove = (event: MouseEvent | TouchEvent) => {
-    const { canvas } = this;
+		if (
+			event.target !== this.canvas.current &&
+			// TODO: Do we need to check mouseDown status?
+			!(isMouseDown && activePointIndex)
+		) {
+			return;
+		}
 
-    if (!canvas.current) {
-      return;
-    }
+		if (!isMouseDown) {
+			const point = this.getClosestPointToEvent(event, pointHitboxMouse);
+			this.setState({ activePointIndex: point ? point.index : null });
+			return;
+		}
 
-    const { pointHitboxMouse, inputMax, onChange, isMouseDown } = this.props;
-    const { activePointIndex } = this.state;
-    const { x, y } = getRelativeMouseCoordinates(event, canvas.current);
+		if (typeof activePointIndex !== 'number') {
+			return;
+		}
 
-    if (
-      event.target !== canvas.current &&
-      // TODO: Do we need to check mouseDown status?
-      !(isMouseDown && activePointIndex)
-    ) {
-      return;
-    }
+		const { mapX, mapY, canvasControl } = this.points[activePointIndex];
 
-    if (!isMouseDown) {
-      const point = this.getClosestPointToEvent(event, pointHitboxMouse);
-      this.setState({ activePointIndex: point ? point.index : null });
-      return;
-    }
+		if (!canvasControl) {
+			return;
+		}
+		let xMidiValue;
+		let yMidiValue;
 
-    if (typeof activePointIndex === 'number') {
-      const { mapX, mapY, canvasControl } = this.points[activePointIndex];
+		// TODO: Ohhh dear...
+		{
+			const range = (this.points[activePointIndex].width / this.pointWidthTotal) * this.canvasOffsetWidth;
+			const multiplier = (x - this.getPointOffsetX(activePointIndex)) / range;
+			xMidiValue = this.clampValue(multiplier * inputMax);
+		}
+		{
+			const multiplier = (y - this.offset) / this.canvasOffsetHeight;
+			yMidiValue = inputMax - this.clampValue(multiplier * inputMax);
+		}
 
-      if (canvasControl) {
-        let xMidiValue;
-        let yMidiValue;
-
-        // TODO: Ohhh dear...
-        {
-          const range = (this.points[activePointIndex].width / this.pointWidthTotal) * this.canvasOffsetWidth;
-          const multiplier = (x - this.getPointOffsetX(activePointIndex)) / range;
-          xMidiValue = this.clampValue(multiplier * inputMax)
-        }
-        {
-          const multiplier = (y - this.offset) / this.canvasOffsetHeight;
-          yMidiValue = inputMax - this.clampValue(multiplier * inputMax);
-        }
-
-        // TODO: Make some generic top-level types maybe? Like Array<[string, number]> to reuse
-        const changes: Array<[string, number]> = [];
-        if (mapX) {
-          changes.push([mapX, xMidiValue]);
-        }
-        if (mapY) {
-          changes.push([mapY, yMidiValue]);
-        }
-        if (changes.length) {
-          onChange(changes);
-        }
-      }
-    }
-  }
+		// TODO: Make some generic top-level types maybe? Like Array<[string, number]> to reuse
+		const changes: [string, number][] = [];
+		if (mapX) {
+			changes.push([mapX, xMidiValue]);
+		}
+		if (mapY) {
+			changes.push([mapY, yMidiValue]);
+		}
+		if (changes.length) {
+			onChange(changes);
+		}
+	};
 }
 
 // TODO: Move
@@ -495,14 +492,14 @@ const withDefaultProps = defaultProps(new DefaultProps());
 
 // TODO: Tidy
 const InputADSR = (props: Omit<Props, 'isMouseDown' | 'isMouseOver'>) =>
-  <MouseDownStatus>{({ isMouseDown }) =>
-    <MouseOverStatus>{({ isMouseOver }) =>
-      <InputADSRBase
-        {...props}
-        isMouseDown={isMouseDown}
-        isMouseOver={isMouseOver}
-      />
-    }</MouseOverStatus>
-  }</MouseDownStatus>
+	<MouseDownStatus>{({ isMouseDown }) =>
+		<MouseOverStatus>{({ isMouseOver }) =>
+			<InputADSRBase
+				{...props}
+				isMouseDown={isMouseDown}
+				isMouseOver={isMouseOver}
+			/>
+		}</MouseOverStatus>
+	}</MouseDownStatus>;
 
 export default withDefaultProps(InputADSR);

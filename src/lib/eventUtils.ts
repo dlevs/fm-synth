@@ -6,21 +6,21 @@ type EventDefinition = [EventTarget, string, LooseMouseEventListener];
 
 export const getRelativeMouseCoordinates = (
 	event: LooseMouseEvent,
-	element?: HTMLElement
+	element?: HTMLElement,
 ) => {
-  const bounds = (element || event.target as HTMLElement).getBoundingClientRect();
+	const bounds = (element || event.target as HTMLElement).getBoundingClientRect();
 	const { pageX, pageY } = 'touches' in event
 		? event.touches[0]
 		: event;
 
-  return {
-    x: pageX - bounds.left,
-    y: pageY - bounds.top
-  };
-}
+	return {
+		x: pageX - bounds.left,
+		y: pageY - bounds.top,
+	};
+};
 
 export class EventManager {
-	private getEvents: () => EventDefinition[];
+	private readonly getEvents: () => EventDefinition[];
 	private events: EventDefinition[];
 
 	constructor(getEvents: () => EventDefinition[]) {

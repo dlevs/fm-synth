@@ -1,6 +1,6 @@
 // React props
 export interface RenderPropComponentProps<T> {
-  children: (passedArgs: T) => JSX.Element
+	children(passedArgs: T): JSX.Element;
 }
 
 // Utilities
