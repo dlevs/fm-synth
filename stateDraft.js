@@ -1,11 +1,19 @@
 // {
-// 	activeNotes: [
-// 		{
-// 			note: 4,
-// 			// Value in MIDI scale
-// 			velocity: 120
-// 		}
-// 	],
+// 	notes: {
+// 		activeSound: [
+// 			{
+// 				note: 4,
+// 				// Value in MIDI scale
+// 				velocity: 120
+// 			},
+// 			{
+// 				note: 6,
+// 				velocity: 99
+// 			}
+// 		],
+// 		activeUi: [6],
+// 		sustainedNotesToRemove: [4]
+// 	},
 // 	midiControl: {
 // 		devices: {
 // 			'-1841601646': {
@@ -55,8 +63,7 @@
 // 				preEnvelope: false
 // 			}
 // 		],
-// 		settings: {
-// 			baseFrequency: 440
-// 		}
+// 		baseFrequency: 440,
+// 		polyphony: 1
 // 	}
 // }

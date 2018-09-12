@@ -1,7 +1,7 @@
 import React from 'react';
 
 type LooseMouseEvent = MouseEvent | TouchEvent | React.MouseEvent | React.TouchEvent;
-type LooseMouseEventListener = (event: LooseMouseEvent) => void;
+type LooseMouseEventListener = (event: Event | React.MouseEvent | React.TouchEvent) => void;
 type EventDefinition = [EventTarget, string, LooseMouseEventListener];
 
 export const getRelativeMouseCoordinates = (

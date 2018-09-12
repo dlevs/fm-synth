@@ -13,7 +13,9 @@ import { visuallyHidden } from '../lib/utilityStyles';
 import InputRange from './InputRange';
 import MouseDownStatus from './util/MouseDownStatus';
 import MouseOverStatus from './util/MouseOverStatus';
-// TODO: make a standard for referencing x, y coordinates. E.g., ALWAYS use an array, or ALWAYS an object. not both
+
+// TODO: Move me, and use everywhere where points are used
+type Point = [number, number];
 
 // TODO: Better name?
 const getParamMultiplier = (inputs: Inputs, name: ParamName) =>
@@ -38,7 +40,6 @@ interface Inputs {
 	sustain: RefObject<HTMLInputElement>;
 }
 
-// TODO: Consider putting the rule of 1 class per file back in tslint
 // TODO: wtf is this class...
 class PointConfig {
 	public name: ParamName;
@@ -145,29 +146,22 @@ class DefaultProps {
 	public width: Dimension = 'fill';
 }
 
-// TODO: Does it need to be exported?
-export interface Props extends DefaultProps {
+interface Props extends DefaultProps {
 	isMouseDown: boolean;
 	isMouseOver: boolean;
 	onChange(changes: [string, number][]): void;
 	// TODO: export this and use in App.js when defining this callback
 	setCanvasContext?(
-			ctx: CanvasRenderingContext2D,
-			{}: { step: CtxRenderingStep; isActive: boolean },
+		ctx: CanvasRenderingContext2D,
+		{}: { step: CtxRenderingStep; isActive: boolean },
 	): void;
 }
 
-export class State {
+class State {
 	public activePointIndex: number | null = null;
 }
 
 class InputADSRBase extends Component<Props, State> {
-	// --------------------------------------------
-	// Static properties
-	// --------------------------------------------
-	// TODO: Set type on this
-	// public static defaultProps = new DefaultProps();
-
 	// --------------------------------------------
 	// Class instance properties
 	// --------------------------------------------
@@ -276,7 +270,7 @@ class InputADSRBase extends Component<Props, State> {
 	// TODO: Break this class down into smaller helper functions.
 	private get currentCoordinates() {
 		return this.points
-			.reduce((points: [number, number][], { calculateX, calculateY }, i) => {
+			.reduce((points: Point[], { calculateX, calculateY }, i) => {
 				// TODO: Should these calculations with "this.pointWidthTotal" and "params[i].width" be higher up?
 				let x = (calculateX(this.props) / this.pointWidthTotal) * this.points[i].width;
 				const y = 1 - calculateY(this.props);
@@ -304,7 +298,6 @@ class InputADSRBase extends Component<Props, State> {
 		const points = this.currentCoordinates;
 		const distances = points.map(([x2, y2]) => Math.abs(x - x2) + Math.abs(y - y2));
 		const index = distances.indexOf(Math.min(...distances));
-		// const index = findClosestIndex(distances, 0);
 
 		// TODO: Hitbox as param in this fn, to avoid needing to leak distance out of this fn
 		return {
@@ -459,26 +452,18 @@ class InputADSRBase extends Component<Props, State> {
 		if (!canvasControl) {
 			return;
 		}
-		let xMidiValue;
-		let yMidiValue;
-
-		// TODO: Ohhh dear...
-		{
-			const range = (this.points[activePointIndex].width / this.pointWidthTotal) * this.canvasOffsetWidth;
-			const multiplier = (x - this.getPointOffsetX(activePointIndex)) / range;
-			xMidiValue = this.clampValue(multiplier * inputMax);
-		}
-		{
-			const multiplier = (y - this.offset) / this.canvasOffsetHeight;
-			yMidiValue = inputMax - this.clampValue(multiplier * inputMax);
-		}
 
 		// TODO: Make some generic top-level types maybe? Like Array<[string, number]> to reuse
 		const changes: [string, number][] = [];
 		if (mapX) {
+			const range = (this.points[activePointIndex].width / this.pointWidthTotal) * this.canvasOffsetWidth;
+			const multiplier = (x - this.getPointOffsetX(activePointIndex)) / range;
+			const xMidiValue = this.clampValue(multiplier * inputMax);
 			changes.push([mapX, xMidiValue]);
 		}
 		if (mapY) {
+			const multiplier = (y - this.offset) / this.canvasOffsetHeight;
+			const yMidiValue = inputMax - this.clampValue(multiplier * inputMax);
 			changes.push([mapY, yMidiValue]);
 		}
 		if (changes.length) {
@@ -487,10 +472,10 @@ class InputADSRBase extends Component<Props, State> {
 	};
 }
 
-// TODO: Move
+// --------------------------------------------
+// Wrap and export
+// --------------------------------------------
 const withDefaultProps = defaultProps(new DefaultProps());
-
-// TODO: Tidy
 const InputADSR = (props: Omit<Props, 'isMouseDown' | 'isMouseOver'>) =>
 	<MouseDownStatus>{({ isMouseDown }) =>
 		<MouseOverStatus>{({ isMouseOver }) =>
