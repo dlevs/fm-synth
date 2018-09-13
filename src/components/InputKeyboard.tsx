@@ -1,8 +1,10 @@
 import range from 'lodash/range';
-import React, { Component, createRef, RefObject } from 'react';
+import React, { Component, createRef, RefObject, MouseEvent } from 'react';
 import { defaultProps } from 'recompose';
 import { EventManager } from '../lib/eventUtils';
 import { Omit } from '../lib/types';
+// TODO: Move this type into lib/types?
+import { Note } from '../store/notesReducer';
 import { css } from 'emotion';
 import MouseDownStatus from './util/MouseDownStatus';
 
@@ -13,21 +15,26 @@ const keyContainer = css`
 `;
 
 const keyStyle = css`
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	text-align: center;
+	align-items: center;
 	appearance: none;
 	border: none;
 	cursor: pointer;
+	padding-bottom: 10px;
 `;
 
+// TODO: Make variables for CSS colors
 const keyWhite = css`
 	${keyStyle}
-	outline: 1px solid #000;
+	color: #111;
+	outline: 1px solid #111;
 	flex: 1;
 	background: #fff;
 
-	&:hover, &:focus {
-		background: #eee;
-	}
-
+	&:hover, &:focus { background: #eee; }
 	&:active {
 		background: #ccc;
 	}
@@ -36,48 +43,67 @@ const keyWhite = css`
 // TODO: Be consistent with ordering of words in "keyBlack" and "BlackKey"
 const keyBlack = css`
 	${keyStyle}
-	background: #000;
+	color: #fff;
+	background: #111;
 	position: absolute;
 	top: 0;
 	bottom: 40%;
-	width: 40px;
 	transform: translateX(-50%);
+	outline: none;
+	border-bottom-left-radius: 8px;
+	border-bottom-right-radius: 8px;
 
-	&:hover, &:focus {
-		background: #eee;
-	}
-
-	&:active {
-		background: #ccc;
-	}
+	&:hover, &:focus { background: #222; }
+	&:active { background: #333; }
 `;
 
 class DefaultProps {
-	keyWidth = 70;
+	keyWidth = 60;
 }
 
 interface Props extends DefaultProps {
 	isMouseDown: boolean;
+	onNoteOn(data: Note): void;
+	onNoteOff(data: Note): void;
 }
 
 class State {
 	numberOfWhiteKeys = 0;
 }
 
-const KEYBOARD_MAP = ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\\'];
+const KEYBOARD_MAP = ['a', 'w', 's', 'e', 'd', 'f', 't', 'g', 'y', 'h', 'u', 'j', 'k', 'o', 'l', 'p', ';', '\\'];
 const WHITE_KEYS_WITH_BLACK = [0, 1, 3, 4, 5];
 const WHITE_KEYS_PER_OCTAVE = 8;
 
 // TODO: Move me
 interface KeyProps {
-	children?: React.ReactNode;
 	style?: React.CSSProperties;
+	onMouseDown(event: MouseEvent<HTMLButtonElement>): void;
+	onMouseUp(event: MouseEvent<HTMLButtonElement>): void;
+	value: number;
 }
-const WhiteKey = ({ children, style }: KeyProps) =>
-	<button className={keyWhite} style={style}>{children}</button>;
+// TODO: These key components are a bit redundant. Get rid of them / simplify
+const WhiteKey = ({ style, onMouseDown, onMouseUp, value }: KeyProps) =>
+	<button
+		className={keyWhite}
+		style={style}
+		onMouseDown={onMouseDown}
+		onMouseUp={onMouseUp}
+		value={value}
+	>
+		{KEYBOARD_MAP[value] || ''}
+	</button>;
 
-const BlackKey = ({ children, style }: KeyProps) =>
-	<button className={keyBlack} style={style}>{children}</button>;
+const BlackKey = ({ style, onMouseDown, onMouseUp, value }: KeyProps) =>
+	<button
+		className={keyBlack}
+		style={style}
+		onMouseDown={onMouseDown}
+		onMouseUp={onMouseUp}
+		value={value}
+	>
+		{KEYBOARD_MAP[value] || ''}
+	</button>;
 
 const hasBlackKey = (whiteKeyIndex: number) => {
 	return WHITE_KEYS_WITH_BLACK.includes(whiteKeyIndex % (WHITE_KEYS_PER_OCTAVE - 1));
@@ -121,6 +147,20 @@ class InputKeyboardBase extends Component<Props> {
 		console.log(event);
 	};
 
+	private readonly onMouseDown = (event: MouseEvent<HTMLButtonElement>) => {
+		this.props.onNoteOn({
+			note: Number((event.target as HTMLButtonElement).value),
+			velocity: 127,
+		});
+	};
+
+	private readonly onMouseUp = (event: MouseEvent<HTMLButtonElement>) => {
+		this.props.onNoteOff({
+			note: Number((event.target as HTMLButtonElement).value),
+			velocity: 127,
+		});
+	};
+
 	public componentDidMount() {
 		this.updateNumberOfWhiteKeys();
 		this.events = new EventManager(() => [
@@ -136,24 +176,32 @@ class InputKeyboardBase extends Component<Props> {
 	}
 
 	public render() {
+		let keyCount = 0;
 		const widthPerKey = this.getWidthPerKey();
 		const { numberOfWhiteKeys } = this.state;
+		const keyProps = {
+			onMouseDown: this.onMouseDown,
+			onMouseUp: this.onMouseUp,
+		};
 
 		return (
 			<div className={keyContainer} ref={this.container}>
 				{range(numberOfWhiteKeys).map(i => {
 					const isLastKey = i === numberOfWhiteKeys - 1;
 					const nodes = [
-						<WhiteKey key='white'>
-							{KEYBOARD_MAP[i] || ''}
-						</WhiteKey>,
+						<WhiteKey key='white' value={keyCount++} {...keyProps} />,
 					];
 
 					if (!isLastKey && hasBlackKey(i)) {
 						nodes.push(
 							<BlackKey
 								key='black'
-								style={{ left: widthPerKey * (i + 1) }}
+								value={keyCount++}
+								style={{
+									left: widthPerKey * (i + 1),
+									width: widthPerKey * 0.6,
+								}}
+								{...keyProps}
 							/>,
 						);
 					}
