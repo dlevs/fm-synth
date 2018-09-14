@@ -1,12 +1,11 @@
 import range from 'lodash/range';
+import classnames from 'classnames';
 import React, { Component, createRef, RefObject, MouseEvent } from 'react';
 import { defaultProps } from 'recompose';
 import { EventManager } from '../lib/eventUtils';
-import { Omit } from '../lib/types';
 // TODO: Move this type into lib/types?
 import { Note } from '../store/notesReducer';
 import { css } from 'emotion';
-import MouseDownStatus from './util/MouseDownStatus';
 
 const keyContainer = css`
 	position: relative;
@@ -24,6 +23,7 @@ const keyStyle = css`
 	border: none;
 	cursor: pointer;
 	padding-bottom: 10px;
+	user-select: none;
 `;
 
 // TODO: Make variables for CSS colors
@@ -35,9 +35,6 @@ const keyWhite = css`
 	background: #fff;
 
 	&:hover, &:focus { background: #eee; }
-	&:active {
-		background: #ccc;
-	}
 `;
 
 // TODO: Be consistent with ordering of words in "keyBlack" and "BlackKey"
@@ -54,7 +51,11 @@ const keyBlack = css`
 	border-bottom-right-radius: 8px;
 
 	&:hover, &:focus { background: #222; }
-	&:active { background: #333; }
+`;
+// TODO: important...?
+const keyActive = css`
+	background: #5492f5 !important;
+	color: #fff;
 `;
 
 class DefaultProps {
@@ -62,13 +63,15 @@ class DefaultProps {
 }
 
 interface Props extends DefaultProps {
-	isMouseDown: boolean;
 	onNoteOn(data: Note): void;
 	onNoteOff(data: Note): void;
 }
 
 class State {
 	numberOfWhiteKeys = 0;
+	// TODO: Use the MouseDownStatus component?
+	isMouseDown = false;
+	currentMouseNote: number | null = null;
 }
 
 const KEYBOARD_MAP = ['a', 'w', 's', 'e', 'd', 'f', 't', 'g', 'y', 'h', 'u', 'j', 'k', 'o', 'l', 'p', ';', '\\'];
@@ -78,38 +81,49 @@ const WHITE_KEYS_PER_OCTAVE = 8;
 // TODO: Move me
 interface KeyProps {
 	style?: React.CSSProperties;
-	onMouseDown(event: MouseEvent<HTMLButtonElement>): void;
-	onMouseUp(event: MouseEvent<HTMLButtonElement>): void;
+	onMouseDown(event: MouseEvent): void;
+	onMouseUp(event: MouseEvent): void;
+	onMouseEnter(event: MouseEvent): void;
+	onMouseLeave(event: MouseEvent): void;
+	isActive: boolean;
 	value: number;
 }
 // TODO: These key components are a bit redundant. Get rid of them / simplify
-const WhiteKey = ({ style, onMouseDown, onMouseUp, value }: KeyProps) =>
-	<button
-		className={keyWhite}
+const WhiteKey = ({ style, onMouseDown, onMouseUp, onMouseEnter, onMouseLeave, isActive, value }: KeyProps) =>
+	<div
+		className={classnames(keyWhite, {
+			[keyActive]: isActive,
+		})}
 		style={style}
 		onMouseDown={onMouseDown}
 		onMouseUp={onMouseUp}
-		value={value}
+		onMouseEnter={onMouseEnter}
+		onMouseLeave={onMouseLeave}
+		data-value={value}
 	>
 		{KEYBOARD_MAP[value] || ''}
-	</button>;
+	</div>;
 
-const BlackKey = ({ style, onMouseDown, onMouseUp, value }: KeyProps) =>
-	<button
-		className={keyBlack}
+const BlackKey = ({ style, onMouseDown, onMouseUp, onMouseEnter, onMouseLeave, isActive, value }: KeyProps) =>
+	<div
+		className={classnames(keyBlack, {
+			[keyActive]: isActive,
+		})}
 		style={style}
 		onMouseDown={onMouseDown}
 		onMouseUp={onMouseUp}
-		value={value}
+		onMouseEnter={onMouseEnter}
+		onMouseLeave={onMouseLeave}
+		data-value={value}
 	>
 		{KEYBOARD_MAP[value] || ''}
-	</button>;
+	</div>;
 
 const hasBlackKey = (whiteKeyIndex: number) => {
 	return WHITE_KEYS_WITH_BLACK.includes(whiteKeyIndex % (WHITE_KEYS_PER_OCTAVE - 1));
 };
 
-class InputKeyboardBase extends Component<Props> {
+class InputKeyboard extends Component<Props> {
 	public state = new State();
 	public events: EventManager;
 
@@ -143,30 +157,43 @@ class InputKeyboardBase extends Component<Props> {
 		console.log(`Key ${index} activated`);
 	};
 
-	private readonly onMouseOver = (event: MouseEvent) => {
-		console.log(event);
-	};
-
-	private readonly onMouseDown = (event: MouseEvent<HTMLButtonElement>) => {
+	private readonly onMouseDown = (event: MouseEvent) => {
+		const note = Number((event.target as HTMLElement).dataset.value);
 		this.props.onNoteOn({
-			note: Number((event.target as HTMLButtonElement).value),
+			note,
 			velocity: 127,
 		});
+		this.setState({ currentMouseNote: note });
 	};
 
-	private readonly onMouseUp = (event: MouseEvent<HTMLButtonElement>) => {
+	private readonly onMouseEnter = (event: MouseEvent) => {
+		if (this.state.isMouseDown) {
+			this.onMouseDown(event);
+		}
+	};
+
+	private readonly releaseCurrentMouseNote = () => {
+		const { currentMouseNote } = this.state;
+		if (currentMouseNote === null) {
+			return;
+		}
+		// TODO: put this logic in "component will update"?
 		this.props.onNoteOff({
-			note: Number((event.target as HTMLButtonElement).value),
+			note: currentMouseNote,
 			velocity: 127,
 		});
+		this.setState({ currentMouseNote: null });
 	};
 
 	public componentDidMount() {
 		this.updateNumberOfWhiteKeys();
 		this.events = new EventManager(() => [
 			[window, 'resize', this.updateNumberOfWhiteKeys],
-			[document, 'mouseover', this.onMouseOver],
 			[document, 'keydown', this.onKeyDown],
+
+			// TODO: Use mixin / util component for this
+			[document, 'mousedown', () => this.setState({ isMouseDown: true })],
+			[document, 'mouseup', () => this.setState({ isMouseDown: false })],
 		]);
 		this.events.listen();
 	}
@@ -178,29 +205,35 @@ class InputKeyboardBase extends Component<Props> {
 	public render() {
 		let keyCount = 0;
 		const widthPerKey = this.getWidthPerKey();
-		const { numberOfWhiteKeys } = this.state;
+		const { numberOfWhiteKeys, currentMouseNote } = this.state;
 		const keyProps = {
 			onMouseDown: this.onMouseDown,
-			onMouseUp: this.onMouseUp,
+			onMouseUp: this.releaseCurrentMouseNote,
+			onMouseEnter: this.onMouseEnter,
+			onMouseLeave: this.releaseCurrentMouseNote,
 		};
 
 		return (
 			<div className={keyContainer} ref={this.container}>
 				{range(numberOfWhiteKeys).map(i => {
 					const isLastKey = i === numberOfWhiteKeys - 1;
+					const whiteValue = keyCount++;
+
 					const nodes = [
-						<WhiteKey key='white' value={keyCount++} {...keyProps} />,
+						<WhiteKey key='white' value={whiteValue} {...keyProps} isActive={whiteValue === currentMouseNote} />,
 					];
 
 					if (!isLastKey && hasBlackKey(i)) {
+						const blackValue = keyCount++;
 						nodes.push(
 							<BlackKey
 								key='black'
-								value={keyCount++}
+								value={blackValue}
 								style={{
 									left: widthPerKey * (i + 1),
 									width: widthPerKey * 0.6,
 								}}
+								isActive={blackValue === currentMouseNote}
 								{...keyProps}
 							/>,
 						);
@@ -214,12 +247,4 @@ class InputKeyboardBase extends Component<Props> {
 }
 
 const withDefaultProps = defaultProps(new DefaultProps());
-const InputKeyboard = (props: Omit<Props, 'isMouseDown'>) =>
-	<MouseDownStatus>{({ isMouseDown }) =>
-		<InputKeyboardBase
-			{...props}
-			isMouseDown={isMouseDown}
-		/>
-	}</MouseDownStatus>;
-
 export default withDefaultProps(InputKeyboard);
