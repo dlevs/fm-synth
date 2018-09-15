@@ -31,39 +31,45 @@ const connectMidiDevices = async (onMessage: MidiMessageEventCallback) => {
 	});
 };
 
+// TODO: Export this type "ReturnType<typeof parseMidi>" from the parse-midi module for convenience
+const getActionForMidiData = (midiEvent: ReturnType<typeof parseMidi>) => {
+	switch (midiEvent.messageType) {
+		case 'noteon':
+			return noteActions.triggerNoteOn({
+				note: midiEvent.key,
+				velocity: midiEvent.velocity,
+			});
+
+		case 'noteoff':
+			return noteActions.triggerNoteOff({
+				note: midiEvent.key,
+				velocity: midiEvent.velocity,
+			});
+
+		case 'controlchange':
+			switch (midiEvent.controlFunction) {
+				case 'sustainon':
+					return noteActions.triggerSustainOn();
+				case 'sustainoff':
+					return noteActions.triggerSustainOff();
+			}
+			break;
+
+		// TODO: Intellisense on "messageType" is great. Consider adding it to "channelModeMessage" and "controlFunction" too for parse-midi npm package
+		case 'channelmodechange':
+			switch (midiEvent.channelModeMessage) {
+				case 'allnotesoff':
+					return noteActions.triggerAllNotesOff();
+			}
+	}
+
+	return null;
+};
+
 export default (store: Store) => {
-	console.log(store);
 	connectMidiDevices(event => {
 		const midiEvent = parseMidi(event.data);
-		let action;
-
-		switch (midiEvent.messageType) {
-			case 'noteon':
-				action = noteActions.triggerNoteOn({
-					note: midiEvent.key,
-					velocity: midiEvent.velocity,
-				});
-				break;
-
-			case 'noteoff':
-				action = noteActions.triggerNoteOff({
-					note: midiEvent.key,
-					velocity: midiEvent.velocity,
-				});
-				break;
-
-			case 'controlchange': {
-				switch (midiEvent.controlFunction) {
-					case 'sustainon':
-						action = noteActions.triggerSustainOn();
-						break;
-					case 'sustainoff':
-						action = noteActions.triggerSustainOff();
-				}
-			}
-
-			// TODO: implement response to "allnotesoff" control change message
-		}
+		const action = getActionForMidiData(midiEvent);
 
 		if (action) {
 			store.dispatch(action);

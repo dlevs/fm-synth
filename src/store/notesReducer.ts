@@ -2,6 +2,7 @@ import produce from 'immer';
 
 export const NOTE_ON = 'NOTE_ON';
 export const NOTE_OFF = 'NOTE_OFF';
+export const ALL_NOTES_OFF = 'ALL_NOTES_OFF';
 export const SUSTAIN_ON = 'SUSTAIN_ON';
 export const SUSTAIN_OFF = 'SUSTAIN_OFF';
 
@@ -23,7 +24,7 @@ export interface Notes {
 }
 
 interface NoteAction extends Note {
-	type: 'NOTE_ON' | 'NOTE_OFF';
+	type: 'NOTE_ON' | 'NOTE_OFF' | 'ALL_NOTES_OFF';
 }
 
 type Action = NoteAction | {
@@ -44,8 +45,10 @@ const createNoteTrigger = (type: string) =>
 	});
 
 export const noteActions = {
+	// TODO: We need to prepend all fn names with "trigger"?
 	triggerNoteOn: createNoteTrigger(NOTE_ON),
 	triggerNoteOff: createNoteTrigger(NOTE_OFF),
+	triggerAllNotesOff: () => ({ type: ALL_NOTES_OFF }),
 	triggerSustainOn: () => ({ type: SUSTAIN_ON }),
 	triggerSustainOff: () => ({ type: SUSTAIN_OFF }),
 };
@@ -79,6 +82,10 @@ const notesReducer = (state = defaultNotes, action: Action) =>
 				}
 
 				draft.activeNotes = draft.activeNotes.filter(note => note !== noteToRemove);
+				break;
+
+			case ALL_NOTES_OFF:
+				draft.activeNotes = [];
 				break;
 
 			case SUSTAIN_ON:
