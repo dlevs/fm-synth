@@ -4,7 +4,7 @@ import React, { Component, createRef, RefObject, MouseEvent } from 'react';
 import { defaultProps } from 'recompose';
 import { EventManager } from '../lib/eventUtils';
 // TODO: Move this type into lib/types?
-import { Note } from '../store/notesReducer';
+import { Note, NoteStatus } from '../store/notesReducer';
 import { css } from 'emotion';
 
 const keyContainer = css`
@@ -24,6 +24,7 @@ const keyStyle = css`
 	cursor: pointer;
 	padding-bottom: 10px;
 	user-select: none;
+	transition: background 300ms, color 300ms;
 `;
 
 // TODO: Make variables for CSS colors
@@ -56,6 +57,7 @@ const keyBlack = css`
 const keyActive = css`
 	background: #5492f5 !important;
 	color: #fff;
+	transition: all 0s !important;
 `;
 
 class DefaultProps {
@@ -65,6 +67,7 @@ class DefaultProps {
 interface Props extends DefaultProps {
 	onNoteOn(data: Note): void;
 	onNoteOff(data: Note): void;
+	activeNotes: NoteStatus[];
 }
 
 class State {
@@ -205,7 +208,9 @@ class InputKeyboard extends Component<Props> {
 	public render() {
 		let keyCount = 0;
 		const widthPerKey = this.getWidthPerKey();
-		const { numberOfWhiteKeys, currentMouseNote } = this.state;
+		const { numberOfWhiteKeys } = this.state;
+		// TODO: Use reselect here!!!?
+		const activeNotes = this.props.activeNotes.map(({ note }) => note);
 		const keyProps = {
 			onMouseDown: this.onMouseDown,
 			onMouseUp: this.releaseCurrentMouseNote,
@@ -220,7 +225,7 @@ class InputKeyboard extends Component<Props> {
 					const whiteValue = keyCount++;
 
 					const nodes = [
-						<WhiteKey key='white' value={whiteValue} {...keyProps} isActive={whiteValue === currentMouseNote} />,
+						<WhiteKey key='white' value={whiteValue} {...keyProps} isActive={activeNotes.includes(whiteValue)} />,
 					];
 
 					if (!isLastKey && hasBlackKey(i)) {
@@ -233,7 +238,7 @@ class InputKeyboard extends Component<Props> {
 									left: widthPerKey * (i + 1),
 									width: widthPerKey * 0.6,
 								}}
-								isActive={blackValue === currentMouseNote}
+								isActive={activeNotes.includes(blackValue)}
 								{...keyProps}
 							/>,
 						);

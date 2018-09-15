@@ -8,6 +8,7 @@
     "sourceMap": true,
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
+    "downlevelIteration": true,
     "jsx": "react",
     "moduleResolution": "node",
     "rootDir": "src",

@@ -2,9 +2,6 @@ import fromPairs from 'lodash/fromPairs';
 import React, { Component } from 'react';
 import InputADSR from './components/InputADSR';
 import KeyboardMain from './containers/KeyboardMain';
-import { Settings } from './store/settingsReducer';
-import { connect } from 'react-redux';
-import { Store } from './store';
 
 const BLUR = 20;
 
@@ -45,16 +42,6 @@ class State {
 	};
 }
 
-const TestSettings = connect(
-	({ settings }: Store) => settings,
-)(
-	({ baseFrequency, polyphony }: Settings) =>
-		<ul>
-			<li>baseFrequency: {baseFrequency}Hz</li>
-			<li>polyphony: {polyphony} voices</li>
-		</ul>,
-);
-
 class App extends Component {
 	public state = new State();
 
@@ -77,8 +64,6 @@ class App extends Component {
 					onChange={this.onAdsrChange}
 				/>
 				<KeyboardMain />
-				<TestSettings />
-				<input type='range' />
 			</>
 		);
 	}

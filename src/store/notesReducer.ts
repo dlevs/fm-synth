@@ -11,7 +11,7 @@ export interface Note {
 	velocity: number;
 }
 
-interface NoteStatus extends Note {
+export interface NoteStatus extends Note {
 	isReleased: boolean;
 	isSostenuto: boolean;
 }
