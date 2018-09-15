@@ -50,6 +50,19 @@ export default (store: Store) => {
 					note: midiEvent.key,
 					velocity: midiEvent.velocity,
 				});
+				break;
+
+			case 'controlchange': {
+				switch (midiEvent.controlFunction) {
+					case 'sustainon':
+						action = noteActions.triggerSustainOn();
+						break;
+					case 'sustainoff':
+						action = noteActions.triggerSustainOff();
+				}
+			}
+
+			// TODO: implement response to "allnotesoff" control change message
 		}
 
 		if (action) {
