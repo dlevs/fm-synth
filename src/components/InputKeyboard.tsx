@@ -1,14 +1,22 @@
 import range from 'lodash/range';
 import findLast from 'lodash/findLast';
 import classnames from 'classnames';
+import { css } from 'emotion';
+import Color from 'color';
 import React, { Component, createRef, RefObject, MouseEvent } from 'react';
 import { defaultProps } from 'recompose';
 import { EventManager } from '../lib/eventUtils';
 import { velocityColorMixScale } from '../lib/scales';
+import { Omit } from '../lib/types';
+import MouseDownStatus from './util/MouseDownStatus';
 // TODO: Move this type into lib/types?
 import { Note, NoteStatus } from '../store/notesReducer';
-import { css } from 'emotion';
-import Color from 'color';
+
+const KEYBOARD_MAP = ['a', 'w', 's', 'e', 'd', 'f', 't', 'g', 'y', 'h', 'u', 'j', 'k', 'o', 'l', 'p', ';', '\\'];
+const WHITE_KEYS_WITH_BLACK = [0, 1, 3, 4, 5];
+const WHITE_KEYS_PER_OCTAVE = 8;
+
+const activeKeyColor = Color('#5492f5');
 
 const keyContainer = css`
 	position: relative;
@@ -59,12 +67,10 @@ const keyBlack = css`
 	&:hover, &:focus { background: #222; }
 `;
 
-const activeColor = Color('#5492f5');
-
 // TODO: important...?
 // TODO: Divide by max velocity in fn above?
 const keyActive = (color: string, velocity: number) => css`
-	background: ${Color(color).mix(activeColor, velocityColorMixScale(velocity)).toString()} !important;
+	background: ${Color(color).mix(activeKeyColor, velocityColorMixScale(velocity)).toString()} !important;
 	color: #fff;
 	transition: all 0s !important;
 `;
@@ -77,18 +83,13 @@ interface Props extends DefaultProps {
 	onNoteOn(data: Note): void;
 	onNoteOff(data: Note): void;
 	activeNotes: NoteStatus[];
+	isMouseDown: boolean;
 }
 
 class State {
 	numberOfWhiteKeys = 0;
-	// TODO: Use the MouseDownStatus component?
-	isMouseDown = false;
 	currentMouseNote: number | null = null;
 }
-
-const KEYBOARD_MAP = ['a', 'w', 's', 'e', 'd', 'f', 't', 'g', 'y', 'h', 'u', 'j', 'k', 'o', 'l', 'p', ';', '\\'];
-const WHITE_KEYS_WITH_BLACK = [0, 1, 3, 4, 5];
-const WHITE_KEYS_PER_OCTAVE = 8;
 
 // TODO: Move me
 interface KeyProps {
@@ -138,7 +139,7 @@ const hasBlackKey = (whiteKeyIndex: number) => {
 	return WHITE_KEYS_WITH_BLACK.includes(whiteKeyIndex % (WHITE_KEYS_PER_OCTAVE - 1));
 };
 
-class InputKeyboard extends Component<Props> {
+class InputKeyboardBase extends Component<Props> {
 	public state = new State();
 	public events: EventManager;
 
@@ -182,7 +183,7 @@ class InputKeyboard extends Component<Props> {
 	};
 
 	private readonly onMouseEnter = (event: MouseEvent) => {
-		if (this.state.isMouseDown) {
+		if (this.props.isMouseDown) {
 			this.onMouseDown(event);
 		}
 	};
@@ -205,10 +206,6 @@ class InputKeyboard extends Component<Props> {
 		this.events = new EventManager(() => [
 			[window, 'resize', this.updateNumberOfWhiteKeys],
 			[document, 'keydown', this.onKeyDown],
-
-			// TODO: Use mixin / util component for this
-			[document, 'mousedown', () => this.setState({ isMouseDown: true })],
-			[document, 'mouseup', () => this.setState({ isMouseDown: false })],
 		]);
 		this.events.listen();
 	}
@@ -266,4 +263,12 @@ class InputKeyboard extends Component<Props> {
 }
 
 const withDefaultProps = defaultProps(new DefaultProps());
+const InputKeyboard = (props: Omit<Props, 'isMouseDown'>) =>
+	<MouseDownStatus>{({ isMouseDown }) =>
+		<InputKeyboardBase
+			{...props}
+			isMouseDown={isMouseDown}
+		/>
+	}</MouseDownStatus>;
+
 export default withDefaultProps(InputKeyboard);

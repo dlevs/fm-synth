@@ -14,6 +14,8 @@ import InputRange from './InputRange';
 import MouseDownStatus from './util/MouseDownStatus';
 import MouseOverStatus from './util/MouseOverStatus';
 
+// TODO: This widget can probably be made much simpler with SVG than canvas. Try SVG for future widgets + consider refactoring
+
 // TODO: Move me, and use everywhere where points are used
 type Point = [number, number];
 
