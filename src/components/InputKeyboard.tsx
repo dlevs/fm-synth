@@ -1,11 +1,14 @@
 import range from 'lodash/range';
+import findLast from 'lodash/findLast';
 import classnames from 'classnames';
 import React, { Component, createRef, RefObject, MouseEvent } from 'react';
 import { defaultProps } from 'recompose';
 import { EventManager } from '../lib/eventUtils';
+import { velocityColorMixScale } from '../lib/scales';
 // TODO: Move this type into lib/types?
 import { Note, NoteStatus } from '../store/notesReducer';
 import { css } from 'emotion';
+import Color from 'color';
 
 const keyContainer = css`
 	position: relative;
@@ -48,14 +51,20 @@ const keyBlack = css`
 	bottom: 40%;
 	transform: translateX(-50%);
 	outline: none;
+	border: 1px #111 solid;
+	border-top: none;
 	border-bottom-left-radius: 8px;
 	border-bottom-right-radius: 8px;
 
 	&:hover, &:focus { background: #222; }
 `;
+
+const activeColor = Color('#5492f5');
+
 // TODO: important...?
-const keyActive = css`
-	background: #5492f5 !important;
+// TODO: Divide by max velocity in fn above?
+const keyActive = (color: string, velocity: number) => css`
+	background: ${Color(color).mix(activeColor, velocityColorMixScale(velocity)).toString()} !important;
 	color: #fff;
 	transition: all 0s !important;
 `;
@@ -88,14 +97,17 @@ interface KeyProps {
 	onMouseUp(event: MouseEvent): void;
 	onMouseEnter(event: MouseEvent): void;
 	onMouseLeave(event: MouseEvent): void;
-	isActive: boolean;
+	velocity: number;
 	value: number;
 }
 // TODO: These key components are a bit redundant. Get rid of them / simplify
-const WhiteKey = ({ style, onMouseDown, onMouseUp, onMouseEnter, onMouseLeave, isActive, value }: KeyProps) =>
+const WhiteKey = ({ style, onMouseDown, onMouseUp, onMouseEnter, onMouseLeave, velocity, value }: KeyProps) =>
+	// TODO: Break this out.
+	// TODO: Not sure how efficient it is to make this styling per key. check...
 	<div
 		className={classnames(keyWhite, {
-			[keyActive]: isActive,
+			// TODO: This doesn't make much sense
+			[keyActive('#fff', velocity)]: velocity > 0,
 		})}
 		style={style}
 		onMouseDown={onMouseDown}
@@ -107,10 +119,10 @@ const WhiteKey = ({ style, onMouseDown, onMouseUp, onMouseEnter, onMouseLeave, i
 		{KEYBOARD_MAP[value] || ''}
 	</div>;
 
-const BlackKey = ({ style, onMouseDown, onMouseUp, onMouseEnter, onMouseLeave, isActive, value }: KeyProps) =>
+const BlackKey = ({ style, onMouseDown, onMouseUp, onMouseEnter, onMouseLeave, velocity, value }: KeyProps) =>
 	<div
 		className={classnames(keyBlack, {
-			[keyActive]: isActive,
+			[keyActive('#111', velocity)]: velocity > 0,
 		})}
 		style={style}
 		onMouseDown={onMouseDown}
@@ -210,7 +222,7 @@ class InputKeyboard extends Component<Props> {
 		const widthPerKey = this.getWidthPerKey();
 		const { numberOfWhiteKeys } = this.state;
 		// TODO: Use reselect here!!!?
-		const activeNotes = this.props.activeNotes.map(({ note }) => note);
+		const { activeNotes } = this.props;
 		const keyProps = {
 			onMouseDown: this.onMouseDown,
 			onMouseUp: this.releaseCurrentMouseNote,
@@ -223,13 +235,15 @@ class InputKeyboard extends Component<Props> {
 				{range(numberOfWhiteKeys).map(i => {
 					const isLastKey = i === numberOfWhiteKeys - 1;
 					const whiteValue = keyCount++;
+					const lastWhite = findLast(activeNotes, { note: whiteValue });
 
 					const nodes = [
-						<WhiteKey key='white' value={whiteValue} {...keyProps} isActive={activeNotes.includes(whiteValue)} />,
+						<WhiteKey key='white' value={whiteValue} {...keyProps} velocity={lastWhite ? lastWhite.velocity : 0} />,
 					];
 
 					if (!isLastKey && hasBlackKey(i)) {
 						const blackValue = keyCount++;
+						const lastBlack = findLast(activeNotes, { note: blackValue });
 						nodes.push(
 							<BlackKey
 								key='black'
@@ -238,7 +252,7 @@ class InputKeyboard extends Component<Props> {
 									left: widthPerKey * (i + 1),
 									width: widthPerKey * 0.6,
 								}}
-								isActive={activeNotes.includes(blackValue)}
+								velocity={lastBlack ? lastBlack.velocity : 0}
 								{...keyProps}
 							/>,
 						);
