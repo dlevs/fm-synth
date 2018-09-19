@@ -79,7 +79,8 @@ export default class PolyVoice {
 			const { waveType, envelope } = oscillator;
 
 			return new Voice(
-				oscillator.mode === 'ratio' ? note * oscillator.ratio : note,
+				// TODO: What should ratio do exactly? And move `12` to a constants file
+				oscillator.mode === 'ratio' ? note + (oscillator.ratio * 12) : note,
 				velocity,
 				waveType,
 				envelope,

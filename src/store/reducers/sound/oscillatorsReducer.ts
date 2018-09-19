@@ -23,7 +23,7 @@ const defaultState: Oscillator[] = [
 	{
 		id: 'TODO:some-short-id-here',
 		mode: 'ratio',
-		ratio: 1,
+		ratio: 0,
 		waveType: 'sawtooth',
 		envelope: {
 			attack: 0.01,
@@ -35,7 +35,7 @@ const defaultState: Oscillator[] = [
 	{
 		id: 'TODO:some-short-id-here2',
 		mode: 'ratio',
-		ratio: 2,
+		ratio: 1,
 		waveType: 'sawtooth',
 		envelope: {
 			attack: 0.01,

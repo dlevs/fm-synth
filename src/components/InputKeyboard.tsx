@@ -216,7 +216,7 @@ class InputKeyboardBase extends Component<Props> {
 
 	public render() {
 		// TODO: Make lowest note configurable via an octave parameter
-		let keyCount = 35;
+		let keyCount = 36;
 		const widthPerKey = this.getWidthPerKey();
 		const { numberOfWhiteKeys } = this.state;
 		// TODO: Use reselect here!!!?
