@@ -10,7 +10,7 @@ import { velocityColorMixScale } from '../lib/scales';
 import { Omit } from '../lib/types';
 import MouseDownStatus from './util/MouseDownStatus';
 // TODO: Move this type into lib/types?
-import { Note, NoteStatus } from '../store/notesReducer';
+import { Note, NoteStatus } from '../store/reducers/notesReducer';
 
 const KEYBOARD_MAP = ['a', 'w', 's', 'e', 'd', 'f', 't', 'g', 'y', 'h', 'u', 'j', 'k', 'o', 'l', 'p', ';', '\\'];
 const WHITE_KEYS_WITH_BLACK = [0, 1, 3, 4, 5];
@@ -215,7 +215,8 @@ class InputKeyboardBase extends Component<Props> {
 	}
 
 	public render() {
-		let keyCount = 0;
+		// TODO: Make lowest note configurable via an octave parameter
+		let keyCount = 35;
 		const widthPerKey = this.getWidthPerKey();
 		const { numberOfWhiteKeys } = this.state;
 		// TODO: Use reselect here!!!?

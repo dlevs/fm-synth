@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 import InputKeyboard from '../components/InputKeyboard';
 import { Store } from '../store';
-import { noteActions } from '../store/notesReducer';
+import { noteActions } from '../store/reducers/notesReducer';
 
 export default connect(
 	// TODO: Use reselect?
