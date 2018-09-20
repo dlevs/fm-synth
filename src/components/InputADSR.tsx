@@ -22,7 +22,7 @@ type Point = [number, number];
 // TODO: Better name?
 const getParamMultiplier = (inputs: Inputs, name: ParamName) =>
 	({ inputMax }: Props) => {
-		// TODO: Wtf... Do we really need this level of paranoia to use TS?
+		// TODO: Do we really need this level of paranoia to use TS?
 		const inputElem = inputs[name] && inputs[name].current;
 		if (inputElem) {
 			return Number(inputElem.value) / inputMax;
@@ -42,7 +42,7 @@ interface Inputs {
 	sustain: RefObject<HTMLInputElement>;
 }
 
-// TODO: wtf is this class...
+// TODO: This class feels unnecessary. Simplify with simple function to expand
 class PointConfig {
 	public name: ParamName;
 	public label: string;
