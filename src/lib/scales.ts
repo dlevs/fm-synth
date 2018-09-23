@@ -18,5 +18,5 @@ const scaleNumberBetween = (min: number, max: number) => {
 
 export const velocityColorMixScale = flow(
 	scaleMidiValueBetween0And1,
-	scaleNumberBetween(0.5, 1),
+	scaleNumberBetween(0.2, 1),
 );

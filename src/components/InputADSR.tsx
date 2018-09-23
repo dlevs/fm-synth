@@ -1,5 +1,4 @@
-import classnames from 'classnames';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import findIndex from 'lodash/findIndex';
 import clamp from 'lodash/clamp';
 import sumBy from 'lodash/sumBy';
@@ -229,7 +228,7 @@ class InputADSRBase extends Component<Props, State> {
 				</div>
 				<canvas
 					ref={this.canvas}
-					className={classnames(adsrCanvas, { [adsrCanvasGrabbing]: isMouseDown })}
+					className={cx(adsrCanvas, { [adsrCanvasGrabbing]: isMouseDown })}
 					onMouseDown={this.onMouseDown}
 					onTouchStart={this.onMouseDown}
 				/>

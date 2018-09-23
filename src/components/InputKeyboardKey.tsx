@@ -1,13 +1,16 @@
 import React, { MouseEvent } from 'react';
-import classnames from 'classnames';
 import Color from 'color';
 import { velocityColorMixScale } from '../lib/scales';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { KEY_INDEX_TO_KEYBOARD_KEY_MAP } from '../lib/constants';
 
-const activeKeyColor = Color('#5492f5');
+const COLOR_ACTIVE_KEY = Color('#2c76ec');
+const COLOR_WHITE_KEY = Color('#fff');
+const COLOR_BLACK_KEY = Color('#111');
+const COLOR_HOVER_RATIO = 0.1;
 
-const keyStyle = css`
+// TODO: Make a naming convention for style variable names
+const baseKey = css`
 	display: flex;
 	flex-direction: column;
 	justify-content: flex-end;
@@ -21,22 +24,22 @@ const keyStyle = css`
 	transition: background 300ms, color 300ms;
 `;
 
-// TODO: Make variables for CSS colors
-const keyWhite = css`
-	${keyStyle}
+const whiteKey = css`
+	${baseKey}
 	color: #111;
 	outline: 1px solid #111;
 	flex: 1;
-	background: #fff;
+	background: ${COLOR_WHITE_KEY.toString()};
 
-	&:hover, &:focus { background: #eee; }
+	&:hover, &:focus {
+		background: ${COLOR_WHITE_KEY.darken(COLOR_HOVER_RATIO).toString()};
+	}
 `;
 
-// TODO: Be consistent with ordering of words in "keyBlack" and "BlackKey"
-const keyBlack = css`
-	${keyStyle}
+const blackKey = css`
+	${baseKey}
 	color: #fff;
-	background: #111;
+	background: ${COLOR_BLACK_KEY.toString()};
 	position: absolute;
 	top: 0;
 	bottom: 40%;
@@ -47,30 +50,41 @@ const keyBlack = css`
 	border-bottom-left-radius: 8px;
 	border-bottom-right-radius: 8px;
 
-	&:hover, &:focus { background: #222; }
+	&:hover, &:focus {
+		background: ${COLOR_BLACK_KEY.lighten(COLOR_HOVER_RATIO).toString()};
+	}
 `;
 
-// TODO: important...?
-// TODO: Divide by max velocity in fn above?
-const keyActive = (color: string, velocity: number) => css`
-	background: ${Color(color).mix(activeKeyColor, velocityColorMixScale(velocity)).toString()} !important;
+// TODO: might make more sense to have velocity be between 0 - 1 here. Decide at which point to decouple from MIDI scale 0 - 127.
+const activeKey = (backgroundColor: Color, velocity: number) => css`
+	background: ${backgroundColor.mix(COLOR_ACTIVE_KEY, velocityColorMixScale(velocity)).toString()} !important;
 	color: #fff;
-	transition: all 0s !important;
+	transition: all 0s;
 `;
 
-// TODO: Move me
-interface KeyProps {
+const colorSettingsMap = {
+	white: {
+		cssClass: whiteKey,
+		backgroundColor: COLOR_WHITE_KEY,
+	},
+	black: {
+		cssClass: blackKey,
+		backgroundColor: COLOR_BLACK_KEY,
+	},
+};
+
+interface Props {
 	color: 'white' | 'black';
+	velocity: number;
+	note: number;
 	style?: React.CSSProperties;
 	onMouseDown(event: MouseEvent): void;
 	onMouseUp(event: MouseEvent): void;
 	onMouseEnter(event: MouseEvent): void;
 	onMouseLeave(event: MouseEvent): void;
-	velocity: number;
-	note: number;
 }
 
-const InputKeyboard = ({
+const InputKeyboardKey = ({
 	color,
 	style,
 	onMouseDown,
@@ -79,16 +93,17 @@ const InputKeyboard = ({
 	onMouseLeave,
 	velocity,
 	note,
-}: KeyProps) => {
-	// TODO: Not sure how efficient it is to make this styling per key. check...
-	const cssClass = color === 'white' ? keyWhite : keyBlack;
-	const activeColor = color === 'white' ? '#fff' : '#111';
+}: Props) => {
+	const { cssClass, backgroundColor } = colorSettingsMap[color];
+	const cssClasses = [cssClass];
+
+	if (velocity > 0) {
+		cssClasses.push(activeKey(backgroundColor, velocity));
+	}
+
 	return (
 		<div
-			className={classnames(cssClass, {
-				// TODO: This doesn't make much sense
-				[keyActive(activeColor, velocity)]: velocity > 0,
-			})}
+			className={cx(cssClasses)}
 			style={style}
 			onMouseDown={onMouseDown}
 			onMouseUp={onMouseUp}
@@ -101,4 +116,4 @@ const InputKeyboard = ({
 	);
 };
 
-export default InputKeyboard;
+export default InputKeyboardKey;
