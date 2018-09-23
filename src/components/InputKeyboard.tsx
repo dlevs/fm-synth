@@ -1,78 +1,20 @@
+import React, { Component, createRef, RefObject, MouseEvent } from 'react';
 import range from 'lodash/range';
 import findLast from 'lodash/findLast';
-import classnames from 'classnames';
 import { css } from 'emotion';
-import Color from 'color';
-import React, { Component, createRef, RefObject, MouseEvent } from 'react';
 import { defaultProps } from 'recompose';
 import { EventManager } from '../lib/eventUtils';
-import { velocityColorMixScale } from '../lib/scales';
 import { Omit } from '../lib/types';
+import { WHITE_KEYS_WITH_BLACK, WHITE_KEYS_PER_OCTAVE } from '../lib/constants';
 import MouseDownStatus from './util/MouseDownStatus';
 // TODO: Move this type into lib/types?
+import InputKeyboardKey from './InputKeyboardKey';
 import { Note, NoteStatus } from '../store/reducers/notesReducer';
-
-const KEYBOARD_MAP = ['a', 'w', 's', 'e', 'd', 'f', 't', 'g', 'y', 'h', 'u', 'j', 'k', 'o', 'l', 'p', ';', '\\'];
-const WHITE_KEYS_WITH_BLACK = [0, 1, 3, 4, 5];
-const WHITE_KEYS_PER_OCTAVE = 8;
-
-const activeKeyColor = Color('#5492f5');
 
 const keyContainer = css`
 	position: relative;
 	display: flex;
 	height: 200px;
-`;
-
-const keyStyle = css`
-	display: flex;
-	flex-direction: column;
-	justify-content: flex-end;
-	text-align: center;
-	align-items: center;
-	appearance: none;
-	border: none;
-	cursor: pointer;
-	padding-bottom: 10px;
-	user-select: none;
-	transition: background 300ms, color 300ms;
-`;
-
-// TODO: Make variables for CSS colors
-const keyWhite = css`
-	${keyStyle}
-	color: #111;
-	outline: 1px solid #111;
-	flex: 1;
-	background: #fff;
-
-	&:hover, &:focus { background: #eee; }
-`;
-
-// TODO: Be consistent with ordering of words in "keyBlack" and "BlackKey"
-const keyBlack = css`
-	${keyStyle}
-	color: #fff;
-	background: #111;
-	position: absolute;
-	top: 0;
-	bottom: 40%;
-	transform: translateX(-50%);
-	outline: none;
-	border: 1px #111 solid;
-	border-top: none;
-	border-bottom-left-radius: 8px;
-	border-bottom-right-radius: 8px;
-
-	&:hover, &:focus { background: #222; }
-`;
-
-// TODO: important...?
-// TODO: Divide by max velocity in fn above?
-const keyActive = (color: string, velocity: number) => css`
-	background: ${Color(color).mix(activeKeyColor, velocityColorMixScale(velocity)).toString()} !important;
-	color: #fff;
-	transition: all 0s !important;
 `;
 
 class DefaultProps {
@@ -90,49 +32,6 @@ class State {
 	numberOfWhiteKeys = 0;
 	currentMouseNote: number | null = null;
 }
-
-// TODO: Move me
-interface KeyProps {
-	color: 'white' | 'black';
-	style?: React.CSSProperties;
-	onMouseDown(event: MouseEvent): void;
-	onMouseUp(event: MouseEvent): void;
-	onMouseEnter(event: MouseEvent): void;
-	onMouseLeave(event: MouseEvent): void;
-	velocity: number;
-	note: number;
-}
-// TODO: These key components are a bit redundant. Get rid of them / simplify
-const KeyboardKey = ({
-	color,
-	style,
-	onMouseDown,
-	onMouseUp,
-	onMouseEnter,
-	onMouseLeave,
-	velocity,
-	note,
-}: KeyProps) => {
-	// TODO: Not sure how efficient it is to make this styling per key. check...
-	const cssClass = color === 'white' ? keyWhite : keyBlack;
-	const activeColor = color === 'white' ? '#fff' : '#111';
-	return (
-		<div
-			className={classnames(cssClass, {
-				// TODO: This doesn't make much sense
-				[keyActive(activeColor, velocity)]: velocity > 0,
-			})}
-			style={style}
-			onMouseDown={onMouseDown}
-			onMouseUp={onMouseUp}
-			onMouseEnter={onMouseEnter}
-			onMouseLeave={onMouseLeave}
-			data-note={note}
-		>
-			{KEYBOARD_MAP[note] || ''}
-		</div>
-	);
-};
 
 const hasBlackKey = (whiteKeyIndex: number) => {
 	return WHITE_KEYS_WITH_BLACK.includes(whiteKeyIndex % (WHITE_KEYS_PER_OCTAVE - 1));
@@ -161,16 +60,6 @@ class InputKeyboardBase extends Component<Props> {
 	private getWidthPerKey() {
 		return this.getWidth() / this.state.numberOfWhiteKeys;
 	}
-
-	private readonly onKeyDown = ({ key }: KeyboardEvent) => {
-		const index = KEYBOARD_MAP.indexOf(key);
-
-		if (index === -1) {
-			return;
-		}
-
-		console.log(`Key ${index} activated`);
-	};
 
 	private readonly onMouseDown = (event: MouseEvent) => {
 		const note = Number((event.target as HTMLElement).dataset.note);
@@ -216,7 +105,6 @@ class InputKeyboardBase extends Component<Props> {
 		this.updateNumberOfWhiteKeys();
 		this.events = new EventManager(() => [
 			[window, 'resize', this.updateNumberOfWhiteKeys],
-			[document, 'keydown', this.onKeyDown],
 		]);
 		this.events.listen();
 	}
@@ -246,7 +134,7 @@ class InputKeyboardBase extends Component<Props> {
 					{
 						const note = keyCount++;
 						nodes.push(
-							<KeyboardKey
+							<InputKeyboardKey
 								key='white'
 								color='white'
 								velocity={this.getLastVelocityOfNote(note)}
@@ -259,7 +147,7 @@ class InputKeyboardBase extends Component<Props> {
 					if (!isLastKey && hasBlackKey(i)) {
 						const note = keyCount++;
 						nodes.push(
-							<KeyboardKey
+							<InputKeyboardKey
 								key='black'
 								color='black'
 								note={note}
