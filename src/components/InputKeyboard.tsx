@@ -93,47 +93,46 @@ class State {
 
 // TODO: Move me
 interface KeyProps {
+	color: 'white' | 'black';
 	style?: React.CSSProperties;
 	onMouseDown(event: MouseEvent): void;
 	onMouseUp(event: MouseEvent): void;
 	onMouseEnter(event: MouseEvent): void;
 	onMouseLeave(event: MouseEvent): void;
 	velocity: number;
-	value: number;
+	note: number;
 }
 // TODO: These key components are a bit redundant. Get rid of them / simplify
-const WhiteKey = ({ style, onMouseDown, onMouseUp, onMouseEnter, onMouseLeave, velocity, value }: KeyProps) =>
-	// TODO: Break this out.
+const KeyboardKey = ({
+	color,
+	style,
+	onMouseDown,
+	onMouseUp,
+	onMouseEnter,
+	onMouseLeave,
+	velocity,
+	note,
+}: KeyProps) => {
 	// TODO: Not sure how efficient it is to make this styling per key. check...
-	<div
-		className={classnames(keyWhite, {
-			// TODO: This doesn't make much sense
-			[keyActive('#fff', velocity)]: velocity > 0,
-		})}
-		style={style}
-		onMouseDown={onMouseDown}
-		onMouseUp={onMouseUp}
-		onMouseEnter={onMouseEnter}
-		onMouseLeave={onMouseLeave}
-		data-value={value}
-	>
-		{KEYBOARD_MAP[value] || ''}
-	</div>;
-
-const BlackKey = ({ style, onMouseDown, onMouseUp, onMouseEnter, onMouseLeave, velocity, value }: KeyProps) =>
-	<div
-		className={classnames(keyBlack, {
-			[keyActive('#111', velocity)]: velocity > 0,
-		})}
-		style={style}
-		onMouseDown={onMouseDown}
-		onMouseUp={onMouseUp}
-		onMouseEnter={onMouseEnter}
-		onMouseLeave={onMouseLeave}
-		data-value={value}
-	>
-		{KEYBOARD_MAP[value] || ''}
-	</div>;
+	const cssClass = color === 'white' ? keyWhite : keyBlack;
+	const activeColor = color === 'white' ? '#fff' : '#111';
+	return (
+		<div
+			className={classnames(cssClass, {
+				// TODO: This doesn't make much sense
+				[keyActive(activeColor, velocity)]: velocity > 0,
+			})}
+			style={style}
+			onMouseDown={onMouseDown}
+			onMouseUp={onMouseUp}
+			onMouseEnter={onMouseEnter}
+			onMouseLeave={onMouseLeave}
+			data-note={note}
+		>
+			{KEYBOARD_MAP[note] || ''}
+		</div>
+	);
+};
 
 const hasBlackKey = (whiteKeyIndex: number) => {
 	return WHITE_KEYS_WITH_BLACK.includes(whiteKeyIndex % (WHITE_KEYS_PER_OCTAVE - 1));
@@ -174,7 +173,7 @@ class InputKeyboardBase extends Component<Props> {
 	};
 
 	private readonly onMouseDown = (event: MouseEvent) => {
-		const note = Number((event.target as HTMLElement).dataset.value);
+		const note = Number((event.target as HTMLElement).dataset.note);
 		this.props.onNoteOn({
 			note,
 			velocity: 127,
@@ -201,6 +200,18 @@ class InputKeyboardBase extends Component<Props> {
 		this.setState({ currentMouseNote: null });
 	};
 
+	// TODO: Move this to be a reselect selector
+	private getLastOfNote(note: number) {
+		const { activeNotes } = this.props;
+		return findLast(activeNotes, { note });
+	}
+
+	// TODO: Move this to be a reselect selector
+	private getLastVelocityOfNote(note: number) {
+		const lastOfNote = this.getLastOfNote(note);
+		return lastOfNote ? lastOfNote.velocity : 0;
+	}
+
 	public componentDidMount() {
 		this.updateNumberOfWhiteKeys();
 		this.events = new EventManager(() => [
@@ -217,10 +228,8 @@ class InputKeyboardBase extends Component<Props> {
 	public render() {
 		// TODO: Make lowest note configurable via an octave parameter
 		let keyCount = 36;
-		const widthPerKey = this.getWidthPerKey();
 		const { numberOfWhiteKeys } = this.state;
-		// TODO: Use reselect here!!!?
-		const { activeNotes } = this.props;
+		const widthPerKey = this.getWidthPerKey();
 		const keyProps = {
 			onMouseDown: this.onMouseDown,
 			onMouseUp: this.releaseCurrentMouseNote,
@@ -232,25 +241,33 @@ class InputKeyboardBase extends Component<Props> {
 			<div className={keyContainer} ref={this.container}>
 				{range(numberOfWhiteKeys).map(i => {
 					const isLastKey = i === numberOfWhiteKeys - 1;
-					const whiteValue = keyCount++;
-					const lastWhite = findLast(activeNotes, { note: whiteValue });
+					const nodes = [];
 
-					const nodes = [
-						<WhiteKey key='white' value={whiteValue} {...keyProps} velocity={lastWhite ? lastWhite.velocity : 0} />,
-					];
+					{
+						const note = keyCount++;
+						nodes.push(
+							<KeyboardKey
+								key='white'
+								color='white'
+								velocity={this.getLastVelocityOfNote(note)}
+								note={note}
+								{...keyProps}
+							/>,
+						);
+					}
 
 					if (!isLastKey && hasBlackKey(i)) {
-						const blackValue = keyCount++;
-						const lastBlack = findLast(activeNotes, { note: blackValue });
+						const note = keyCount++;
 						nodes.push(
-							<BlackKey
+							<KeyboardKey
 								key='black'
-								value={blackValue}
+								color='black'
+								note={note}
+								velocity={this.getLastVelocityOfNote(note)}
 								style={{
 									left: widthPerKey * (i + 1),
 									width: widthPerKey * 0.6,
 								}}
-								velocity={lastBlack ? lastBlack.velocity : 0}
 								{...keyProps}
 							/>,
 						);
