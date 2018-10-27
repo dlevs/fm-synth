@@ -13,7 +13,7 @@
     "emotion": "^9.2.6",
     "immer": "^1.6.0",
     "lodash": "^4.17.10",
-    "parse-midi": "^1.0.5",
+    "parse-midi": "^1.0.6",
     "react": "^16.4.2",
     "react-dom": "^16.4.2",
     "react-redux": "^5.0.7",
