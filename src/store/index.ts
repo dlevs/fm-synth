@@ -1,4 +1,4 @@
-import { applyMiddleware, combineReducers, createStore } from 'redux';
+import { applyMiddleware, combineReducers, createStore, compose } from 'redux';
 import notes, { Notes } from './reducers/notesReducer';
 import settings, { Settings } from './reducers/settingsReducer';
 import sound, { Sound } from './reducers/sound';
@@ -18,6 +18,8 @@ export interface Store {
 
 export default createStore(
 	rootReducer,
-	window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__(),
-	applyMiddleware(soundTriggerMiddleware),
+	compose(
+		applyMiddleware(soundTriggerMiddleware),
+		window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__(),
+	),
 );
