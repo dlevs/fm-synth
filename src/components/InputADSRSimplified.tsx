@@ -6,6 +6,7 @@ interface Props {
 	decay: number;
 	sustain: number;
 	release: number;
+	onChange(changes: [string, number][]): void;
 }
 
 const styleShadow = css`
@@ -26,35 +27,48 @@ const log = ({ target }: MouseEvent) => {
 interface PointProps {
 	x: number;
 	y: number;
+	size: number;
 }
 
-const Point = ({ x, y }: PointProps) =>
-	<circle
+/**
+ * Render a circle. To be used inside of an <svg> element.
+ *
+ * Uses the <line> element instead of <circle> in order to make use of
+ * non-scaling-stroke, so the SVG can be scaled without increasing the
+ * size of the circle.
+ */
+const Point = ({ x, y, size }: PointProps) =>
+	<line
 		{...sharedProps}
-		cx={x}
-		cy={y}
-		r='1'
-		stroke='none'
+		x1={x}
+		y1={y}
+		x2={x}
+		y2={y}
+		strokeLinecap='round'
+		strokeWidth={size}
+		onMouseEnter={log}
 	/>;
 
-const InputADSRSimplified = ({ attack, decay, sustain, release }: Props) =>
-	<svg
-		className={styleShadow}
-		height='500'
-		width='100%'
-		viewBox='0 0 100 100'
-		onMouseMove={log}
-	>
-		<path
-			{...sharedProps}
-			d={`M0 100 L${attack} 0 L${decay} ${sustain} L75 ${sustain} L${release} 100`}
-			fill='none'
-			strokeWidth='2'
-		/>
-		<Point x={attack} y={0} />
-		<Point x={decay} y={sustain} />
-		<Point x={75} y={sustain} />
-		<Point x={release} y={100} />
-	</svg>;
+const InputADSRSimplified = ({ attack, decay, sustain, release }: Props) => {
+	return (
+		<svg
+			className={styleShadow}
+			height='500'
+			width='100%'
+			viewBox='0 0 100 100'
+		>
+			<path
+				{...sharedProps}
+				d={`M0 100 L${attack} 0 L${decay} ${sustain} L75 ${sustain} L${release} 100`}
+				fill='none'
+				strokeWidth='1'
+			/>
+			<Point size={6} x={attack} y={0} />
+			<Point size={6} x={decay} y={sustain} />
+			<Point size={6} x={75} y={sustain} />
+			<Point size={6} x={release} y={100} />
+		</svg>
+	);
+};
 
 export default InputADSRSimplified;

@@ -29,6 +29,7 @@ class App extends Component {
 			<>
 				<InputADSRSimplified
 					{...this.state.adsrParams}
+					onChange={this.onAdsrChange}
 				/>
 				<KeyboardMain />
 			</>
