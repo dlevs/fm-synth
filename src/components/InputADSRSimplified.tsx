@@ -1,5 +1,6 @@
 import React, { MouseEvent } from 'react';
 import { css } from 'emotion';
+import useMouseStatus from './hooks/useMouseStatus';
 
 interface Props {
 	attack: number;
@@ -142,9 +143,15 @@ const InputADSRSimplified = ({ attack, decay, sustain, release }: Props) => {
 	const xDecay = attack + decay;
 	const xSustain = xDecay + 25;
 	const xRelease = xSustain + release;
+	const { isMouseOver, isMouseDown, mouseStatusProps } = useMouseStatus();
 
 	return (
-		<div className={styleWrapper}>
+		<div
+			{...mouseStatusProps}
+			className={styleWrapper}
+		>
+			{`Mouse ${isMouseOver ? 'is' : 'isn\'t'} over`}<br/>
+			{`Mouse ${isMouseDown ? 'is' : 'isn\'t'} down`}
 			<svg
 				className={styleSvg}
 				height='500'

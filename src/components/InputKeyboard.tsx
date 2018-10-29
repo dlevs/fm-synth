@@ -6,7 +6,7 @@ import { defaultProps } from 'recompose';
 import { EventManager } from '../lib/eventUtils';
 import { Omit } from '../lib/types';
 import { WHITE_KEYS_WITH_BLACK, WHITE_KEYS_PER_OCTAVE } from '../lib/constants';
-import MouseDownStatus from './util/MouseDownStatus';
+import MouseDownStatus from './hooks/MouseDownStatus';
 // TODO: Move this type into lib/types?
 import InputKeyboardKey from './InputKeyboardKey';
 import { Note, NoteStatus } from '../store/reducers/notesReducer';

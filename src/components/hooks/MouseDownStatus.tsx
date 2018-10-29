@@ -1,6 +1,13 @@
+// TODO: Kill this file. Use hooks instead
+
 import React, { Component } from 'react';
 import { EventManager } from '../../lib/eventUtils';
-import { RenderPropComponentProps } from '../../lib/types';
+
+// React props
+export interface RenderPropComponentProps<T> {
+	children(passedArgs: T): JSX.Element;
+}
+
 export class State {
 	public isMouseDown = false;
 }
