@@ -18,7 +18,7 @@ const useMouseDownStatus = () => {
 		events.listen();
 
 		return () => events.stopListening();
-	});
+	}, []);
 
 	return {
 		isMouseDown,
