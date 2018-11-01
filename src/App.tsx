@@ -12,6 +12,7 @@ class State {
 	};
 }
 
+// TODO: Move state to redux:
 class App extends Component {
 	public state = new State();
 
