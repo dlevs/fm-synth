@@ -6,9 +6,9 @@ import KeyboardMain from './containers/KeyboardMain';
 class State {
 	public adsrParams = {
 		attack: 20,
-		decay: 40,
-		release: 100,
-		sustain: 40,
+		decay: 30,
+		release: 30,
+		sustain: 50,
 	};
 }
 

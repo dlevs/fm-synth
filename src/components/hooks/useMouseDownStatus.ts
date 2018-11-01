@@ -6,6 +6,7 @@ const useMouseDownStatus = () => {
 
 	const mouseDownProps = {
 		onMouseDown: () => setMouseDown(true),
+		// TODO: TouchStart necessary?
 		onTouchStart: () => setMouseDown(true),
 	};
 

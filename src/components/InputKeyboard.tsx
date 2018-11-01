@@ -73,6 +73,7 @@ const InputKeyboard = ({
 	// TODO: Make lowest note configurable via an octave parameter
 	let keyCount = 36;
 	const keyProps = {
+		// TODO: These functions are created every single render. Look at recommended react hook patterns.
 		onMouseDown,
 		onMouseEnter,
 		onMouseUp: releaseMouseNote,
