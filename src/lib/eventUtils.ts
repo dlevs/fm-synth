@@ -21,7 +21,7 @@ export const getRelativeMouseCoordinates = (
 
 export class EventManager {
 	private readonly getEvents: () => EventDefinition[];
-	private events: EventDefinition[];
+	private events: EventDefinition[] | null = null;
 
 	constructor(getEvents: () => EventDefinition[]) {
 		this.getEvents = getEvents;
@@ -36,9 +36,11 @@ export class EventManager {
 	}
 
 	public stopListening() {
-		this.events.forEach(([element, eventType, callback]: EventDefinition) => {
-			element.removeEventListener(eventType, callback as EventListener);
-		});
+		if (this.events) {
+			this.events.forEach(([element, eventType, callback]: EventDefinition) => {
+				element.removeEventListener(eventType, callback as EventListener);
+			});
+		}
 		return this;
 	}
 }

@@ -1,6 +1,6 @@
 import fromPairs from 'lodash/fromPairs';
 import React, { Component } from 'react';
-import InputADSRSimplified from './components/InputADSRSimplified';
+import InputADSR from './components/InputADSR';
 import KeyboardMain from './containers/KeyboardMain';
 
 class State {
@@ -28,7 +28,7 @@ class App extends Component {
 	public render() {
 		return (
 			<>
-				<InputADSRSimplified
+				<InputADSR
 					{...this.state.adsrParams}
 					onChange={this.onAdsrChange}
 				/>

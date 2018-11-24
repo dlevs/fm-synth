@@ -1,4 +1,4 @@
-import React, { MouseEvent, useRef, useState } from 'react';
+import React, { MouseEvent, RefObject, useRef, useState } from 'react';
 import { css } from 'emotion';
 import findLast from 'lodash/findLast';
 import range from 'lodash/range';
@@ -33,7 +33,7 @@ const InputKeyboard = ({
 	onNoteOn,
 	onNoteOff,
 }: Props) => {
-	const container = useRef(null);
+	const container: RefObject<HTMLDivElement | null> = useRef(null);
 	const { isMouseDown, mouseDownProps } = useMouseDownStatus();
 	const [mouseNote, setMouseNote] = useState(null as null | number);
 	const width = useClientWidth(container);
@@ -83,7 +83,7 @@ const InputKeyboard = ({
 
 	return (
 		<div
-			ref={container}
+			ref={container as RefObject<HTMLDivElement>}
 			className={keyContainer}
 			{...mouseDownProps}
 		>

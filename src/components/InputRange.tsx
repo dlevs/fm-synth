@@ -11,6 +11,9 @@ interface Props {
 	inputRef?: RefObject<HTMLInputElement>;
 }
 
+/**
+ * A simple range input.
+ */
 const InputRange = ({ label, inputRef, ...otherProps }: Props) => {
 	const id = useUniqueId();
 
