@@ -15,6 +15,35 @@ export interface ADSREnvelope {
 	release: number;
 }
 
+export interface Note {
+	note: number;
+	velocity: number;
+}
+
+export interface NoteStatus extends Note {
+	isReleased: boolean;
+	isSostenuto: boolean;
+}
+
+export interface OscillatorBase {
+	id: string;
+	waveType: OscillatorType;
+	envelope: ADSREnvelope;
+}
+
+export interface OscillatorFixed extends OscillatorBase {
+	mode: 'fixed';
+	frequency: number;
+}
+
+export interface OscillatorRatio extends OscillatorBase {
+	mode: 'ratio';
+	ratio: number;
+}
+
+export type Oscillator = OscillatorFixed | OscillatorRatio;
+
 // Utilities
 export type Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
 export type Subtract<T, K> = Omit<T, keyof K>;
+export type ValueOf<T> = T[keyof T];

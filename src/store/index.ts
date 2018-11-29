@@ -1,20 +1,8 @@
-import { applyMiddleware, combineReducers, createStore, compose } from 'redux';
-import notes, { Notes } from './reducers/notesReducer';
-import settings, { Settings } from './reducers/settingsReducer';
-import sound, { Sound } from './reducers/sound';
+import { applyMiddleware, createStore, compose } from 'redux';
+import rootReducer, { State } from './reducers';
 import soundTriggerMiddleware from './middleware/soundTriggerMiddleware';
 
-const rootReducer = combineReducers({
-	notes,
-	settings,
-	sound,
-});
-
-export interface Store {
-	notes: Notes;
-	settings: Settings;
-	sound: Sound;
-}
+export type Store = State;
 
 export default createStore(
 	rootReducer,

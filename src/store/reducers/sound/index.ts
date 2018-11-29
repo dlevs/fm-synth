@@ -1,10 +1,10 @@
 import { combineReducers } from 'redux';
-import oscillators, { Oscillator } from './oscillatorsReducer';
+import oscillators, { State as Ocillators } from './oscillatorsReducer';
 
 export default combineReducers({
 	oscillators,
 });
 
-export interface Sound {
-	oscillators: Oscillator[];
+export interface State {
+	oscillators: Ocillators;
 }

@@ -1,6 +1,6 @@
 import parseMidi from 'parse-midi';
 import { Store } from 'redux';
-import { noteActions } from '../store/reducers/notesReducer';
+import { actions as notesActions } from '../store/reducers/notesReducer';
 
 type MidiMessageEventCallback = (event: WebMidi.MIDIMessageEvent) => void;
 
@@ -35,13 +35,13 @@ const connectMidiDevices = async (onMessage: MidiMessageEventCallback) => {
 const getActionForMidiData = (midiEvent: ReturnType<typeof parseMidi>) => {
 	switch (midiEvent.messageType) {
 		case 'noteon':
-			return noteActions.triggerNoteOn({
+			return notesActions.triggerNoteOn({
 				note: midiEvent.key,
 				velocity: midiEvent.velocity,
 			});
 
 		case 'noteoff':
-			return noteActions.triggerNoteOff({
+			return notesActions.triggerNoteOff({
 				note: midiEvent.key,
 				velocity: midiEvent.velocity,
 			});
@@ -49,9 +49,9 @@ const getActionForMidiData = (midiEvent: ReturnType<typeof parseMidi>) => {
 		case 'controlchange':
 			switch (midiEvent.controlFunction) {
 				case 'sustainon':
-					return noteActions.triggerSustainOn();
+					return notesActions.triggerSustainOn();
 				case 'sustainoff':
-					return noteActions.triggerSustainOff();
+					return notesActions.triggerSustainOff();
 			}
 			break;
 
@@ -59,7 +59,7 @@ const getActionForMidiData = (midiEvent: ReturnType<typeof parseMidi>) => {
 		case 'channelmodechange':
 			switch (midiEvent.channelModeMessage) {
 				case 'allnotesoff':
-					return noteActions.triggerAllNotesOff();
+					return notesActions.triggerAllNotesOff();
 			}
 	}
 

@@ -1,75 +1,42 @@
 import produce from 'immer';
+import createAction from '../../lib/createAction'
+import { ValueOf, Note, NoteStatus } from '../../lib/types'
 
-export const NOTE_ON = 'NOTE_ON';
-export const NOTE_OFF = 'NOTE_OFF';
-export const ALL_NOTES_OFF = 'ALL_NOTES_OFF';
-export const SUSTAIN_ON = 'SUSTAIN_ON';
-export const SUSTAIN_OFF = 'SUSTAIN_OFF';
+export type State = typeof initialState
+export type Action = ReturnType<ValueOf<typeof actions>>
 
-// TODO: Move this to the types.ts file
-export interface Note {
-	note: number;
-	velocity: number;
-}
-
-export interface NoteStatus extends Note {
-	isReleased: boolean;
-	isSostenuto: boolean;
-}
-
-export interface Notes {
-	activeNotes: NoteStatus[];
-	isSustainActive: boolean;
-	isSostenutoActive: boolean;
-}
-
-interface NoteAction extends Note {
-	type: 'NOTE_ON' | 'NOTE_OFF' | 'ALL_NOTES_OFF';
-}
-
-type Action = NoteAction | {
-	type: 'SUSTAIN_ON' | 'SUSTAIN_OFF';
-};
-
-const defaultNotes: Notes = {
-	activeNotes: [],
+const initialState = {
+	activeNotes: [] as NoteStatus[],
 	isSustainActive: false,
 	isSostenutoActive: false,
 };
 
-const createNoteTrigger = (type: string) =>
-	({ note, velocity }: Note) => ({
-		type,
-		note,
-		velocity,
-	});
-
-export const noteActions = {
+export const actions = {
 	// TODO: We need to prepend all fn names with "trigger"?
-	triggerNoteOn: createNoteTrigger(NOTE_ON),
-	triggerNoteOff: createNoteTrigger(NOTE_OFF),
-	triggerAllNotesOff: () => ({ type: ALL_NOTES_OFF }),
-	triggerSustainOn: () => ({ type: SUSTAIN_ON }),
-	triggerSustainOff: () => ({ type: SUSTAIN_OFF }),
+	triggerNoteOn: createAction<'NOTE_ON', Note>('NOTE_ON'),
+	triggerNoteOff: createAction<'NOTE_OFF', Note>('NOTE_OFF'),
+	triggerAllNotesOff: createAction('ALL_NOTES_OFF'),
+	triggerSustainOn: createAction('SUSTAIN_ON'),
+	triggerSustainOff: createAction('SUSTAIN_OFF'),
 };
 
 // TODO: What does all of this achieve? Sound generator will not be as declarative.
 // It may be easier to do this in redux middleware / outside of redux completely
-const notesReducer = (state = defaultNotes, action: Action) =>
+const notesReducer = (state = initialState, action: Action) =>
 	produce(state, draft => {
 		switch (action.type) {
-			case NOTE_ON:
+			case actions.triggerNoteOn.type:
 				draft.activeNotes.push({
-					note: action.note,
-					velocity: action.velocity,
+					note: action.payload.note,
+					velocity: action.payload.velocity,
 					isReleased: false,
 					isSostenuto: false,
 				});
 				break;
 
-			case NOTE_OFF:
+			case actions.triggerNoteOff.type:
 				const noteToRemove = draft.activeNotes.find(({ note, isReleased }) =>
-					note === action.note && !isReleased,
+					note === action.payload.note && !isReleased,
 				);
 
 				if (!noteToRemove) {
@@ -84,15 +51,15 @@ const notesReducer = (state = defaultNotes, action: Action) =>
 				draft.activeNotes = draft.activeNotes.filter(note => note !== noteToRemove);
 				break;
 
-			case ALL_NOTES_OFF:
+			case actions.triggerAllNotesOff.type:
 				draft.activeNotes = [];
 				break;
 
-			case SUSTAIN_ON:
+			case actions.triggerSustainOn.type:
 				draft.isSustainActive = true;
 				break;
 
-			case SUSTAIN_OFF:
+			case actions.triggerSustainOff.type:
 				draft.isSustainActive = false;
 				draft.activeNotes = draft.activeNotes.filter(({ isReleased }) => !isReleased);
 		}

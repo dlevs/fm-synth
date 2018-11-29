@@ -1,25 +1,7 @@
 import produce from 'immer';
-import { ADSREnvelope } from '../../../lib/types';
+import { Oscillator } from '../../../lib/types';
 
-interface OscillatorBase {
-	id: string;
-	waveType: OscillatorType;
-	envelope: ADSREnvelope;
-}
-
-interface OscillatorFixed extends OscillatorBase {
-	mode: 'fixed';
-	frequency: number;
-}
-
-interface OscillatorRatio extends OscillatorBase {
-	mode: 'ratio';
-	ratio: number;
-}
-
-export type Oscillator = OscillatorFixed | OscillatorRatio;
-
-const defaultState: Oscillator[] = [
+const initialState: Oscillator[] = [
 	{
 		id: 'TODO:some-short-id-here',
 		mode: 'ratio',
@@ -46,7 +28,7 @@ const defaultState: Oscillator[] = [
 	},
 ];
 
-const oscillatorsReducer = (state = defaultState) =>
+const oscillatorsReducer = (state = initialState) =>
 	produce(state, () => {
 		// switch (action.type) {
 		// 	case SET_BASE_FREQUENCY:
@@ -59,3 +41,4 @@ const oscillatorsReducer = (state = defaultState) =>
 	});
 
 export default oscillatorsReducer;
+export type State = typeof initialState

@@ -1,21 +1,21 @@
 import { Middleware } from 'redux';
-import { NOTE_ON, NOTE_OFF } from '../reducers/notesReducer';
+import { actions, Action } from '../reducers/notesReducer';
 import PolyVoice from '../../lib/audio/Voice';
 
 let voices: PolyVoice[] = [];
 
 // tslint:disable-next-line:no-unused
-const soundTriggerMiddleware: Middleware = store => next => action => {
+const soundTriggerMiddleware: Middleware = store => next => (action: Action) => {
 	if (action) {
-		if (action.type === NOTE_ON) {
-			const voice = new PolyVoice(action.note, action.velocity);
+		if (action.type === actions.triggerNoteOn.type) {
+			const voice = new PolyVoice(action.payload.note, action.payload.velocity);
 
 			voices.push(voice);
 			voice.triggerAttack();
-		} else if (action.type === NOTE_OFF) {
+		} else if (action.type === actions.triggerNoteOff.type) {
 			// TODO: Duplicate logic here and in notesReducer...
 			voices = voices.filter(voice => {
-				if (voice.note === action.note) {
+				if (voice.note === action.payload.note) {
 					voice.triggerRelease();
 					return false;
 				}

@@ -6,9 +6,7 @@ import InputKeyboardKey from './InputKeyboardKey';
 import useClientWidth from '../hooks/useClientWidth';
 import useMouseDownStatus from '../hooks/useMouseDownStatus';
 import { WHITE_KEYS_WITH_BLACK, WHITE_KEYS_PER_OCTAVE } from '../lib/constants';
-
-// TODO: Move these to types file?
-import { Note, NoteStatus } from '../store/reducers/notesReducer';
+import { Note, NoteStatus } from '../lib/types';
 
 const keyContainer = css`
 	position: relative;
