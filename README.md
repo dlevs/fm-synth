@@ -3,4 +3,3 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 TODO:
 Add https://github.com/streamich/react-use
 Add useRedux when implemented https://github.com/reduxjs/react-redux/issues/1063
-Update dependencies

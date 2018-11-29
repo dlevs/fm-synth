@@ -3,8 +3,8 @@ import { css } from 'emotion';
 import findLast from 'lodash/findLast';
 import range from 'lodash/range';
 import InputKeyboardKey from './InputKeyboardKey';
-import useClientWidth from './hooks/useClientWidth';
-import useMouseDownStatus from './hooks/useMouseDownStatus';
+import useClientWidth from '../hooks/useClientWidth';
+import useMouseDownStatus from '../hooks/useMouseDownStatus';
 import { WHITE_KEYS_WITH_BLACK, WHITE_KEYS_PER_OCTAVE } from '../lib/constants';
 
 // TODO: Move these to types file?

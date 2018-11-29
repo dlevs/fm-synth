@@ -1,5 +1,5 @@
 import React, { ChangeEvent, RefObject } from 'react';
-import useUniqueId from './hooks/useUniqueId';
+import useUniqueId from '../hooks/useUniqueId';
 
 interface Props {
 	label: string;

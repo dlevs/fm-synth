@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { EventManager } from '../../lib/eventUtils';
+import { EventManager } from '../lib/eventUtils';
 
 const useMouseDownStatus = () => {
 	const [isMouseDown, setMouseDown] = useState(false);
