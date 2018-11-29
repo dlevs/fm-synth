@@ -41,4 +41,3 @@ const oscillatorsReducer = (state = initialState) =>
 	});
 
 export default oscillatorsReducer;
-export type State = typeof initialState

@@ -2,7 +2,6 @@ import produce from 'immer';
 import createAction from '../../lib/createAction'
 import { ValueOf, Note, NoteStatus } from '../../lib/types'
 
-export type State = typeof initialState
 export type Action = ReturnType<ValueOf<typeof actions>>
 
 const initialState = {

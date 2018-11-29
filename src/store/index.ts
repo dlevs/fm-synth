@@ -1,8 +1,8 @@
 import { applyMiddleware, createStore, compose } from 'redux';
-import rootReducer, { State } from './reducers';
+import rootReducer from './reducers';
 import soundTriggerMiddleware from './middleware/soundTriggerMiddleware';
 
-export type Store = State;
+export type Store = ReturnType<typeof rootReducer>;
 
 export default createStore(
 	rootReducer,
