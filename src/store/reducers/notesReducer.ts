@@ -1,8 +1,8 @@
 import produce from 'immer';
-import createAction from '../../lib/createAction'
-import { ValueOf, Note, NoteStatus } from '../../lib/types'
+import createAction from '../../lib/createAction';
+import { ValueOf, Note, NoteStatus } from '../../lib/types';
 
-export type Action = ReturnType<ValueOf<typeof actions>>
+export type Action = ReturnType<ValueOf<typeof actions>>;
 
 const initialState = {
 	activeNotes: [] as NoteStatus[],

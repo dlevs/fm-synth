@@ -1,8 +1,8 @@
 import produce from 'immer';
-import createAction from '../../lib/createAction'
-import { ValueOf } from '../../lib/types'
+import createAction from '../../lib/createAction';
+import { ValueOf } from '../../lib/types';
 
-export type Action = ReturnType<ValueOf<typeof actions>>
+export type Action = ReturnType<ValueOf<typeof actions>>;
 
 const initialState = {
 	baseFrequency: 440,
@@ -11,8 +11,8 @@ const initialState = {
 
 export const actions = {
 	setBaseFrequency: createAction<'SET_BASE_FREQUENCY', number>('SET_BASE_FREQUENCY'),
-	setPolyphony: createAction<'SET_POLYPHONY', number>('SET_POLYPHONY')
-}
+	setPolyphony: createAction<'SET_POLYPHONY', number>('SET_POLYPHONY'),
+};
 
 const settingsReducer = (state = initialState, action: Action) =>
 	produce(state, draft => {

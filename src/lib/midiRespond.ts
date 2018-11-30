@@ -19,7 +19,7 @@ const connectMidiDevices = async (onMessage: MidiMessageEventCallback) => {
 
 	addMidiEventMessageListeners(access.inputs, onMessage);
 
-	access.addEventListener('statechange', (event) => {
+	access.addEventListener('statechange', event => {
 		const { state } = (event as WebMidi.MIDIConnectionEvent).port;
 		if (state !== 'connected' || event.target === null) {
 			return;

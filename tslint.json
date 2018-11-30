@@ -1,5 +1,5 @@
 {
-  "extends": ["tslint-react", "tslint-config-prettier", "@dlevs/tslint-config"],
+  "extends": ["@dlevs/tslint-config"],
   "rules": {
     "comment-format": [true, "check-space"],
     "variable-name": [true, "ban-keywords", "check-format", "allow-pascal-case"],

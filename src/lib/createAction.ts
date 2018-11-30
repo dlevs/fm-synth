@@ -1,29 +1,29 @@
 interface ActionCreator<T extends string> {
 	(): {
-		type: T
-	}
+		type: T;
+	};
 	type: T;
 }
 
 interface ActionWithPayloadCreator<T extends string, P> {
 	(payload: P): {
-		type: T,
-		payload: P
-	}
+		type: T;
+		payload: P;
+	};
 	type: T;
 }
 
-function createAction<T extends string>(type: T): ActionCreator<T>
-function createAction<T extends string, P>(type: T): ActionWithPayloadCreator<T, P>
+function createAction<T extends string>(type: T): ActionCreator<T>;
+function createAction<T extends string, P>(type: T): ActionWithPayloadCreator<T, P>;
 function createAction<T extends string, P>(type: T) {
-	const action = (payload?: P) =>
+	const actionCreator = (payload?: P) =>
 		payload === undefined
 			? { type }
-			: { type, payload }
+			: { type, payload };
 
-	action.type = type
+	actionCreator.type = type;
 
-	return action
+	return actionCreator;
 }
 
-export default createAction
+export default createAction;
