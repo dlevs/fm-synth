@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, RefObject, useEffect } from 'react';
 import { css } from 'emotion';
 import uniq from 'lodash/uniq';
 import flatMap from 'lodash/flatMap';
@@ -29,11 +29,13 @@ const styleWrapper = css`
 `;
 
 const styleSvg = css`
+	user-select: none;
 	display: block;
 	overflow: visible;
-	cursor: grab;
 
 	&[data-hover="true"] {
+		cursor: grab;
+
 		path {
 			fill: rgba(0, 0, 0, 0.05);
 		}
@@ -58,11 +60,6 @@ const styleCircle = css`
 	}
 `;
 
-interface PointMap {
-	pointIndex: number;
-	mapX?: string | null;
-	mapY?: string | null;
-}
 
 // TODO: Explain this value and make better name
 const WIDTH = 3.5;
@@ -99,7 +96,9 @@ const getInteractivePoints = (pointsConfig: ReturnType<typeof getPointsConfig>) 
 		.map(({ mapX, mapY }, pointIndex) => ({ mapX, mapY, pointIndex }))
 		.filter(({ mapX, mapY }) => mapX || mapY);
 
-const getPointInputs = (interactivePoints: ReturnType<typeof getInteractivePoints>) => {
+const getPointInputs = (
+	interactivePoints: ReturnType<typeof getInteractivePoints>,
+): {[key: string]: RefObject<null | HTMLInputElement>} => {
 	const inputNames = flatMap(
 		interactivePoints,
 		({ mapX, mapY }) => [mapX, mapY],
@@ -129,14 +128,10 @@ const InputADSR = (props: Props) => {
 
 	// SVG wrapper element
 	const svgWrapper = useRef(null as null | HTMLDivElement);
+	const wrapper = useRef(null as null | HTMLDivElement);
 	const { width, height } = useSize(svgWrapper);
 	const scalePointToWidth = scaleMIDIValueBetween(0, width / WIDTH);
 	const scalePointToHeight = scaleMIDIValueBetween(0, height);
-
-	// Ensure a re-render when size of window changes.
-
-	// TODO: Tidy the rest
-	const [activePointIndex, setActivePointIndex] = useState(null as null | number);
 	const pointsConfig = getPointsConfig(props);
 	const points = cumulativeX(pointsConfig.map(({ point }) => point))
 		.map(([x, y]): Point => [
@@ -145,6 +140,39 @@ const InputADSR = (props: Props) => {
 		]);
 	const interactivePoints = getInteractivePoints(pointsConfig);
 	const inputs = getPointInputs(interactivePoints);
+	const [activePointIndex, setActivePointIndexRaw] = useState(null as null | number);
+	const setActivePointIndex = (index: null | number) => {
+		if (activePointIndex !== index) {
+			setActivePointIndexRaw(index);
+		}
+	};
+	const getIsInputFocused = () => (
+		wrapper.current &&
+		wrapper.current.contains(document.activeElement)
+	);
+	const isInputFocused = getIsInputFocused();
+
+	useEffect(() => {
+		if (isMouseDown && activePointIndex != null) {
+			const point = interactivePoints[activePointIndex];
+			const inputName = point.mapX || point.mapY;
+
+			if (inputName != null) {
+				const relatedInput = inputs[inputName];
+				if (relatedInput && relatedInput.current) {
+					relatedInput.current.focus();
+				}
+			}
+		}
+
+		if (!isMouseDown && !isMouseOver && !getIsInputFocused()) {
+			setActivePointIndex(null);
+		}
+	});
+
+	// Ensure a re-render when size of window changes.
+
+	// TODO: Tidy the rest
 
 	const onMouseMove: EventListener = event => {
 		if (!svgWrapper.current) {
@@ -154,24 +182,18 @@ const InputADSR = (props: Props) => {
 		const { x, y } = getRelativeMouseCoordinates(event, svgWrapper.current);
 
 		// TODO: Moving mouse fast out of SVG area causes it to remain in active state. Do some of this logic outside of mousemove
-		if (!isMouseDown) {
-			if (isMouseOver) {
-				const hoveredPointIndex = getClosestPointIndex(
-					interactivePoints.map(pointMap => points[pointMap.pointIndex]),
-					[x, y],
-				);
+		if (!isMouseDown && isMouseOver) {
+			const hoveredPointIndex = getClosestPointIndex(
+				interactivePoints.map(pointMap => points[pointMap.pointIndex]),
+				[x, y],
+			);
 
-				if (hoveredPointIndex !== activePointIndex) {
-					setActivePointIndex(hoveredPointIndex);
-				}
-			} else if (activePointIndex !== null) {
-				setActivePointIndex(null);
-			}
+			setActivePointIndex(hoveredPointIndex);
 
 			return;
 		}
 
-		if (activePointIndex === null) {
+		if (activePointIndex === null || !isMouseOver) {
 			return;
 		}
 
@@ -203,7 +225,28 @@ const InputADSR = (props: Props) => {
 	useEventListener(document, 'mousemove', onMouseMove);
 
 	return (
-		<div className={styleWrapper}>
+		<div
+			className={styleWrapper}
+			ref={wrapper}
+			onBlur={(event) => {
+				if (wrapper.current && !wrapper.current.contains(event.relatedTarget)) {
+					setActivePointIndex(null)
+				}
+			}}
+			onFocus={(event: FocusEvent) => {
+				const { name } = event.target;
+				const index = interactivePoints.findIndex(({ mapX, mapY }) => {
+					return mapX === name || mapY === name;
+				});
+
+				if (index !== -1) {
+					setActivePointIndex(index);
+				}
+			}}
+			// Prevent default on click to not take focus away from input
+			// elements being focused via JS for accessibility.
+			onMouseDown={e => e.preventDefault()}
+		>
 			<div className={styleVisuallyHidden}>
 				{Object.keys(inputs).map(name => (
 					<InputRange
@@ -214,16 +257,6 @@ const InputADSR = (props: Props) => {
 						min={MIDI_MIN}
 						max={MIDI_MAX}
 						inputRef={inputs[name]}
-						onFocus={() => {
-							const index = interactivePoints.findIndex(({ mapX, mapY }) => {
-								return mapX === name || mapY === name;
-							});
-
-							if (index !== -1) {
-								setActivePointIndex(index);
-							}
-						}}
-						onBlur={() => setActivePointIndex(null)}
 						onChange={({ target }) => {
 							onChange({
 								...pickADSRProps(props),
@@ -241,7 +274,7 @@ const InputADSR = (props: Props) => {
 				<svg
 					className={styleSvg}
 					data-hover={activePointIndex != null}
-					data-active={isMouseDown}
+					data-active={isInputFocused}
 					width='100%'
 					height='300'
 					viewBox={`0 0 ${width} ${height}`}
