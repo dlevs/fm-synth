@@ -3,7 +3,7 @@ import { css } from 'emotion';
 import uniq from 'lodash/uniq';
 import flatMap from 'lodash/flatMap';
 import clamp from 'lodash/fp/clamp';
-import { MIDI_MIN, MIDI_MAX, SVG_VIEWBOX, scaleMidiValueToSVG } from '../lib/scales';
+import { MIDI_MIN, MIDI_MAX, scaleMIDIValueBetween } from '../lib/scales';
 import { getRelativeMouseCoordinates } from '../lib/eventUtils';
 import { cumulativeX } from '../lib/pointUtils';
 import { Point, ADSREnvelope } from '../lib/types';
@@ -12,6 +12,7 @@ import useEventListener from '../hooks/useEventListener';
 import SVGLineCircle from './SVGLineCircle';
 import SVGPathLine from './SVGPathLine';
 import useMouseStatus from '../hooks/useMouseStatus';
+import useSize from '../hooks/useSize';
 
 const clampBetween0And1 = clamp(0, 1);
 
@@ -27,8 +28,9 @@ const styleWrapper = css`
 `;
 
 const styleSvg = css`
+	display: block;
 	overflow: visible;
-	/* filter: drop-shadow(0 0 5px #000); */
+	cursor: grab;
 
 	&[data-hover="true"] {
 		path {
@@ -49,10 +51,8 @@ const styleCircle = css`
 	position: relative;
 	z-index: 1;
 	stroke-width: 6;
-	cursor: grab;
 
-	&:hover,
-	&:active + & {
+	&[data-active="true"] {
 		stroke-width: 12;
 	}
 `;
@@ -65,8 +65,6 @@ interface PointMap {
 
 // TODO: Explain this value and make better name
 const WIDTH = 3.5;
-// TODO: Name makes no sense
-const WIDTH_MAX = WIDTH * MIDI_MAX;
 
 interface PointConfig {
 	point: Point;
@@ -114,44 +112,80 @@ const getPointInputs = (interactivePoints: ReturnType<typeof getInteractivePoint
 	}), {});
 };
 
+const getClosestPointIndex = (points: Point[], [x, y]: Point) => {
+	const distances = points.map(([x2, y2]) => Math.abs(x - x2) + Math.abs(y - y2));
+	const distance = Math.min(...distances);
+
+	return distances.indexOf(distance);
+};
+
 const InputADSR = (props: Props) => {
+	// Props
 	const { onChange } = props;
-	const [currentPointMap, setCurrentPointMap] = useState(null as null | PointMap);
+
+	// State
 	const { isMouseDown, isMouseOver, mouseStatusProps } = useMouseStatus();
+
+	// SVG wrapper element
+	const svgWrapper = useRef(null as null | HTMLDivElement);
+	const { width, height } = useSize(svgWrapper);
+	const scalePointToWidth = scaleMIDIValueBetween(0, width / WIDTH);
+	const scalePointToHeight = scaleMIDIValueBetween(0, height);
+
+	// Ensure a re-render when size of window changes.
+
+
+	// TODO: Tidy the rest
+	const [activePointIndex, setActivePointIndex] = useState(null as null | number);
 	const pointsConfig = getPointsConfig(props);
+	const points = cumulativeX(pointsConfig.map(({ point }) => point))
+		.map(([x, y]): Point => [
+			scalePointToWidth(x),
+			scalePointToHeight(y),
+		]);
 	const interactivePoints = getInteractivePoints(pointsConfig);
 	const inputs = getPointInputs(interactivePoints);
 
-	const pointsMIDI = cumulativeX(pointsConfig.map(({ point }) => point));
-	// TODO: ...
-	const points = pointsMIDI.map(([x, y]) => [
-		scaleMidiValueToSVG(x) / WIDTH,
-		scaleMidiValueToSVG(y),
-	] as Point);
-	const svgWrapper = useRef(null as null | HTMLDivElement);
-	const clearCurrentParam = () => {
-		setCurrentPointMap(null);
-	};
 	const onMouseMove: EventListener = event => {
-		if (!currentPointMap || !svgWrapper.current) {
+		if (!svgWrapper.current) {
 			return;
 		}
 
-		const { clientWidth, clientHeight } = svgWrapper.current;
-		const { mapX, mapY, pointIndex } = currentPointMap;
-		const changes: Partial<ADSREnvelope> = {};
 		const { x, y } = getRelativeMouseCoordinates(event, svgWrapper.current);
 
+		if (!isMouseDown) {
+			if (isMouseOver) {
+				const hoveredPointIndex = getClosestPointIndex(
+					interactivePoints.map(pointMap => points[pointMap.pointIndex]),
+					[x, y],
+				);
+
+				if (hoveredPointIndex !== activePointIndex) {
+					setActivePointIndex(hoveredPointIndex);
+				}
+			} else if (activePointIndex !== null) {
+				setActivePointIndex(null);
+			}
+
+			return;
+		}
+
+		if (activePointIndex === null) {
+			return;
+		}
+
+		const { mapX, mapY, pointIndex } = interactivePoints[activePointIndex];
+		const changes: Partial<ADSREnvelope> = {};
+
 		if (mapX) {
-			const scaleX = clientWidth / WIDTH_MAX;
-			const [minX] = pointsMIDI[pointIndex - 1] || [0, 0];
-			const maxRangeX = clientWidth / WIDTH;
-			const ratioX = clampBetween0And1((x - (minX * scaleX)) / maxRangeX);
+			const [minX] = points[pointIndex - 1] || [0, 0];
+			const maxRangeX = width / WIDTH;
+			const ratioX = clampBetween0And1((x - minX) / maxRangeX);
 			changes[mapX] = ratioX * MIDI_MAX;
 		}
 
 		if (mapY) {
-			const ratioY = clampBetween0And1(y / clientHeight);
+			const ratioY = clampBetween0And1(y / height);
 			changes[mapY] = MIDI_MAX - (ratioY * MIDI_MAX);
 		}
 
@@ -165,7 +199,6 @@ const InputADSR = (props: Props) => {
 		});
 	};
 
-	useEventListener(document, 'mouseup', clearCurrentParam);
 	useEventListener(document, 'mousemove', onMouseMove);
 
 	return (
@@ -189,7 +222,7 @@ const InputADSR = (props: Props) => {
 			))}
 			{/*
 				A wrapper is needed for querying dimensions.
-				We cannot query `.clientWidth` on an SVG directly in Firefox.
+				We cannot query `.width` on an SVG directly in Firefox.
 			*/}
 			<div ref={svgWrapper} {...mouseStatusProps}>
 				<svg
@@ -198,16 +231,16 @@ const InputADSR = (props: Props) => {
 					data-active={isMouseDown}
 					width='100%'
 					height='300'
-					viewBox={SVG_VIEWBOX}
+					viewBox={`0 0 ${width} ${height}`}
 					preserveAspectRatio='none'
 				>
 					<SVGPathLine className={styleSvgBase} points={points} />
 					{interactivePoints.map((pointMap, i) => (
 						<SVGLineCircle
 							key={i}
+							data-active={i === activePointIndex}
 							className={styleCircle}
 							point={points[pointMap.pointIndex]}
-							onMouseDown={() => setCurrentPointMap(pointMap)}
 						/>
 					))}
 				</svg>

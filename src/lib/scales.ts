@@ -1,9 +1,5 @@
 import flow from 'lodash/flow';
 
-export const SVG_MIN = 0;
-export const SVG_MAX = 100;
-export const SVG_VIEWBOX = `${SVG_MIN} ${SVG_MIN} ${SVG_MAX} ${SVG_MAX}`;
-
 export const MIDI_MIN = 0;
 export const MIDI_MAX = 127;
 
@@ -16,19 +12,16 @@ const scaleMidiValueBetween0And1 = (n: number) => n / MIDI_MAX;
  * Create a function which scales values between 0 - 1 to
  * a be between `min` and `max`.
  */
-const scaleNumberBetween = (min: number, max: number) => {
+export const scaleNumberBetween = (min: number, max: number) => {
 	const step = max - min;
 
 	// `multiplier` is a number between 0 - 1
 	return (multiplier: number) => (multiplier * step) + min;
 };
 
-export const velocityColorMixScale = flow(
+export const scaleMIDIValueBetween = (min: number, max: number) => flow(
 	scaleMidiValueBetween0And1,
-	scaleNumberBetween(0.2, 1),
+	scaleNumberBetween(min, max),
 );
 
-export const scaleMidiValueToSVG = flow(
-	scaleMidiValueBetween0And1,
-	scaleNumberBetween(SVG_MIN, SVG_MAX),
-);
+export const velocityColorMixScale = scaleMIDIValueBetween(0.2, 1);

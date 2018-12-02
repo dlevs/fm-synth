@@ -3,7 +3,7 @@ import { css } from 'emotion';
 import findLast from 'lodash/findLast';
 import range from 'lodash/range';
 import InputKeyboardKey from './InputKeyboardKey';
-import useClientWidth from '../hooks/useClientWidth';
+import useSize from '../hooks/useSize';
 import useMouseDownStatus from '../hooks/useMouseDownStatus';
 import { WHITE_KEYS_WITH_BLACK, WHITE_KEYS_PER_OCTAVE } from '../lib/constants';
 import { Note, NoteStatus } from '../lib/types';
@@ -32,9 +32,9 @@ const InputKeyboard = ({
 	onNoteOff,
 }: Props) => {
 	const container: RefObject<HTMLDivElement | null> = useRef(null);
+	const { width } = useSize(container);
 	const { isMouseDown, mouseDownProps } = useMouseDownStatus();
 	const [mouseNote, setMouseNote] = useState(null as null | number);
-	const width = useClientWidth(container);
 	const numberOfWhiteKeys = Math.floor(width / keyWidth);
 	const widthPerKey = width / numberOfWhiteKeys;
 
