@@ -3,7 +3,7 @@ export const getRelativeMouseCoordinates = (
 	element?: Element,
 ) => {
 	const bounds = (element || event.target as Element).getBoundingClientRect();
-	const { clientX, clientY } = event instanceof TouchEvent
+	const { clientX, clientY } = (window.TouchEvent && event instanceof TouchEvent)
 		? event.touches[0]
 		: event as MouseEvent;
 

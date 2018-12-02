@@ -4,10 +4,13 @@ declare global {
 		__REDUX_DEVTOOLS_EXTENSION__: any;
 		AudioContext: typeof AudioContext;
 		webkitAudioContext: typeof AudioContext;
+		TouchEvent: typeof TouchEvent;
 	}
 }
 
 // App-specific types
+export type Point = [number, number];
+
 export interface ADSREnvelope {
 	attack: number;
 	decay: number;

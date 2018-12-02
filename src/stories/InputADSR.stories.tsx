@@ -17,8 +17,10 @@ const StatefulInputADSR = (props: ADSREnvelope) => {
 };
 
 storiesOf('InputADSR', module)
+	// TODO: Look into a global way to register these
 	.addDecorator(withKnobs)
-	.add('Controlled by props', withInfo({ inline: true })(() => (
+	.addDecorator(withInfo({ inline: true }))
+	.add('Controlled by props', () => (
 		<InputADSR
 			attack={number('attack', 100)}
 			decay={number('decay', 100)}
@@ -26,12 +28,12 @@ storiesOf('InputADSR', module)
 			release={number('release', 100)}
 			onChange={action('onChange')}
 		/>
-	)))
-	.add('Controlled by drag', withInfo({ inline: true })(() => (
+	))
+	.add('Controlled by drag', () => (
 		<StatefulInputADSR
 			attack={100}
 			decay={100}
 			sustain={70}
 			release={100}
 		/>
-	)));
+	));
