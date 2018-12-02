@@ -7,6 +7,7 @@ import { MIDI_MIN, MIDI_MAX, scaleMIDIValueBetween } from '../lib/scales';
 import { getRelativeMouseCoordinates } from '../lib/eventUtils';
 import { cumulativeX } from '../lib/pointUtils';
 import { Point, ADSREnvelope } from '../lib/types';
+import { styleVisuallyHidden } from '../lib/utilityStyles';
 import InputRange from './InputRange';
 import useEventListener from '../hooks/useEventListener';
 import SVGLineCircle from './SVGLineCircle';
@@ -134,7 +135,6 @@ const InputADSR = (props: Props) => {
 
 	// Ensure a re-render when size of window changes.
 
-
 	// TODO: Tidy the rest
 	const [activePointIndex, setActivePointIndex] = useState(null as null | number);
 	const pointsConfig = getPointsConfig(props);
@@ -153,6 +153,7 @@ const InputADSR = (props: Props) => {
 
 		const { x, y } = getRelativeMouseCoordinates(event, svgWrapper.current);
 
+		// TODO: Moving mouse fast out of SVG area causes it to remain in active state. Do some of this logic outside of mousemove
 		if (!isMouseDown) {
 			if (isMouseOver) {
 				const hoveredPointIndex = getClosestPointIndex(
@@ -203,23 +204,35 @@ const InputADSR = (props: Props) => {
 
 	return (
 		<div className={styleWrapper}>
-			{Object.keys(inputs).map(name => (
-				<InputRange
-					key={name}
-					label={name}
-					name={name}
-					value={props[name]}
-					min={MIDI_MIN}
-					max={MIDI_MAX}
-					inputRef={inputs[name]}
-					onChange={({ target }) => {
-						onChange({
-							...pickADSRProps(props),
-							[name]: Number(target.value),
-						});
-					}}
-				/>
-			))}
+			<div className={styleVisuallyHidden}>
+				{Object.keys(inputs).map(name => (
+					<InputRange
+						key={name}
+						label={name}
+						name={name}
+						value={props[name]}
+						min={MIDI_MIN}
+						max={MIDI_MAX}
+						inputRef={inputs[name]}
+						onFocus={() => {
+							const index = interactivePoints.findIndex(({ mapX, mapY }) => {
+								return mapX === name || mapY === name;
+							});
+
+							if (index !== -1) {
+								setActivePointIndex(index);
+							}
+						}}
+						onBlur={() => setActivePointIndex(null)}
+						onChange={({ target }) => {
+							onChange({
+								...pickADSRProps(props),
+								[name]: Number((target as HTMLInputElement).value),
+							});
+						}}
+					/>
+				))}
+			</div>
 			{/*
 				A wrapper is needed for querying dimensions.
 				We cannot query `.width` on an SVG directly in Firefox.
@@ -227,7 +240,7 @@ const InputADSR = (props: Props) => {
 			<div ref={svgWrapper} {...mouseStatusProps}>
 				<svg
 					className={styleSvg}
-					data-hover={isMouseOver || isMouseDown}
+					data-hover={activePointIndex != null}
 					data-active={isMouseDown}
 					width='100%'
 					height='300'

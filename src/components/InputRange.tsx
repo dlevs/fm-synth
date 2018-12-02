@@ -1,13 +1,12 @@
-import React, { ChangeEvent, RefObject } from 'react';
+import React, { HTMLAttributes, RefObject } from 'react';
 import useUniqueId from '../hooks/useUniqueId';
 
-interface Props {
+interface Props extends HTMLAttributes<HTMLInputElement> {
 	label: string;
 	name: string;
 	min: number;
 	max: number;
 	value: number;
-	onChange(event: ChangeEvent<HTMLInputElement>): void;
 	// TODO: Can we use forwardRef?
 	inputRef?: RefObject<HTMLInputElement>;
 }

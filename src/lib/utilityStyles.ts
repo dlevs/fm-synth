@@ -1,6 +1,6 @@
 import { css } from 'emotion';
 
-export const visuallyHidden = css`
+export const styleVisuallyHidden = css`
 	position: absolute;
 	overflow: hidden;
 	clip: rect(0 0 0 0);
