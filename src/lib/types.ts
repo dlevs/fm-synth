@@ -47,3 +47,4 @@ export type Oscillator = OscillatorFixed | OscillatorRatio;
 export type Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
 export type Subtract<T, K> = Omit<T, keyof K>;
 export type ValueOf<T> = T[keyof T];
+export type PropsOf<F> = F extends (props: infer P) => any ? P : never;

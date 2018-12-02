@@ -1,22 +1,16 @@
 import { RefObject, useState, useEffect } from 'react';
+import useEventListener from './useEventListener';
 
 const useClientWidth = (ref: RefObject<HTMLElement | null>) => {
 	const [width, setWidth] = useState(0);
+	const setWidthFromRef = () => {
+		if (ref.current) {
+			setWidth(ref.current.clientWidth);
+		}
+	};
 
-	useEffect(() => {
-		const setWidthFromRef = () => {
-			if (ref.current) {
-				setWidth(ref.current.clientWidth);
-			}
-		};
-
-		setWidthFromRef();
-		window.addEventListener('resize', setWidthFromRef);
-
-		return () => {
-			window.removeEventListener('resize', setWidthFromRef);
-		};
-	}, []);
+	useEffect(setWidthFromRef, []);
+	useEventListener(window, 'resize', setWidthFromRef, []);
 
 	return width;
 };

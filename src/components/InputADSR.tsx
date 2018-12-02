@@ -1,27 +1,30 @@
-import React, { useState, useEffect, MouseEvent, HTMLAttributes } from 'react';
+import React, { useState, HTMLAttributes, useRef } from 'react';
 import last from 'lodash/last';
-import sumBy from 'lodash/sumBy';
+import clamp from 'lodash/fp/clamp';
 // import map from 'lodash/fp/map';
-import flatMap from 'lodash/fp/flatMap';
 import { css } from 'emotion';
+import InputRange from './InputRange';
+import { visuallyHidden } from '../lib/utilityStyles';
 import { MIDI_MIN, MIDI_MAX, SVG_VIEWBOX, scaleMidiValueToSVG } from '../lib/scales';
+import { getRelativeMouseCoordinates } from '../lib/eventUtils';
+import { ADSREnvelope } from '../lib/types';
+import useEventListener from '../hooks/useEventListener';
+
+const clampBetween0And1 = clamp(0, 1);
+
+const pickADSRProps = ({ attack, decay, sustain, release }: ADSREnvelope) =>
+	({ attack, decay, sustain, release });
 
 // TODO: Move me
 type Point = [number, number];
 // type ParamName = 'attack' | 'decay' | 'sustain' | 'release';
 
-interface Props {
-	attack: number;
-	decay: number;
-	sustain: number;
-	release: number;
-	onChange(changes: [string, number][]): void;
+interface Props extends ADSREnvelope {
+	onChange(value: ADSREnvelope): void;
 }
 
-interface SVGPointProps {
+interface SVGPointProps extends HTMLAttributes<SVGLineElement> {
 	point: Point;
-	name: string;
-	onMouseDown(event: MouseEvent): void;
 }
 
 interface SVGLineCircleProps extends HTMLAttributes<SVGLineElement> {
@@ -65,61 +68,11 @@ const styleCircle = css`
 	pointer-events: none;
 	stroke-width: 6;
 
-	.${styleHitbox}:hover + & {
+	.${styleHitbox}:hover + &,
+	.${styleHitbox}:active + & {
 		stroke-width: 12;
 	}
 `;
-
-// const onMouseMove = () => {
-// 	if (!this.canvas.current) {
-// 		return;
-// 	}
-
-// 	const { pointHitboxMouse, inputMax, onChange, isMouseDown } = this.props;
-// 	const { activePointIndex } = this.state;
-// 	const { x, y } = getRelativeMouseCoordinates(event, this.canvas.current);
-
-// 	if (
-// 		event.target !== this.canvas.current &&
-// 		// TODO: Do we need to check mouseDown status?
-// 		!(isMouseDown && activePointIndex)
-// 	) {
-// 		return;
-// 	}
-
-// 	if (!isMouseDown) {
-// 		const point = this.getClosestPointToEvent(event, pointHitboxMouse);
-// 		this.setState({ activePointIndex: point ? point.index : null });
-// 		return;
-// 	}
-
-// 	if (typeof activePointIndex !== 'number') {
-// 		return;
-// 	}
-
-// 	const { mapX, mapY, canvasControl } = this.points[activePointIndex];
-
-// 	if (!canvasControl) {
-// 		return;
-// 	}
-
-// 	// TODO: Make some generic top-level types maybe? Like Array<[string, number]> to reuse
-// 	const changes: [string, number][] = [];
-// 	if (mapX) {
-// 		const range = (this.points[activePointIndex].width / this.pointWidthTotal) * this.canvasOffsetWidth;
-// 		const multiplier = (x - this.getPointOffsetX(activePointIndex)) / range;
-// 		const xMidiValue = this.clampValue(multiplier * inputMax);
-// 		changes.push([mapX, xMidiValue]);
-// 	}
-// 	if (mapY) {
-// 		const multiplier = (y - this.offset) / this.canvasOffsetHeight;
-// 		const yMidiValue = inputMax - this.clampValue(multiplier * inputMax);
-// 		changes.push([mapY, yMidiValue]);
-// 	}
-// 	if (changes.length) {
-// 		onChange(changes);
-// 	}
-// }
 
 const SVGLineCircle = ({ x, y, ...otherProps }: SVGLineCircleProps) =>
 	<line
@@ -138,7 +91,7 @@ const SVGLineCircle = ({ x, y, ...otherProps }: SVGLineCircleProps) =>
  * non-scaling-stroke, so the SVG can be scaled without increasing the
  * size of the circle.
  */
-const SVGPoint = ({ point, name, onMouseDown }: SVGPointProps) => {
+const SVGPoint = ({ point, onMouseDown }: SVGPointProps) => {
 	const [x, y] = point;
 
 	return (
@@ -148,7 +101,6 @@ const SVGPoint = ({ point, name, onMouseDown }: SVGPointProps) => {
 				y={y}
 				className={styleHitbox}
 				onMouseDown={onMouseDown}
-				data-name={name}
 			/>
 			<SVGLineCircle
 				className={styleCircle}
@@ -176,159 +128,108 @@ const SVGPathLine = ({ points, ...otherProps }: SVGPathLineProps) =>
 		{...otherProps}
 	/>;
 
-// interface PointConfig {
-// 	name?: ParamName;
-// 	label: string;
-// 	mapX: string;
-// 	mapY: string | null;
-// 	calculateX: pointCalculation;
-// 	calculateY: pointCalculation;
-// 	canvasControl: boolean;
-// 	inputControl: boolean;
-// 	width: number;
-// }
+const cumulativeX = (points: Point[]) => points
+	.reduce((accum, [x, y]) => {
+		const [lastX] = last(accum) || [0, 0];
+		return [
+			...accum,
+			[x + lastX, y],
+		] as Point[];
+	}, [] as Point[]);
 
-// const pointsConfig: PointConfig[] = [
-// 	{
-// 		calculateX: () => 0,
-// 		calculateY: () => 0,
-// 		canvasControl: false,
-// 		inputControl: false,
-// 		// TODO: "start" is not in ParamName...
-// 		width: 0,
-// 	},
-// 	{
-// 		calculateY: () => 1,
-// 		name: 'attack',
-// 	},
-// 	{
-// 		calculateY: ({ sustain }) => sustain,
-// 		mapY: 'sustain',
-// 		name: 'decay',
-// 	},
-// 	{
-// 		calculateX: () => 1,
-// 		calculateY: getParamMultiplier(inputs, 'sustain'),
-// 		canvasControl: false,
-// 		name: 'sustain',
-// 		width: 0.5,
-// 	},
-// 	{
-// 		calculateY: () => 0,
-// 		name: 'release',
-// 	},
-// ];
-
-// ame = name;
-// 		this.label = label || upperFirst(name);
-
-// 		this.mapX = mapX || name;
-// 		this.mapY = mapY || null;
-
-// 		// TODO:
-// 		this.calculateX = calculateX || getParamMultiplier(inputs, name);
-// 		this.calculateY = calculateY;
-
-// 		this.inputControl = inputControl;
-
-// 		// TODO: Width is a bit confusing. Can it be incorporated into calculateX?
-// 		this.width = width;
-// 		this.inputs = inputs;
-
-interface Param {
-	getPoint(props: Props, lastPoint: Point): Point;
-	mapToInput?: {
-		x?: string;
-		y?: string;
-	};
-	width: number;
+interface PointMap {
+	pointIndex?: number;
+	mapX?: string | null;
+	mapY?: string | null;
 }
 
-const params: Param[] = [
-	{
-		getPoint: () => [MIDI_MIN, MIDI_MAX],
-		width: 0,
-	},
-	{
-		getPoint: ({ attack }) => [attack, MIDI_MIN],
-		mapToInput: { x: 'attack' },
-		width: 1,
-	},
-	{
-		getPoint: ({ decay, sustain }, [lastX]) => [lastX + decay, MIDI_MAX - sustain],
-		mapToInput: { x: 'decay', y: 'sustain' },
-		width: 1,
-	},
-	{
-		getPoint: ({ sustain }, [lastX]) => [lastX + (MIDI_MAX / 2), MIDI_MAX - sustain],
-		width: 0.5,
-	},
-	{
-		getPoint: ({ release }, [lastX]) => [lastX + release, MIDI_MAX],
-		mapToInput: { x: 'release' },
-		width: 1,
-	},
-];
-const widthTotal = sumBy(params, 'width');
-const inputs = flatMap(
-	params,
-	({ mapToInput }: Param) => mapToInput && Object.values(mapToInput),
-).filter(name => !!name);
-
-console.log(inputs);
-
-const getParamPoints = (props: Props): Point[] =>
-	params
-		.reduce((points, { getPoint }) => {
-			const lastPoint = last(points) || [0, 0];
-
-			return points.concat([
-				getPoint(props, lastPoint),
-			]);
-		}, [] as Point[])
-		.map(([x, y]) => [
-			scaleMidiValueToSVG(x) / widthTotal,
-			scaleMidiValueToSVG(y),
-		] as Point);
+// TODO: Explain this value and make better name
+const WIDTH = 3.5;
+// TODO: Name makes no sense
+const WIDTH_MAX = WIDTH * MIDI_MAX;
 
 const InputADSR = (props: Props) => {
-	const [currentParam, setCurrentParam] = useState(null as null | string);
+	const { attack, decay, sustain, release, onChange } = props;
+	const [pointMap, setPointMap] = useState(null as null | PointMap);
+	const pointsMIDI = cumulativeX([
+		[MIDI_MIN, MIDI_MAX],
+		[attack, MIDI_MIN],
+		[decay, MIDI_MAX - sustain],
+		[MIDI_MAX / 2, MIDI_MAX - sustain],
+		[release, MIDI_MAX],
+	]);
+	// TODO: ...
+	const points = pointsMIDI.map(([x, y]) => [
+		// TODO: Defined this magic number
+		scaleMidiValueToSVG(x) / WIDTH,
+		scaleMidiValueToSVG(y),
+	] as Point);
+	const svg = useRef(null as null | SVGSVGElement);
+	const inputs = {
+		attack: useRef(null as null | HTMLInputElement),
+		decay: useRef(null as null | HTMLInputElement),
+		sustain: useRef(null as null | HTMLInputElement),
+		release: useRef(null as null | HTMLInputElement),
+	};
+	const clearCurrentParam = () => {
+		setPointMap(null);
+	};
+	const onMouseMove: EventListener = event => {
+		if (pointMap && svg.current) {
+			const { clientWidth, clientHeight } = svg.current;
+			const { mapX, mapY, pointIndex } = pointMap;
+			const changes: Partial<ADSREnvelope> = {};
+			const { x, y } = getRelativeMouseCoordinates(event, svg.current);
 
-	const points = getParamPoints(props);
-	console.log(points);
+			if (mapX) {
+				const scaleX = clientWidth / WIDTH_MAX;
+				const minX = pointIndex != null
+					? (pointsMIDI[pointIndex - 1] || [0, 0])[0]
+					:	0;
+				const maxRangeX = clientWidth / WIDTH;
+				const ratioX = clampBetween0And1((x - (minX * scaleX)) / maxRangeX);
 
-	const onHitboxMouseDown = ({ target }: MouseEvent) => {
-		console.log(target);
-		const param = (target as HTMLElement).dataset.name;
-		if (param) {
-			setCurrentParam(param);
+				changes[mapX] = ratioX * MIDI_MAX;
+			}
+
+			if (mapY) {
+				const ratioY = clampBetween0And1(y / clientHeight);
+				changes[mapY] = MIDI_MAX - (ratioY * MIDI_MAX);
+			}
+
+			if (mapX || mapY) {
+				onChange({
+					...pickADSRProps(props),
+					...changes,
+				});
+			}
 		}
 	};
 
-	// TODO: Can this pattern of registering event on document be broken out into its own hook?
-	useEffect(() => {
-		const clearCurrentParam = () => {
-			setCurrentParam(null);
-		};
-		const onMouseMove = () => {
-			console.log('hello?');
-			if (currentParam) {
-				console.log(currentParam);
-			}
-		};
-
-		document.addEventListener('mouseup', clearCurrentParam);
-		document.addEventListener('mousemove', onMouseMove);
-
-		return () => {
-			document.removeEventListener('mouseup', clearCurrentParam);
-			document.removeEventListener('mousemove', onMouseMove);
-		};
-	}, []);
+	useEventListener(document, 'mouseup', clearCurrentParam);
+	useEventListener(document, 'mousemove', onMouseMove);
 
 	return (
 		<div className={styleWrapper}>
+			{Object.keys(inputs).map(key => (
+				<InputRange
+					key={key}
+					label={key}
+					name={key}
+					value={props[key]}
+					min={MIDI_MIN}
+					max={MIDI_MAX}
+					inputRef={inputs[key]}
+					onChange={({ target }) => {
+						onChange({
+							...pickADSRProps(props),
+							[target.name]: Number(target.value),
+						});
+					}}
+				/>
+			))}
 			<svg
+				ref={svg}
 				className={styleSvg}
 				width='100%'
 				height='300'
@@ -336,10 +237,28 @@ const InputADSR = (props: Props) => {
 				preserveAspectRatio='none'
 			>
 				<SVGPathLine className={styleSvgBase} points={points} />
-				{/* TODO: Better handling of x / y values */}
-				<SVGPoint onMouseDown={onHitboxMouseDown} name='attack' point={points[1]} />
-				<SVGPoint onMouseDown={onHitboxMouseDown} name='decay' point={points[2]} />
-				<SVGPoint onMouseDown={onHitboxMouseDown} name='release' point={points[4]} />
+				<SVGPoint
+					point={points[1]}
+					onMouseDown={() => setPointMap({
+						pointIndex: 1,
+						mapX: 'attack',
+					})}
+				/>
+				<SVGPoint
+					point={points[2]}
+					onMouseDown={() => setPointMap({
+						pointIndex: 2,
+						mapX: 'decay',
+						mapY: 'sustain',
+					})}
+				/>
+				<SVGPoint
+					point={points[4]}
+					onMouseDown={() => setPointMap({
+						pointIndex: 4,
+						mapX: 'release',
+					})}
+				/>
 			</svg>
 		</div>
 	);

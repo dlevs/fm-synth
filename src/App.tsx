@@ -1,7 +1,7 @@
-import fromPairs from 'lodash/fromPairs';
 import React, { Component } from 'react';
 import InputADSR from './components/InputADSR';
 import KeyboardMain from './containers/KeyboardMain';
+import { ADSREnvelope } from './lib/types';
 
 class State {
 	public adsrParams = {
@@ -16,13 +16,9 @@ class State {
 class App extends Component {
 	public state = new State();
 
-	public onAdsrChange = (changes: [string, number][]) => {
-		this.setState((prevState: State) => ({
-			adsrParams: {
-				...prevState.adsrParams,
-				...fromPairs(changes),
-			},
-		}));
+	public onAdsrChange = (changes: ADSREnvelope) => {
+		console.log('onAdsrChange', changes);
+		this.setState(changes);
 	};
 
 	public render() {

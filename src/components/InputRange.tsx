@@ -8,6 +8,7 @@ interface Props {
 	max: number;
 	value: number;
 	onChange(event: ChangeEvent<HTMLInputElement>): void;
+	// TODO: Can we use forwardRef?
 	inputRef?: RefObject<HTMLInputElement>;
 }
 

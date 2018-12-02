@@ -1,46 +1,14 @@
-import React from 'react';
-
-type LooseMouseEvent = MouseEvent | TouchEvent | React.MouseEvent | React.TouchEvent;
-type LooseMouseEventListener = (event: Event | React.MouseEvent | React.TouchEvent) => void;
-type EventDefinition = [EventTarget, string, LooseMouseEventListener];
-
 export const getRelativeMouseCoordinates = (
-	event: LooseMouseEvent,
-	element?: HTMLElement,
+	event: Event,
+	element?: Element,
 ) => {
-	const bounds = (element || event.target as HTMLElement).getBoundingClientRect();
-	const { pageX, pageY } = 'touches' in event
+	const bounds = (element || event.target as Element).getBoundingClientRect();
+	const { clientX, clientY } = event instanceof TouchEvent
 		? event.touches[0]
-		: event;
+		: event as MouseEvent;
 
 	return {
-		x: pageX - bounds.left,
-		y: pageY - bounds.top,
+		x: clientX - bounds.left,
+		y: clientY - bounds.top,
 	};
 };
-
-export class EventManager {
-	private readonly getEvents: () => EventDefinition[];
-	private events: EventDefinition[] | null = null;
-
-	constructor(getEvents: () => EventDefinition[]) {
-		this.getEvents = getEvents;
-	}
-
-	public listen() {
-		this.events = this.events || this.getEvents();
-		this.events.forEach(([element, eventType, callback]: EventDefinition) => {
-			element.addEventListener(eventType, callback as EventListener);
-		});
-		return this;
-	}
-
-	public stopListening() {
-		if (this.events) {
-			this.events.forEach(([element, eventType, callback]: EventDefinition) => {
-				element.removeEventListener(eventType, callback as EventListener);
-			});
-		}
-		return this;
-	}
-}
