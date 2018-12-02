@@ -1,5 +1,7 @@
-import React, { useState, HTMLAttributes, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { css } from 'emotion';
+import uniq from 'lodash/uniq';
+import flatMap from 'lodash/flatMap';
 import clamp from 'lodash/fp/clamp';
 import { MIDI_MIN, MIDI_MAX, SVG_VIEWBOX, scaleMidiValueToSVG } from '../lib/scales';
 import { getRelativeMouseCoordinates } from '../lib/eventUtils';
@@ -9,6 +11,7 @@ import InputRange from './InputRange';
 import useEventListener from '../hooks/useEventListener';
 import SVGLineCircle from './SVGLineCircle';
 import SVGPathLine from './SVGPathLine';
+import useMouseStatus from '../hooks/useMouseStatus';
 
 const clampBetween0And1 = clamp(0, 1);
 
@@ -19,10 +22,6 @@ interface Props extends ADSREnvelope {
 	onChange(value: ADSREnvelope): void;
 }
 
-interface SVGPointProps extends HTMLAttributes<SVGLineElement> {
-	point: Point;
-}
-
 const styleWrapper = css`
 	padding: 12px;
 `;
@@ -31,7 +30,7 @@ const styleSvg = css`
 	overflow: visible;
 	/* filter: drop-shadow(0 0 5px #000); */
 
-	&:hover {
+	&[data-hover="true"] {
 		path {
 			fill: rgba(0, 0, 0, 0.05);
 		}
@@ -45,40 +44,18 @@ const styleSvgBase = css`
 	fill: none;
 `;
 
-const styleHitbox = css`
-	${styleSvgBase}
-	stroke: transparent;
-	z-index: 1;
-	position: relative;
-	stroke-width: 50;
-	cursor: grab;
-`;
-
 const styleCircle = css`
 	${styleSvgBase}
-	pointer-events: none;
+	position: relative;
+	z-index: 1;
 	stroke-width: 6;
+	cursor: grab;
 
-	.${styleHitbox}:hover + &,
-	.${styleHitbox}:active + & {
+	&:hover,
+	&:active + & {
 		stroke-width: 12;
 	}
 `;
-
-// TODO: We won't need a hitbox soon. Can we remove this component?
-const SVGPoint = ({ point, onMouseDown }: SVGPointProps) => (
-	<>
-		<SVGLineCircle
-			point={point}
-			className={styleHitbox}
-			onMouseDown={onMouseDown}
-		/>
-		<SVGLineCircle
-			className={styleCircle}
-			point={point}
-		/>
-	</>
-);
 
 interface PointMap {
 	pointIndex: number;
@@ -91,52 +68,86 @@ const WIDTH = 3.5;
 // TODO: Name makes no sense
 const WIDTH_MAX = WIDTH * MIDI_MAX;
 
+interface PointConfig {
+	point: Point;
+	mapX?: string;
+	mapY?: string;
+}
+
+const getPointsConfig = ({ attack, decay, sustain, release }: ADSREnvelope): PointConfig[] => [
+	{
+		point: [MIDI_MIN, MIDI_MAX],
+	},
+	{
+		point: [attack, MIDI_MIN],
+		mapX: 'attack',
+	},
+	{
+		point: [decay, MIDI_MAX - sustain],
+		mapX: 'decay',
+		mapY: 'sustain',
+	},
+	{
+		point: [MIDI_MAX / 2, MIDI_MAX - sustain],
+	},
+	{
+		point: [release, MIDI_MAX],
+		mapX: 'release',
+	},
+];
+const getInteractivePoints = (pointsConfig: ReturnType<typeof getPointsConfig>) =>
+	pointsConfig
+		.map(({ mapX, mapY }, pointIndex) => ({ mapX, mapY, pointIndex }))
+		.filter(({ mapX, mapY }) => mapX || mapY);
+
+const getPointInputs = (interactivePoints: ReturnType<typeof getInteractivePoints>) => {
+	const inputNames = flatMap(
+		interactivePoints,
+		({ mapX, mapY }) => [mapX, mapY],
+	).filter(
+		value => typeof value === 'string',
+	) as string[];
+
+	return uniq(inputNames).reduce((accum, name) => ({
+		...accum,
+		[name]: useRef(null as null | HTMLInputElement),
+	}), {});
+};
+
 const InputADSR = (props: Props) => {
-	const { attack, decay, sustain, release, onChange } = props;
-	const [pointMap, setPointMap] = useState(null as null | PointMap);
-	const pointsMIDI = cumulativeX([
-		[MIDI_MIN, MIDI_MAX],
-		[attack, MIDI_MIN],
-		[decay, MIDI_MAX - sustain],
-		[MIDI_MAX / 2, MIDI_MAX - sustain],
-		[release, MIDI_MAX],
-	]);
+	const { onChange } = props;
+	const [currentPointMap, setCurrentPointMap] = useState(null as null | PointMap);
+	const { isMouseDown, isMouseOver, mouseStatusProps } = useMouseStatus();
+	const pointsConfig = getPointsConfig(props);
+	const interactivePoints = getInteractivePoints(pointsConfig);
+	const inputs = getPointInputs(interactivePoints);
+
+	const pointsMIDI = cumulativeX(pointsConfig.map(({ point }) => point));
 	// TODO: ...
 	const points = pointsMIDI.map(([x, y]) => [
 		scaleMidiValueToSVG(x) / WIDTH,
 		scaleMidiValueToSVG(y),
 	] as Point);
 	const svgWrapper = useRef(null as null | HTMLDivElement);
-	const inputs = {
-		attack: useRef(null as null | HTMLInputElement),
-		decay: useRef(null as null | HTMLInputElement),
-		sustain: useRef(null as null | HTMLInputElement),
-		release: useRef(null as null | HTMLInputElement),
-	};
 	const clearCurrentParam = () => {
-		setPointMap(null);
+		setCurrentPointMap(null);
 	};
 	const onMouseMove: EventListener = event => {
-		if (!pointMap || !svgWrapper.current) {
+		if (!currentPointMap || !svgWrapper.current) {
 			return;
 		}
 
 		const { clientWidth, clientHeight } = svgWrapper.current;
-		const { mapX, mapY, pointIndex } = pointMap;
+		const { mapX, mapY, pointIndex } = currentPointMap;
 		const changes: Partial<ADSREnvelope> = {};
 		const { x, y } = getRelativeMouseCoordinates(event, svgWrapper.current);
 
 		if (mapX) {
 			const scaleX = clientWidth / WIDTH_MAX;
 			const [minX] = pointsMIDI[pointIndex - 1] || [0, 0];
-
 			const maxRangeX = clientWidth / WIDTH;
-
 			const ratioX = clampBetween0And1((x - (minX * scaleX)) / maxRangeX);
-
 			changes[mapX] = ratioX * MIDI_MAX;
-			console.log(clientWidth, WIDTH);
-
 		}
 
 		if (mapY) {
@@ -159,19 +170,19 @@ const InputADSR = (props: Props) => {
 
 	return (
 		<div className={styleWrapper}>
-			{Object.keys(inputs).map(key => (
+			{Object.keys(inputs).map(name => (
 				<InputRange
-					key={key}
-					label={key}
-					name={key}
-					value={props[key]}
+					key={name}
+					label={name}
+					name={name}
+					value={props[name]}
 					min={MIDI_MIN}
 					max={MIDI_MAX}
-					inputRef={inputs[key]}
+					inputRef={inputs[name]}
 					onChange={({ target }) => {
 						onChange({
 							...pickADSRProps(props),
-							[target.name]: Number(target.value),
+							[name]: Number(target.value),
 						});
 					}}
 				/>
@@ -180,37 +191,25 @@ const InputADSR = (props: Props) => {
 				A wrapper is needed for querying dimensions.
 				We cannot query `.clientWidth` on an SVG directly in Firefox.
 			*/}
-			<div ref={svgWrapper}>
+			<div ref={svgWrapper} {...mouseStatusProps}>
 				<svg
 					className={styleSvg}
+					data-hover={isMouseOver || isMouseDown}
+					data-active={isMouseDown}
 					width='100%'
 					height='300'
 					viewBox={SVG_VIEWBOX}
 					preserveAspectRatio='none'
 				>
 					<SVGPathLine className={styleSvgBase} points={points} />
-					<SVGPoint
-						point={points[1]}
-						onMouseDown={() => setPointMap({
-							pointIndex: 1,
-							mapX: 'attack',
-						})}
-					/>
-					<SVGPoint
-						point={points[2]}
-						onMouseDown={() => setPointMap({
-							pointIndex: 2,
-							mapX: 'decay',
-							mapY: 'sustain',
-						})}
-					/>
-					<SVGPoint
-						point={points[4]}
-						onMouseDown={() => setPointMap({
-							pointIndex: 4,
-							mapX: 'release',
-						})}
-					/>
+					{interactivePoints.map((pointMap, i) => (
+						<SVGLineCircle
+							key={i}
+							className={styleCircle}
+							point={points[pointMap.pointIndex]}
+							onMouseDown={() => setCurrentPointMap(pointMap)}
+						/>
+					))}
 				</svg>
 			</div>
 		</div>
