@@ -118,7 +118,7 @@ const getClosestPointIndex = (points: Point[], [x, y]: Point) => {
 	return distances.indexOf(distance);
 };
 
-const InputADSR = (props: Props) => {
+const InputEnvelopeADSR = (props: Props) => {
 	// Props
 	const { onChange } = props;
 
@@ -294,4 +294,4 @@ const InputADSR = (props: Props) => {
 	);
 };
 
-export default InputADSR;
+export default InputEnvelopeADSR;

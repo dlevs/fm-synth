@@ -18,6 +18,17 @@ export interface ADSREnvelope {
 	release: number;
 }
 
+export interface DX7Envelope {
+	rate1: number;
+	rate2: number;
+	rate3: number;
+	rate4: number;
+	level1: number;
+	level2: number;
+	level3: number;
+	level4: number;
+}
+
 export interface Note {
 	note: number;
 	velocity: number;

@@ -18,12 +18,16 @@ interface DX7Envelope {
 	level4: number;
 }
 
-const StatefulInputEnvelopeDX7 = (props: DX7Envelope) => {
-	const [envelope, setEnvelope] = useState(props);
+interface StatefulInputEnvelopeDX7Props {
+	initialValue: DX7Envelope;
+}
+
+const StatefulInputEnvelopeDX7 = ({ initialValue }: StatefulInputEnvelopeDX7Props) => {
+	const [value, setValue] = useState(initialValue);
 	return (
 		<InputEnvelopeDX7
-			{...envelope}
-			onChange={setEnvelope}
+			value={value}
+			onChange={setValue}
 		/>
 	);
 };
@@ -43,13 +47,15 @@ storiesOf('InputEnvelopeDX7', module)
 	))
 	.add('Controlled by drag', () => (
 		<StatefulInputEnvelopeDX7
-			rate1={100}
-			rate2={100}
-			rate3={100}
-			rate4={100}
-			level1={100}
-			level2={80}
-			level3={30}
-			level4={0}
+			initialValue={{
+				rate1: 100,
+				rate2: 100,
+				rate3: 100,
+				rate4: 100,
+				level1: 100,
+				level2: 80,
+				level3: 30,
+				level4: 0,
+			}}
 		/>
 	));

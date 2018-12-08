@@ -6,7 +6,7 @@ import clamp from 'lodash/fp/clamp';
 import { MIDI_MIN, MIDI_MAX, scaleMIDIValueBetween } from '../lib/scales';
 import { getRelativeMouseCoordinates } from '../lib/eventUtils';
 import { cumulativeX } from '../lib/pointUtils';
-import { Point, ADSREnvelope } from '../lib/types';
+import { Point } from '../lib/types';
 import { styleVisuallyHidden } from '../lib/utilityStyles';
 import InputRange from './InputRange';
 import useEventListener from '../hooks/useEventListener';
@@ -17,12 +17,11 @@ import useSize from '../hooks/useSize';
 
 const clampBetween0And1 = clamp(0, 1);
 
-const pickADSRProps = ({ attack, decay, sustain, release }: ADSREnvelope) =>
-	({ attack, decay, sustain, release });
-
-interface Props extends ADSREnvelope {
-	getPoints(params: ADSREnvelope): PointConfig[];
-	onChange(value: ADSREnvelope): void;
+interface Props <T>{
+	divideWidth: number;
+	pointsConfig: PointConfig[];
+	value: T;
+	onChange(value: T): void;
 }
 
 const styleWrapper = css`
@@ -61,10 +60,7 @@ const styleCircle = css`
 	}
 `;
 
-// TODO: Explain this value and make better name
-const WIDTH = 3.5;
-
-interface PointConfig {
+export interface PointConfig {
 	point: Point;
 	mapX?: string;
 	mapY?: string;
@@ -98,9 +94,11 @@ const getClosestPointIndex = (points: Point[], [x, y]: Point) => {
 	return distances.indexOf(distance);
 };
 
-const InputADSR = (props: Props) => {
+type InputEnvelopeType = <T extends object>(props: Props<T>) => React.ReactElement<Props<T>>;
+
+const InputEnvelope: InputEnvelopeType = props => {
 	// Props
-	const { getPoints, onChange } = props;
+	const { value, pointsConfig, onChange, divideWidth } = props;
 
 	// State
 	const { isMouseDown, isMouseOver, mouseStatusProps } = useMouseStatus();
@@ -109,9 +107,8 @@ const InputADSR = (props: Props) => {
 	const svgWrapper = useRef(null as null | HTMLDivElement);
 	const wrapper = useRef(null as null | HTMLDivElement);
 	const { width, height } = useSize(svgWrapper);
-	const scalePointToWidth = scaleMIDIValueBetween(0, width / WIDTH);
+	const scalePointToWidth = scaleMIDIValueBetween(0, width / divideWidth);
 	const scalePointToHeight = scaleMIDIValueBetween(0, height);
-	const pointsConfig = getPoints(props);
 	const points = cumulativeX(pointsConfig.map(({ point }) => point))
 		.map(([x, y]): Point => [
 			scalePointToWidth(x),
@@ -177,11 +174,11 @@ const InputADSR = (props: Props) => {
 		}
 
 		const { mapX, mapY, pointIndex } = interactivePoints[activePointIndex];
-		const changes: Partial<ADSREnvelope> = {};
+		const changes: Partial<typeof value> = {};
 
 		if (mapX) {
 			const [minX] = points[pointIndex - 1] || [0, 0];
-			const maxRangeX = width / WIDTH;
+			const maxRangeX = width / divideWidth;
 			const ratioX = clampBetween0And1((x - minX) / maxRangeX);
 			changes[mapX] = ratioX * MIDI_MAX;
 		}
@@ -196,7 +193,7 @@ const InputADSR = (props: Props) => {
 		}
 
 		onChange({
-			...pickADSRProps(props),
+			...value,
 			...changes,
 		});
 	};
@@ -238,7 +235,7 @@ const InputADSR = (props: Props) => {
 						inputRef={inputs[name]}
 						onChange={({ target }) => {
 							onChange({
-								...pickADSRProps(props),
+								...value,
 								[name]: Number((target as HTMLInputElement).value),
 							});
 						}}
@@ -274,4 +271,4 @@ const InputADSR = (props: Props) => {
 	);
 };
 
-export default InputADSR;
+export default InputEnvelope;
