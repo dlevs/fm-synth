@@ -25,7 +25,7 @@ const hasBlackKey = (whiteKeyIndex: number) => {
 	return WHITE_KEYS_WITH_BLACK.includes(whiteKeyIndex % (WHITE_KEYS_PER_OCTAVE - 1));
 };
 
-const InputKeyboard = ({
+export const InputKeyboard = ({
 	keyWidth = 60,
 	activeNotes,
 	onNoteOn,

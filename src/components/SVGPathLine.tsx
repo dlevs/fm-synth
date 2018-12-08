@@ -5,7 +5,7 @@ interface Props extends HTMLAttributes<SVGPathElement> {
 	points: Point[];
 }
 
-const SVGPathLine = ({ points, ...otherProps }: Props) =>
+export const SVGPathLine = ({ points, ...otherProps }: Props) =>
 	<path
 		d={
 			points

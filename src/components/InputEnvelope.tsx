@@ -94,9 +94,10 @@ const getClosestPointIndex = (points: Point[], [x, y]: Point) => {
 	return distances.indexOf(distance);
 };
 
+// TODO: Typing directly on the fn works in "withOwnState.tsx". Why not here?
 type InputEnvelopeType = <T extends object>(props: Props<T>) => React.ReactElement<Props<T>>;
 
-const InputEnvelope: InputEnvelopeType = props => {
+export const InputEnvelope: InputEnvelopeType = props => {
 	// Props
 	const { value, pointsConfig, onChange, divideWidth } = props;
 
@@ -229,7 +230,7 @@ const InputEnvelope: InputEnvelopeType = props => {
 						key={name}
 						label={name}
 						name={name}
-						value={props[name]}
+						value={value[name]}
 						min={MIDI_MIN}
 						max={MIDI_MAX}
 						inputRef={inputs[name]}

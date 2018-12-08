@@ -6,12 +6,16 @@ import InputEnvelopeADSR from '../components/InputEnvelopeADSR';
 import { withKnobs, number } from '@storybook/addon-knobs';
 import { ADSREnvelope } from '../lib/types';
 
-const StatefulInputEnvelopeADSR = (props: ADSREnvelope) => {
-	const [envelope, setEnvelope] = useState(props);
+interface StatefulInputEnvelopeADSRProps {
+	initialValue: ADSREnvelope;
+}
+
+const StatefulInputEnvelopeADSR = ({ initialValue }: StatefulInputEnvelopeADSRProps) => {
+	const [value, setValue] = useState(initialValue);
 	return (
 		<InputEnvelopeADSR
-			{...envelope}
-			onChange={setEnvelope}
+			value={value}
+			onChange={setValue}
 		/>
 	);
 };
@@ -22,18 +26,22 @@ storiesOf('InputEnvelopeADSR', module)
 	.addDecorator(withInfo({ inline: true }))
 	.add('Controlled by props', () => (
 		<InputEnvelopeADSR
-			attack={number('attack', 100)}
-			decay={number('decay', 100)}
-			sustain={number('sustain', 70)}
-			release={number('release', 100)}
+			value={{
+				attack: number('attack', 100),
+				decay: number('decay', 100),
+				sustain: number('sustain', 70),
+				release: number('release', 100),
+			}}
 			onChange={action('onChange')}
 		/>
 	))
 	.add('Controlled by drag', () => (
 		<StatefulInputEnvelopeADSR
-			attack={100}
-			decay={100}
-			sustain={70}
-			release={100}
+			initialValue={{
+				attack: 100,
+				decay: 100,
+				sustain: 70,
+				release: 100,
+			}}
 		/>
 	));

@@ -14,7 +14,7 @@ interface Props extends HTMLAttributes<HTMLInputElement> {
 /**
  * A simple range input.
  */
-const InputRange = ({ label, inputRef, ...otherProps }: Props) => {
+export const InputRange = ({ label, inputRef, ...otherProps }: Props) => {
 	const id = useUniqueId();
 
 	return <>

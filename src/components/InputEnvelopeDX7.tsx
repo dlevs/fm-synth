@@ -8,7 +8,7 @@ interface Props {
 	onChange(value: DX7Envelope): void;
 }
 
-const InputEnvelopeDX7 = ({
+export const InputEnvelopeDX7 = ({
 	value,
 	onChange,
 }: Props) => {
@@ -26,7 +26,7 @@ const InputEnvelopeDX7 = ({
 	return (
 		<InputEnvelope
 			onChange={onChange}
-			// TODO: rename
+			// TODO: rename, and calculate this by passing an object of max values into pointsConfig generator
 			divideWidth={4.5}
 			value={value}
 			pointsConfig={[

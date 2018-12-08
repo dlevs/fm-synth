@@ -17,7 +17,7 @@ interface Props extends HTMLAttributes<SVGLineElement> {
  * non-scaling-stroke, so the SVG can be scaled without increasing the
  * size of the circle.
  */
-const SVGLineCircle = ({ point, ...otherProps }: Props) =>
+export const SVGLineCircle = ({ point, ...otherProps }: Props) =>
 	<line
 		x1={point[0]}
 		y1={point[1]}
