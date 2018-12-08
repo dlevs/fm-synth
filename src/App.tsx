@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import InputADSR from './components/InputADSR';
+import InputADSR from './components/InputEnvelopeADSR';
 import KeyboardMain from './containers/KeyboardMain';
 import { ADSREnvelope } from './lib/types';
 

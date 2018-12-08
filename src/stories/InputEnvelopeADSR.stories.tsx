@@ -2,26 +2,26 @@ import React, { useState } from 'react';
 import { storiesOf } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 import { withInfo } from '@storybook/addon-info';
-import InputADSR from '../components/InputADSR';
+import InputEnvelopeADSR from '../components/InputEnvelopeADSR';
 import { withKnobs, number } from '@storybook/addon-knobs';
 import { ADSREnvelope } from '../lib/types';
 
-const StatefulInputADSR = (props: ADSREnvelope) => {
+const StatefulInputEnvelopeADSR = (props: ADSREnvelope) => {
 	const [envelope, setEnvelope] = useState(props);
 	return (
-		<InputADSR
+		<InputEnvelopeADSR
 			{...envelope}
 			onChange={setEnvelope}
 		/>
 	);
 };
 
-storiesOf('InputADSR', module)
+storiesOf('InputEnvelopeADSR', module)
 	// TODO: Look into a global way to register these
 	.addDecorator(withKnobs)
 	.addDecorator(withInfo({ inline: true }))
 	.add('Controlled by props', () => (
-		<InputADSR
+		<InputEnvelopeADSR
 			attack={number('attack', 100)}
 			decay={number('decay', 100)}
 			sustain={number('sustain', 70)}
@@ -30,7 +30,7 @@ storiesOf('InputADSR', module)
 		/>
 	))
 	.add('Controlled by drag', () => (
-		<StatefulInputADSR
+		<StatefulInputEnvelopeADSR
 			attack={100}
 			decay={100}
 			sustain={70}

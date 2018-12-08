@@ -17,8 +17,38 @@ import useSize from '../hooks/useSize';
 
 const clampBetween0And1 = clamp(0, 1);
 
-const pickADSRProps = ({ attack, decay, sustain, release }: ADSREnvelope) =>
-	({ attack, decay, sustain, release });
+interface DX7Envelope {
+	rate1: number;
+	rate2: number;
+	rate3: number;
+	rate4: number;
+	level1: number;
+	level2: number;
+	level3: number;
+	level4: number;
+}
+
+// TODO: Rename, and use lodash pick
+const pickADSRProps = ({
+	rate1,
+	rate2,
+	rate3,
+	rate4,
+	level1,
+	level2,
+	level3,
+	level4,
+}: DX7Envelope) =>
+	({
+		rate1,
+		rate2,
+		rate3,
+		rate4,
+		level1,
+		level2,
+		level3,
+		level4,
+	});
 
 interface Props extends ADSREnvelope {
 	onChange(value: ADSREnvelope): void;
@@ -60,7 +90,6 @@ const styleCircle = css`
 	}
 `;
 
-
 // TODO: Explain this value and make better name
 const WIDTH = 3.5;
 
@@ -70,25 +99,43 @@ interface PointConfig {
 	mapY?: string;
 }
 
-const getPointsConfig = ({ attack, decay, sustain, release }: ADSREnvelope): PointConfig[] => [
+const getPointsConfig = ({
+	rate1,
+	rate2,
+	rate3,
+	rate4,
+	level1,
+	level2,
+	level3,
+	level4
+}: ADSREnvelope): PointConfig[] => [
 	{
 		point: [MIDI_MIN, MIDI_MAX],
 	},
 	{
-		point: [attack, MIDI_MIN],
-		mapX: 'attack',
+		point: [rate1, MIDI_MAX - level1],
+		mapX: 'rate1',
 	},
 	{
-		point: [decay, MIDI_MAX - sustain],
-		mapX: 'decay',
-		mapY: 'sustain',
+		point: [rate2, MIDI_MAX - level2],
+		mapX: 'rate2',
+		mapY: 'level2',
 	},
 	{
-		point: [MIDI_MAX / 2, MIDI_MAX - sustain],
+		point: [rate3, MIDI_MAX - level3],
+		mapX: 'rate3',
+		mapY: 'level3',
 	},
 	{
-		point: [release, MIDI_MAX],
-		mapX: 'release',
+		point: [MIDI_MAX / 2, MIDI_MAX - level3],
+	},
+	{
+		point: [rate4, MIDI_MAX - level4],
+		mapX: 'rate4',
+		mapY: 'level4',
+	},
+	{
+		point: [0, MIDI_MAX],
 	},
 ];
 const getInteractivePoints = (pointsConfig: ReturnType<typeof getPointsConfig>) =>
@@ -193,7 +240,7 @@ const InputADSR = (props: Props) => {
 			return;
 		}
 
-		if (activePointIndex === null || !isMouseOver) {
+		if (activePointIndex === null || !isMouseDown) {
 			return;
 		}
 
