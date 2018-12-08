@@ -1,9 +1,8 @@
 import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
-import { withInfo } from '@storybook/addon-info';
+import { number } from '@storybook/addon-knobs';
 import InputEnvelopeDX7 from '../components/InputEnvelopeDX7';
-import { withKnobs, number } from '@storybook/addon-knobs';
 import HandleOnChange from './storyHelpers/HandleOnChange';
 
 // TODO: Move this
@@ -16,9 +15,7 @@ const optionsMIDIRange = {
 };
 
 storiesOf('InputEnvelopeDX7', module)
-	// TODO: Look into a global way to register these
-	.addDecorator(withKnobs)
-	.addDecorator(withInfo({ inline: true, maxPropObjectKeys: 15 }))
+
 	.add('Controlled by props', () => (
 		<InputEnvelopeDX7
 			value={{
@@ -34,6 +31,7 @@ storiesOf('InputEnvelopeDX7', module)
 			onChange={action('onChange')}
 		/>
 	))
+
 	.add('Controlled by drag', () => (
 		<HandleOnChange initialValue={{
 			rate1: 100,
