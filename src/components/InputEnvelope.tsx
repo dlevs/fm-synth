@@ -1,5 +1,6 @@
 import React, { useState, useRef, RefObject, useEffect } from 'react';
 import { css } from 'emotion';
+import Color from 'color';
 import uniq from 'lodash/uniq';
 import flatMap from 'lodash/flatMap';
 import clamp from 'lodash/fp/clamp';
@@ -20,13 +21,14 @@ const clampBetween0And1 = clamp(0, 1);
 interface Props <T> extends ValueProps<T> {
 	divideWidth: number;
 	pointsConfig: PointConfig[];
+	color?: string;
 }
 
 const styleWrapper = css`
 	padding: 12px;
 `;
 
-const styleSvg = css`
+const styleSvg = (color: string) => css`
 	user-select: none;
 	display: block;
 	overflow: visible;
@@ -35,20 +37,20 @@ const styleSvg = css`
 		cursor: grab;
 
 		path {
-			fill: rgba(0, 0, 0, 0.05);
+			fill: ${Color(color).alpha(0.05).toString()};
 		}
 	}
 `;
 
-const styleSvgBase = css`
+const styleSvgBase = (color: string) => css`
 	vector-effect: non-scaling-stroke;
 	stroke-width: 1;
-	stroke: #444;
+	stroke: ${color};
 	fill: none;
 `;
 
-const styleCircle = css`
-	${styleSvgBase}
+const styleCircle = (color: string) => css`
+	${styleSvgBase(color)}
 	position: relative;
 	z-index: 1;
 	stroke-width: 6;
@@ -92,12 +94,22 @@ const getClosestPointIndex = (points: Point[], [x, y]: Point) => {
 	return distances.indexOf(distance);
 };
 
+export function getDivideWidth<T>(
+	maxEnvelope: T,
+	getPointsConfig: (envelope: T) => PointConfig[],
+) {
+	const maxPoints = getPointsConfig(maxEnvelope);
+	const maxPointsCumulative = cumulativeX(maxPoints.map(({ point }) => point));
+	const [maxX] = maxPointsCumulative[maxPointsCumulative.length - 1];
+	return maxX / MIDI_MAX;
+}
+
 // TODO: Typing directly on the fn works in "withOwnState.tsx". Why not here?
 type InputEnvelopeType = <T extends object>(props: Props<T>) => React.ReactElement<Props<T>>;
 
 export const InputEnvelope: InputEnvelopeType = props => {
 	// Props
-	const { value, pointsConfig, onChange, divideWidth } = props;
+	const { value, pointsConfig, onChange, divideWidth, color = '#444' } = props;
 
 	// State
 	const { isMouseDown, isMouseOver, mouseStatusProps } = useMouseStatus();
@@ -247,7 +259,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 			*/}
 			<div ref={svgWrapper} {...mouseStatusProps}>
 				<svg
-					className={styleSvg}
+					className={styleSvg(color)}
 					data-hover={activePointIndex != null}
 					data-active={isInputFocused}
 					width='100%'
@@ -255,12 +267,12 @@ export const InputEnvelope: InputEnvelopeType = props => {
 					viewBox={`0 0 ${width} ${height}`}
 					preserveAspectRatio='none'
 				>
-					<SVGPathLine className={styleSvgBase} points={points} />
+					<SVGPathLine className={styleSvgBase(color)} points={points} />
 					{interactivePoints.map((pointMap, i) => (
 						<SVGLineCircle
 							key={i}
 							data-active={i === activePointIndex}
-							className={styleCircle}
+							className={styleCircle(color)}
 							point={points[pointMap.pointIndex]}
 						/>
 					))}
