@@ -1,12 +1,9 @@
 import React from 'react';
 import { MIDI_MIN, MIDI_MAX } from '../lib/scales';
-import { ADSREnvelope } from '../lib/types';
+import { ADSREnvelope, ValueProps } from '../lib/types';
 import InputEnvelope from './InputEnvelope';
 
-interface Props {
-	value: ADSREnvelope;
-	onChange(value: ADSREnvelope): void;
-}
+type Props = ValueProps<ADSREnvelope>;
 
 export const InputEnvelopeADSR = ({
 	value,

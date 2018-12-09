@@ -6,7 +6,7 @@ import clamp from 'lodash/fp/clamp';
 import { MIDI_MIN, MIDI_MAX, scaleMIDIValueBetween } from '../lib/scales';
 import { getRelativeMouseCoordinates } from '../lib/eventUtils';
 import { cumulativeX } from '../lib/pointUtils';
-import { Point } from '../lib/types';
+import { Point, ValueProps } from '../lib/types';
 import { styleVisuallyHidden } from '../lib/utilityStyles';
 import InputRange from './InputRange';
 import useEventListener from '../hooks/useEventListener';
@@ -17,11 +17,9 @@ import useSize from '../hooks/useSize';
 
 const clampBetween0And1 = clamp(0, 1);
 
-interface Props <T>{
+interface Props <T> extends ValueProps<T> {
 	divideWidth: number;
 	pointsConfig: PointConfig[];
-	value: T;
-	onChange(value: T): void;
 }
 
 const styleWrapper = css`

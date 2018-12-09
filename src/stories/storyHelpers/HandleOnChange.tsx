@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { action } from '@storybook/addon-actions';
+import { ValueProps } from '../../lib/types';
 
 interface Props<T> {
-	children(props: { value: T; onChange(value: T): void }): JSX.Element;
+	children(props: ValueProps<T>): JSX.Element;
 	initialValue: T;
 }
 

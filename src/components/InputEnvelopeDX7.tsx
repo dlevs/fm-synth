@@ -1,12 +1,9 @@
 import React from 'react';
 import { MIDI_MIN, MIDI_MAX } from '../lib/scales';
-import { DX7Envelope } from '../lib/types';
+import { DX7Envelope, ValueProps } from '../lib/types';
 import InputEnvelope from './InputEnvelope';
 
-interface Props {
-	value: DX7Envelope;
-	onChange(value: DX7Envelope): void;
-}
+type Props = ValueProps<DX7Envelope>;
 
 export const InputEnvelopeDX7 = ({
 	value,
