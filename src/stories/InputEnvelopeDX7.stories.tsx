@@ -1,38 +1,13 @@
 import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
-import { number } from '@storybook/addon-knobs';
-import InputEnvelopeDX7 from '../components/InputEnvelopeDX7';
+import { rangeMIDI } from './storyHelpers/knobs';
 import HandleOnChange from './storyHelpers/HandleOnChange';
-
-// TODO: Move this
-const optionsMIDIRange = {
-	range: true,
-	// TODO: Pull in variables
-	min: 0,
-	max: 127,
-	step: 1,
-};
+import InputEnvelopeDX7 from '../components/InputEnvelopeDX7';
 
 storiesOf('InputEnvelopeDX7', module)
 
-	.add('Controlled by props', () => (
-		<InputEnvelopeDX7
-			value={{
-				rate1: number('rate1', 100, optionsMIDIRange),
-				rate2: number('rate2', 100, optionsMIDIRange),
-				rate3: number('rate3', 100, optionsMIDIRange),
-				rate4: number('rate4', 100, optionsMIDIRange),
-				level1: number('level1', 100, optionsMIDIRange),
-				level2: number('level2', 80, optionsMIDIRange),
-				level3: number('level3', 30, optionsMIDIRange),
-				level4: number('level4', 0, optionsMIDIRange),
-			}}
-			onChange={action('onChange')}
-		/>
-	))
-
-	.add('Controlled by drag', () => (
+	.add('Interactive', () => (
 		<HandleOnChange initialValue={{
 			rate1: 100,
 			rate2: 100,
@@ -50,4 +25,20 @@ storiesOf('InputEnvelopeDX7', module)
 				/>
 			)}
 		</HandleOnChange>
+	))
+
+	.add('Driven by props', () => (
+		<InputEnvelopeDX7
+			value={{
+				rate1: rangeMIDI('rate1', 100),
+				rate2: rangeMIDI('rate2', 100),
+				rate3: rangeMIDI('rate3', 100),
+				rate4: rangeMIDI('rate4', 100),
+				level1: rangeMIDI('level1', 100),
+				level2: rangeMIDI('level2', 80),
+				level3: rangeMIDI('level3', 30),
+				level4: rangeMIDI('level4', 0),
+			}}
+			onChange={action('onChange')}
+		/>
 	));

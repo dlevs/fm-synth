@@ -1,34 +1,13 @@
 import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
-import { number } from '@storybook/addon-knobs';
-import InputEnvelopeADSR from '../components/InputEnvelopeADSR';
+import { rangeMIDI } from './storyHelpers/knobs';
 import HandleOnChange from './storyHelpers/HandleOnChange';
-
-// TODO: Move this
-const optionsMIDIRange = {
-	range: true,
-	// TODO: Pull in variables
-	min: 0,
-	max: 127,
-	step: 1,
-};
+import InputEnvelopeADSR from '../components/InputEnvelopeADSR';
 
 storiesOf('InputEnvelopeADSR', module)
 
-	.add('Controlled by props', () => (
-		<InputEnvelopeADSR
-			value={{
-				attack: number('attack', 100, optionsMIDIRange),
-				decay: number('decay', 100, optionsMIDIRange),
-				sustain: number('sustain', 70, optionsMIDIRange),
-				release: number('release', 100, optionsMIDIRange),
-			}}
-			onChange={action('onChange')}
-		/>
-	))
-
-	.add('Controlled by drag', () => (
+	.add('Interactive', () => (
 		<HandleOnChange initialValue={{
 			attack: 100,
 			decay: 100,
@@ -42,4 +21,16 @@ storiesOf('InputEnvelopeADSR', module)
 				/>
 			)}
 		</HandleOnChange>
+	))
+
+	.add('Driven by props', () => (
+		<InputEnvelopeADSR
+			value={{
+				attack: rangeMIDI('attack', 100),
+				decay: rangeMIDI('decay', 100),
+				sustain: rangeMIDI('sustain', 70),
+				release: rangeMIDI('release', 100),
+			}}
+			onChange={action('onChange')}
+		/>
 	));
