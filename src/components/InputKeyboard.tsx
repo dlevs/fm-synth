@@ -6,7 +6,7 @@ import InputKeyboardKey from './InputKeyboardKey';
 import useSize from '../hooks/useSize';
 import useMouseDownStatus from '../hooks/useMouseDownStatus';
 import { WHITE_KEYS_WITH_BLACK, WHITE_KEYS_PER_OCTAVE } from '../lib/constants';
-import { Note, NoteStatus } from '../lib/types';
+import { Note } from '../lib/types';
 
 const keyContainer = css`
 	position: relative;
@@ -17,7 +17,7 @@ const keyContainer = css`
 interface Props {
 	onNoteOn(data: Note): void;
 	onNoteOff(data: Note): void;
-	activeNotes: NoteStatus[];
+	activeNotes: Note[];
 	keyWidth?: number;
 }
 
