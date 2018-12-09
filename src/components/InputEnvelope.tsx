@@ -12,7 +12,7 @@ import { styleVisuallyHidden } from '../lib/utilityStyles';
 import InputRange from './InputRange';
 import useEventListener from '../hooks/useEventListener';
 import SVGLineCircle from './SVGLineCircle';
-import SVGPathLine from './SVGPathLine';
+import SVGPolyline from './SVGPolyline';
 import useMouseStatus from '../hooks/useMouseStatus';
 import useSize from '../hooks/useSize';
 
@@ -267,7 +267,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 					viewBox={`0 0 ${width} ${height}`}
 					preserveAspectRatio='none'
 				>
-					<SVGPathLine className={styleSvgBase(color)} points={points} />
+					<SVGPolyline className={styleSvgBase(color)} pointsArray={points} />
 					{interactivePoints.map((pointMap, i) => (
 						<SVGLineCircle
 							key={i}

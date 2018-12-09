@@ -10,7 +10,7 @@ const onChange = ({ target }: ChangeEvent<HTMLInputElement>) => {
 
 // TODO: Make more fields optional? Or not...
 storiesOf('InputRange', module)
-	.add('InputRange', () => (
+	.add('Basic usage', () => (
 		<InputRange
 			label='My Label'
 			name='myname'

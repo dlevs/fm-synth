@@ -16,6 +16,7 @@ addDecorator(withKnobs);
 addDecorator(withInfo({
 	inline: true,
 	maxPropObjectKeys: 15,
+	maxPropArrayLength: 15,
 }));
 
 configure(loadStories, module);
