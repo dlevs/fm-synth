@@ -3,7 +3,7 @@ import InputEnvelopeDX7 from '../components/InputEnvelopeDX7';
 
 createInputEnvelopeStories(InputEnvelopeDX7, {
 	rate1: 100,
-	rate2: 100,
+	rate2: 127,
 	rate3: 100,
 	rate4: 100,
 	level1: 100,

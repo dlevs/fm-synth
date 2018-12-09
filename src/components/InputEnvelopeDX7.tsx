@@ -34,6 +34,7 @@ const getPointsConfig = ({
 	{
 		point: [rate1, MIDI_MAX - level1],
 		mapX: 'rate1',
+		mapY: 'level1',
 	},
 	{
 		point: [rate2, MIDI_MAX - level2],
