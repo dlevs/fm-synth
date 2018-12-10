@@ -36,7 +36,7 @@ const styleSvg = (color: string) => css`
 	&[data-hover="true"] {
 		cursor: grab;
 
-		path {
+		path, polyline {
 			fill: ${Color(color).alpha(0.05).toString()};
 		}
 	}
