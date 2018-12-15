@@ -1,23 +1,31 @@
 import { useEffect } from 'react';
 
-const useEventListener = (
+export const baseUseEventListener = (
 	element: EventTarget,
 	event: string | string[],
-	callback: EventListener | React.EventHandler<React.MouseEvent>,
-	inputs?: any[],
+	callback: EventListener,
 ) => {
 	const events = typeof event === 'string' ? [event] : event;
 
-	useEffect(() => {
-		events.forEach(eventName => {
-			element.addEventListener(eventName, callback as EventListener);
-		});
+	events.forEach(eventName => {
+		element.addEventListener(eventName, callback as EventListener);
+	});
 
-		return () => {
-			events.forEach(eventName => {
-				element.removeEventListener(eventName, callback as EventListener);
-			});
-		};
+	return () => {
+		events.forEach(eventName => {
+			element.removeEventListener(eventName, callback as EventListener);
+		});
+	};
+};
+
+const useEventListener = (
+	element: EventTarget,
+	event: string | string[],
+	callback: EventListener,
+	inputs?: any[],
+) => {
+	useEffect(() => {
+		return baseUseEventListener(element, event, callback);
 	}, inputs);
 };
 

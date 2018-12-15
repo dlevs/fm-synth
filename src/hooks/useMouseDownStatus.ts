@@ -1,20 +1,22 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import useEventListener from './useEventListener';
 
 const useMouseDownStatus = () => {
 	const [isMouseDown, setMouseDown] = useState(false);
-	const mouseDownProps = {
-		onMouseDown: () => setMouseDown(true),
-		// TODO: TouchStart necessary?
-		onTouchStart: () => setMouseDown(true),
-	};
-	const setMouseDownFalse = () => setMouseDown(false);
 
-	useEventListener(document, ['mouseup', 'touchend'], setMouseDownFalse, []);
+	useEventListener(
+		document,
+		['mouseup', 'touchend'],
+		() => setMouseDown(false),
+		[],
+	);
 
 	return {
 		isMouseDown,
-		mouseDownProps,
+		mouseDownProps: {
+			onMouseDown: useCallback(() => setMouseDown(true), []),
+			onTouchStart: useCallback(() => setMouseDown(true), []),
+		},
 	};
 };
 

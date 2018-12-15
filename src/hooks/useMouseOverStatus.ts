@@ -1,16 +1,14 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 const useMouseOverStatus = () => {
 	const [isMouseOver, setMouseOver] = useState(false);
 
-	const mouseOverProps = {
-		onMouseEnter: () => setMouseOver(true),
-		onMouseLeave: () => setMouseOver(false),
-	};
-
 	return {
 		isMouseOver,
-		mouseOverProps,
+		mouseOverProps: {
+			onMouseEnter: useCallback(() => setMouseOver(true), []),
+			onMouseLeave: useCallback(() => setMouseOver(false), []),
+		},
 	};
 };
 
