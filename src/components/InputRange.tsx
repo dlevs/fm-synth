@@ -1,7 +1,7 @@
-import React, { HTMLAttributes, RefObject } from 'react';
+import React, { HTMLProps, RefObject } from 'react';
 import useUniqueId from '../hooks/useUniqueId';
 
-interface Props extends HTMLAttributes<HTMLInputElement> {
+interface Props extends HTMLProps<HTMLInputElement> {
 	label: string;
 	name: string;
 	min: number;

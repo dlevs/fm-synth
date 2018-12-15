@@ -1,7 +1,7 @@
-import React, { SVGAttributes } from 'react';
+import React, { SVGProps } from 'react';
 import { Point } from '../lib/types';
 
-interface Props extends SVGAttributes<SVGPolylineElement> {
+interface Props extends SVGProps<SVGPolylineElement> {
 	pointsArray: Point[];
 }
 

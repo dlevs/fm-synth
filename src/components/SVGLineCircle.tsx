@@ -1,4 +1,4 @@
-import React, { SVGAttributes } from 'react';
+import React, { SVGProps } from 'react';
 import { Point } from '../lib/types';
 
 // Safari browser (version 12.0.1 (14606.2.104.1.1)) will not respect the CSS
@@ -6,7 +6,7 @@ import { Point } from '../lib/types';
 // Add a small offset to render correctly.
 const SAFARI_BUG_OFFSET = 0.00001;
 
-interface Props extends SVGAttributes<SVGLineElement> {
+interface Props extends SVGProps<SVGLineElement> {
 	point: Point;
 }
 
