@@ -166,7 +166,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 			return;
 		}
 
-		const { x, y } = getRelativeMouseCoordinates(event, svgWrapper.current);
+		const [x, y] = getRelativeMouseCoordinates(event, svgWrapper.current).constrained;
 
 		// TODO: Moving mouse fast out of SVG area causes it to remain in active state. Do some of this logic outside of mousemove
 		if (!isMouseDown && isMouseOver) {

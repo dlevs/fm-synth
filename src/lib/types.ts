@@ -10,6 +10,10 @@ declare global {
 
 // App-specific types
 export type Point = [number, number];
+export interface RelativePoint {
+	constrained: Point;
+	unconstrained: Point;
+}
 
 export interface ADSREnvelope {
 	attack: number;

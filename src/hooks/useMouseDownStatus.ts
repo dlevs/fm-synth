@@ -4,18 +4,14 @@ import useEventListener from './useEventListener';
 const useMouseDownStatus = () => {
 	const [isMouseDown, setMouseDown] = useState(false);
 
-	useEventListener(
-		document,
-		['mouseup', 'touchend'],
-		() => setMouseDown(false),
-		[],
-	);
+	// useEventListener(document, 'pointerup', () => setMouseDown(false), []);
 
 	return {
 		isMouseDown,
 		mouseDownProps: {
-			onMouseDown: useCallback(() => setMouseDown(true), []),
-			onTouchStart: useCallback(() => setMouseDown(true), []),
+			onPointerDown: useCallback(() => setMouseDown(true), []),
+			onPointerUp: useCallback(() => setMouseDown(false), []),
+			// onTouchStart: useCallback(() => setMouseDown(true), []),
 		},
 	};
 };
