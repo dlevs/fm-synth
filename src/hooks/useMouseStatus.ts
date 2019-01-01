@@ -1,6 +1,7 @@
 import useMouseDownStatus from './useMouseDownStatus';
 import useMouseOverStatus from './useMouseOverStatus';
 
+// TODO: DELETE ME in favour of usePointerStatus
 const useMouseStatus = () => {
 	const { isMouseDown, mouseDownProps } = useMouseDownStatus();
 	const { isMouseOver, mouseOverProps } = useMouseOverStatus();

@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import useEventListener from './useEventListener';
 
+// TODO: DELETE ME in favour of usePointerStatus
 const useMouseDownStatus = () => {
 	const [isMouseDown, setMouseDown] = useState(false);
 

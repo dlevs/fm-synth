@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 
+// TODO: DELETE ME in favour of usePointerStatus
 const useMouseOverStatus = () => {
 	const [isMouseOver, setMouseOver] = useState(false);
 
