@@ -1,21 +1,26 @@
-import { useState, useCallback, useRef, HTMLProps } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import useEventListener from './useEventListener';
 import { getRelativeMouseCoordinates } from '../lib/eventUtils';
 import { RelativePoint } from '../lib/types';
 
 type Status = 'inactive' | 'hover' | 'active';
 
-interface PointerStatus {
-	status: {
-		value: Status;
-		last: Status;
-		hasChanged: boolean;
-	};
-	point: RelativePoint | null;
-	pointerStatusProps: HTMLProps<HTMLElement>;
-}
-
-const usePointerStatus = (): PointerStatus => {
+/**
+ * Get the current status of pointer devices in relation to an element. Returns
+ * relative coordinates of the cursor and the current status.
+ *
+ * The approach has been tested and works for mouse, touch and pen.
+ *
+ * The `status` string value will be `"active"` when dragging on the element,
+ * even when the cursor is then moved outside the bounds of the element. It will
+ * continue to be `"active"` until a `"pointerup"` event.
+ *
+ * Ensure the element that has the event listeners applied via
+ * `pointerStatusProps` has the CSS rule `touch-action: none` in order not to
+ * cancel interactions immediately on touch devices due to scrolling.
+ */
+const usePointerStatus = () => {
+	// Setup variables
 	const [isPointerOver, setIsPointerOver] = useState(false);
 	const [isPointerDown, setIsPointerDown] = useState(false);
 	const [point, setPoint] = useState(null as null | RelativePoint);
@@ -27,6 +32,7 @@ const usePointerStatus = (): PointerStatus => {
 			? 'hover'
 			: 'inactive';
 
+	// Helpers for event management
 	const setPointFromEvent = (event: Event) =>
 		setPoint(getRelativeMouseCoordinates(event, wrapper.current));
 
@@ -36,10 +42,7 @@ const usePointerStatus = (): PointerStatus => {
 			callback(event);
 		}, inputs);
 
-	const onPointerEnter = createHandler(() => setIsPointerOver(true));
-	const onPointerLeave = createHandler(() => setIsPointerOver(false));
-	const onPointerDown = useCallback(() => setIsPointerDown(true), []);
-
+	// Apply event listeners to track events from outside the element
 	useEventListener(document, 'pointerup', () => setIsPointerDown(false), []);
 	useEventListener(document, 'pointermove', event => {
 		if (status !== 'inactive') {
@@ -47,18 +50,28 @@ const usePointerStatus = (): PointerStatus => {
 		}
 	}, [status]);
 
+	// Construct return value
 	const output = {
 		status: {
+			// Most relevant status as a string
 			value: status,
 			last: lastStatus.current,
+
+			// `hasChanged` status so changes can be responded to
 			hasChanged: status !== lastStatus.current,
+
+			// Boolean breakdown of individual parts of status, since an element
+			// can be both active and hovered at the same time, but you would
+			// not be able to tell from the `status` string alone.
+			isHovered: isPointerOver,
+			isActive: status === 'active',
 		},
 		point,
 		pointerStatusProps: {
 			ref: wrapper,
-			onPointerEnter,
-			onPointerLeave,
-			onPointerDown,
+			onPointerEnter: createHandler(() => setIsPointerOver(true)),
+			onPointerLeave: createHandler(() => setIsPointerOver(false)),
+			onPointerDown: createHandler(() => setIsPointerDown(true)),
 			style: {
 				touchAction: 'none',
 			},
