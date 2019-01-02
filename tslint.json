@@ -5,6 +5,7 @@
     "variable-name": [true, "ban-keywords", "check-format", "allow-pascal-case"],
     "react-unused-props-and-state": false,
 		"switch-default": false,
+		"switch-final-break": false,
 		"triple-equals": [true, "allow-null-check"]
   }
 }

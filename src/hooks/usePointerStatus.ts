@@ -1,6 +1,7 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, RefObject } from 'react';
 import useEventListener from './useEventListener';
-import { getRelativeMouseCoordinates } from '../lib/eventUtils';
+import useCallbacks from './useCallbacks';
+import { getRelativePointFromEvent } from '../lib/pointUtils';
 import { RelativePoint } from '../lib/types';
 
 type Status = 'inactive' | 'hover' | 'active';
@@ -24,7 +25,7 @@ const usePointerStatus = () => {
 	const [isPointerOver, setIsPointerOver] = useState(false);
 	const [isPointerDown, setIsPointerDown] = useState(false);
 	const [point, setPoint] = useState(null as null | RelativePoint);
-	const wrapper = useRef(null as any);
+	const wrapper = useRef(null as null | HTMLElement);
 	const lastStatus = useRef('inactive' as Status);
 	const status: Status = isPointerDown
 		? 'active'
@@ -33,22 +34,36 @@ const usePointerStatus = () => {
 			: 'inactive';
 
 	// Helpers for event management
-	const setPointFromEvent = (event: Event) =>
-		setPoint(getRelativeMouseCoordinates(event, wrapper.current));
+	const setPointFromEvent = (event: PointerEvent) => {
+		if (wrapper.current) {
+			setPoint(getRelativePointFromEvent(event, wrapper.current));
+		}
+	};
 
-	const createHandler = (callback: EventListener, inputs = []) =>
-		useCallback(event => {
-			setPointFromEvent(event);
-			callback(event);
-		}, inputs);
+	// TODO: Can we use `PointerEvent` type for argument annotation?
+	// TODO: Can we wrap this in "useCallback and keep the "status" inputs logic here?
+	const setPointFromEventConditionally = (event: Event) => {
+		switch (status) {
+			case 'active':
+				setPointFromEvent(event as PointerEvent);
+				break;
+
+			case 'hover':
+				if (!wrapper.current) {
+					return;
+				}
+
+				// TODO: Test for a nested element too
+				if (wrapper.current === event.target/*wrapper.current.contains(event.target as Node)*/) {
+					setPointFromEvent(event as PointerEvent);
+				}
+				break;
+		}
+	};
 
 	// Apply event listeners to track events from outside the element
 	useEventListener(document, 'pointerup', () => setIsPointerDown(false), []);
-	useEventListener(document, 'pointermove', event => {
-		if (status !== 'inactive') {
-			setPointFromEvent(event);
-		}
-	}, [status]);
+	useEventListener(document, 'pointermove', setPointFromEventConditionally, [status]);
 
 	// Construct return value
 	const output = {
@@ -68,10 +83,12 @@ const usePointerStatus = () => {
 		},
 		point,
 		pointerStatusProps: {
-			ref: wrapper,
-			onPointerEnter: createHandler(() => setIsPointerOver(true)),
-			onPointerLeave: createHandler(() => setIsPointerOver(false)),
-			onPointerDown: createHandler(() => setIsPointerDown(true)),
+			ref: wrapper as RefObject<any>,
+			// TODO: Do we need "useCallbacks" here, or is it OK to just use raw function when not prop drilling?
+			onPointerDown: useCallbacks([setPointFromEvent, () => setIsPointerDown(true)], []),
+			onPointerEnter: useCallbacks([setPointFromEvent, () => setIsPointerOver(true)], []),
+			// TODO: This complexity of sometimes setting point onPointerLeave worth it? Will status not be "hover" anyway if setState is asynchronous?
+			onPointerLeave: useCallbacks([() => setIsPointerOver(false), setPointFromEventConditionally], [status]),
 			style: {
 				touchAction: 'none',
 			},

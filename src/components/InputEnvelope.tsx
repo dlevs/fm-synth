@@ -5,8 +5,7 @@ import uniq from 'lodash/uniq';
 import flatMap from 'lodash/flatMap';
 import clamp from 'lodash/fp/clamp';
 import { MIDI_MIN, MIDI_MAX, scaleMIDIValueBetween } from '../lib/scales';
-import { getRelativeMouseCoordinates } from '../lib/eventUtils';
-import { cumulativeX } from '../lib/pointUtils';
+import { cumulativeX, getRelativePointFromEvent } from '../lib/pointUtils';
 import { Point, ValueProps } from '../lib/types';
 import { styleVisuallyHidden } from '../lib/utilityStyles';
 import InputRange from './InputRange';
@@ -166,7 +165,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 			return;
 		}
 
-		const [x, y] = getRelativeMouseCoordinates(event, svgWrapper.current).constrained;
+		const [x, y] = getRelativePointFromEvent(event, svgWrapper.current).constrained;
 
 		// TODO: Moving mouse fast out of SVG area causes it to remain in active state. Do some of this logic outside of mousemove
 		if (!isMouseDown && isMouseOver) {
