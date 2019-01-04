@@ -13,6 +13,7 @@ const styleDemoWrapper = css`
 	${styleDemoBorder}
 	max-width: 30rem;
 	margin: 2rem auto;
+	cursor: grab;
 	white-space: pre-wrap;
 	user-select: none;
 
@@ -26,6 +27,7 @@ const styleDemoWrapper = css`
 
 	&[data-status="active"] {
 		background: lightgreen;
+		cursor: grabbing;
 	}
 `;
 
