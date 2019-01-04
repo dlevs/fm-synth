@@ -120,6 +120,7 @@ const usePointerStatus = () => {
 			onPointerDown: handlePointerEvent,
 			onPointerEnter: handlePointerEvent,
 			onPointerLeave: handlePointerEvent,
+			'data-status': status,
 		},
 	};
 
