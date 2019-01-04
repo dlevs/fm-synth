@@ -1,6 +1,5 @@
 import { useState, useCallback, useRef, RefObject } from 'react';
 import useEventListener from './useEventListener';
-import useCallbacks from './useCallbacks';
 import { getRelativePointFromEvent } from '../lib/pointUtils';
 import { RelativePoint } from '../lib/types';
 
@@ -17,7 +16,7 @@ type Status = 'inactive' | 'hover' | 'active';
  * continue to be `"active"` until a `"pointerup"` event.
  *
  * Ensure the element that has the event listeners applied via
- * `pointerStatusProps` has the CSS rule `touch-action: none` in order not to
+ * `pointerStatusProps` has the CSS rule `touch-action: none;` in order not to
  * cancel interactions immediately on touch devices due to scrolling.
  */
 const usePointerStatus = () => {
@@ -33,37 +32,68 @@ const usePointerStatus = () => {
 			? 'hover'
 			: 'inactive';
 
-	// Helpers for event management
-	const setPointFromEvent = (event: PointerEvent) => {
-		if (wrapper.current) {
-			setPoint(getRelativePointFromEvent(event, wrapper.current));
-		}
-	};
-
 	// TODO: Can we use `PointerEvent` type for argument annotation?
 	// TODO: Can we wrap this in "useCallback and keep the "status" inputs logic here?
-	const setPointFromEventConditionally = (event: Event) => {
-		switch (status) {
-			case 'active':
-				setPointFromEvent(event as PointerEvent);
+	const eventInputs = [status, wrapper.current];
+	const handlePointerEvent = useCallback((event: Event | React.PointerEvent) => {
+		let shouldSetPoint = true;
+
+		if (!wrapper.current) {
+			return;
+		}
+
+		switch (event.type) {
+			case 'pointerdown':
+				setIsPointerDown(true);
 				break;
 
-			case 'hover':
-				if (!wrapper.current) {
-					return;
+			case 'pointerup':
+				if (status === 'active') {
+					setIsPointerDown(false);
+				} else {
+					shouldSetPoint = false;
 				}
+				break;
 
-				// TODO: Test for a nested element too
-				if (wrapper.current === event.target/*wrapper.current.contains(event.target as Node)*/) {
-					setPointFromEvent(event as PointerEvent);
+			case 'pointerenter':
+				setIsPointerOver(true);
+				break;
+
+			case 'pointerleave':
+				shouldSetPoint = false;
+				setIsPointerOver(false);
+				break;
+
+			case 'pointermove':
+				if (
+					status === 'inactive' ||
+					(
+						status === 'hover' &&
+						wrapper.current !== event.target &&
+						!wrapper.current.contains(event.target as Element)
+					)
+				) {
+					shouldSetPoint = false;
 				}
 				break;
 		}
-	};
+
+		if (!shouldSetPoint) {
+			return;
+		}
+
+		const relativePoint = getRelativePointFromEvent(
+			event as PointerEvent,
+			wrapper.current,
+		);
+		setPoint(relativePoint);
+	// TODO: Pass `wrapper` or `wrapper.current` here? What's best practice?
+	}, eventInputs);
 
 	// Apply event listeners to track events from outside the element
-	useEventListener(document, 'pointerup', () => setIsPointerDown(false), []);
-	useEventListener(document, 'pointermove', setPointFromEventConditionally, [status]);
+	// TODO: We pass inputs here as well?
+	useEventListener(document, 'pointerup', handlePointerEvent, eventInputs);
+	useEventListener(document, 'pointermove', handlePointerEvent, eventInputs);
 
 	// Construct return value
 	const output = {
@@ -84,14 +114,10 @@ const usePointerStatus = () => {
 		point,
 		pointerStatusProps: {
 			ref: wrapper as RefObject<any>,
-			// TODO: Do we need "useCallbacks" here, or is it OK to just use raw function when not prop drilling?
-			onPointerDown: useCallbacks([setPointFromEvent, () => setIsPointerDown(true)], []),
-			onPointerEnter: useCallbacks([setPointFromEvent, () => setIsPointerOver(true)], []),
-			// TODO: This complexity of sometimes setting point onPointerLeave worth it? Will status not be "hover" anyway if setState is asynchronous?
-			onPointerLeave: useCallbacks([() => setIsPointerOver(false), setPointFromEventConditionally], [status]),
-			style: {
-				touchAction: 'none',
-			},
+			// TODO: Do we need "useCallback" here, or is it OK to just use raw function when not prop drilling?
+			onPointerDown: handlePointerEvent,
+			onPointerEnter: handlePointerEvent,
+			onPointerLeave: handlePointerEvent,
 		},
 	};
 
