@@ -60,7 +60,9 @@ const usePointerStatus = () => {
 				break;
 
 			case 'pointerleave':
-				shouldSetPoint = false;
+				if (status !== 'active') {
+					shouldSetPoint = false;
+				}
 				setIsPointerOver(false);
 				break;
 
