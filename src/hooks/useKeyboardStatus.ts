@@ -8,26 +8,27 @@ const initialStatus = {
 	altKey: false,
 };
 
-const useKeyboardStatus = (shouldTrack = true) => {
+const useKeyboardStatus = () => {
 	const [keyStatus, setKeyStatus] = useState(initialStatus);
 
 	const handleKeyEvent = (event: Event) => {
-		if (!shouldTrack) {
-			return;
-		}
+		// if (!shouldTrack) {
+		// 	return;
+		// }
 
 		const { shiftKey, ctrlKey, metaKey, altKey } = event as KeyboardEvent;
 		setKeyStatus({ shiftKey, ctrlKey, metaKey, altKey });
 	};
 
-	useEventListener(document, 'keydown', handleKeyEvent, [shouldTrack]);
-	useEventListener(document, 'keyup', handleKeyEvent, [shouldTrack]);
+	useEventListener(document, 'keydown', handleKeyEvent, [/* TODO: shouldTrack */]);
+	useEventListener(document, 'keyup', handleKeyEvent, [/* TODO: shouldTrack */]);
 
-	if (shouldTrack) {
-		return keyStatus;
-	}
+	// TODO: tify up
+	// if (shouldTrack) {
+	return keyStatus;
+	// }
 
-	return initialStatus;
+	// return initialStatus;
 };
 
 export default useKeyboardStatus;

@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { css } from 'emotion';
 import { storiesOf } from '@storybook/react';
-import usePointerStatus from '../hooks/usePointerStatus';
+import usePointerStatus, { defaultStatus, defaultPoint } from '../hooks/usePointerStatus';
 
 const styleDemoBorder = css`
 	margin: 0;
@@ -58,13 +58,21 @@ const styleDotUnconstrained = css`
 `;
 
 const PointerStatusDemo = () => {
+	const [point, setPoint] = useState(defaultPoint);
+	const [status, setStatus] = useState(defaultStatus);
 	// TODO: Rename these for more context when destructuring?
-	const { props, ...pointerStatus } = usePointerStatus();
-	const [left, top] = pointerStatus.point.constrained;
-	const [leftUnconstrianed, topUnconstrained] = pointerStatus.point.unconstrained;
+	const pointerStatusProps = usePointerStatus({
+		onPointChange: setPoint,
+		onStatusChange: setStatus,
+	});
+	const [left, top] = point.constrained;
+	const [leftUnconstrianed, topUnconstrained] = point.unconstrained;
 	return (
-		<pre {...props} className={styleDemoWrapper}>
-			{JSON.stringify(pointerStatus, null, 4)}
+		<pre {...pointerStatusProps} className={styleDemoWrapper}>
+			{JSON.stringify({
+				status,
+				point,
+			}, null, 4)}
 			<p className={styleDemoInnerEl}>
 				Nested element to test.<br />
 				Make sure the point values still change when hovering over here.

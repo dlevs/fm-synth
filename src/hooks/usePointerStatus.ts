@@ -1,17 +1,16 @@
-import { useState, useCallback, useRef, RefObject } from 'react';
+import { useState, useEffect, useCallback, useRef, RefObject } from 'react';
 import useEventListener from './useEventListener';
 import { getRelativePointFromEvent, constrainPoint } from '../lib/pointUtils';
-import { Point, RelativePoint } from '../lib/types';
 
 type Status = 'inactive' | 'hover' | 'active';
-// TODO: Rename
-interface StatusObj {
-	value: Status;
-	last: Status;
-	hasChanged: boolean;
-	isHovered: boolean;
-	isActive: boolean;
-}
+
+export const defaultStatus = {
+	value: 'inactive' as Status,
+	isHovered: false,
+	isActive: false,
+};
+
+export const defaultPoint = constrainPoint([0, 0], [0, 0]);
 
 /**
  * Get the current status of pointer devices in relation to an element. Returns
@@ -28,29 +27,28 @@ interface StatusObj {
  * cancel interactions immediately on touch devices due to scrolling.
  */
 const usePointerStatus = ({
-	onPointChange = () => {},
+	onPointChange,
+	onStatusChange,
 }: {
-	onPointChange?(status: StatusObj, relativePoint: RelativePoint): void;
+	onPointChange?(relativePoint: typeof defaultPoint, nextStatus: typeof defaultStatus): void;
+	onStatusChange?(status: typeof defaultStatus): void;
 	// TODO: onStatusChange? Return point too anyway? Or this causes unnecessary rerenders?
 } = {}) => {
 	// Setup variables
 	const [isPointerOver, setIsPointerOver] = useState(false);
 	const [isPointerDown, setIsPointerDown] = useState(false);
-	const wrapper = useRef(null as null | HTMLElement);
-	const lastStatus = useRef('inactive' as Status);
 	const status: Status = isPointerDown
 		? 'active'
 		: isPointerOver
 			? 'hover'
 			: 'inactive';
+	const wrapper = useRef(null as null | HTMLElement);
+	const lastStatus = useRef(status);
+
 	// TODO: Tidy. Rename.
-	const statusObj: StatusObj = {
+	const statusObj: typeof defaultStatus = {
 		// Most relevant status as a string
 		value: status,
-		last: lastStatus.current,
-
-		// `hasChanged` status so changes can be responded to
-		hasChanged: status !== lastStatus.current,
 
 		// Boolean breakdown of individual parts of status, since an element
 		// can be both active and hovered at the same time, but you would
@@ -61,7 +59,7 @@ const usePointerStatus = ({
 
 	// TODO: Can we use `PointerEvent` type for argument annotation?
 	// TODO: Can we wrap this in "useCallback and keep the "status" inputs logic here?
-	const eventInputs = [status, wrapper.current];
+	const eventInputs = [status, wrapper.current, onPointChange, onStatusChange];
 	const handlePointerEvent = useCallback((event: Event | React.PointerEvent) => {
 		let shouldSetPoint = true;
 
@@ -107,15 +105,14 @@ const usePointerStatus = ({
 				break;
 		}
 
-		if (!shouldSetPoint) {
-			return;
+		if (shouldSetPoint && onPointChange) {
+			const relativePoint = getRelativePointFromEvent(
+				event as PointerEvent,
+				wrapper.current,
+			);
+			onPointChange(relativePoint, statusObj);
 		}
 
-		const relativePoint = getRelativePointFromEvent(
-			event as PointerEvent,
-			wrapper.current,
-		);
-		onPointChange(statusObj, relativePoint);
 	// TODO: Pass `wrapper` or `wrapper.current` here? What's best practice?
 	}, eventInputs);
 
@@ -123,23 +120,21 @@ const usePointerStatus = ({
 	// TODO: We pass inputs here as well?
 	useEventListener(document, 'pointerup', handlePointerEvent, eventInputs);
 	useEventListener(document, 'pointermove', handlePointerEvent, eventInputs);
+	useEffect(() => {
+		if (onStatusChange) {
+			onStatusChange(statusObj);
+		}
+		lastStatus.current = status;
+	}, [isPointerOver, isPointerDown]);
 
-	// Construct return value
-	const output = {
-		status: statusObj,
-		props: {
-			ref: wrapper as RefObject<any>,
-			// TODO: Do we need "useCallback" here, or is it OK to just use raw function when not prop drilling?
-			onPointerDown: handlePointerEvent,
-			onPointerEnter: handlePointerEvent,
-			onPointerLeave: handlePointerEvent,
-			'data-status': status,
-		},
+	return {
+		ref: wrapper as RefObject<any>,
+		// TODO: Do we need "useCallback" here, or is it OK to just use raw function when not prop drilling?
+		onPointerDown: handlePointerEvent,
+		onPointerEnter: handlePointerEvent,
+		onPointerLeave: handlePointerEvent,
+		'data-status': status,
 	};
-
-	lastStatus.current = status;
-
-	return output;
 };
 
 export default usePointerStatus;

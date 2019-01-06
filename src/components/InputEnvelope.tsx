@@ -11,9 +11,9 @@ import { styleVisuallyHidden } from '../lib/utilityStyles';
 import InputRange from './InputRange';
 import SVGLineCircle from './SVGLineCircle';
 import SVGPolyline from './SVGPolyline';
-import usePointerStatus from '../hooks/usePointerStatus';
-import useSize from '../hooks/useSize';
+import usePointerStatus, { defaultStatus } from '../hooks/usePointerStatus';
 import useKeyboardStatus from '../hooks/useKeyboardStatus';
+import useSize from '../hooks/useSize';
 
 const clampBetween0And1 = clamp(0, 1);
 
@@ -119,11 +119,20 @@ export const InputEnvelope: InputEnvelopeType = props => {
 	const { value, pointsConfig, onChange, divideWidth, color = '#444' } = props;
 
 	const [activePointIndex, setActivePointIndexRaw] = useState(null as null | number);
+	const [status, setStatus] = useState(defaultStatus);
 
 	// State
-	const pointerStatus = usePointerStatus({
-		onPointChange: (status, point) => {
-			switch (status.value) {
+	const keyboardStatus = useKeyboardStatus();
+	const pointerStatusProps = usePointerStatus({
+		onStatusChange: status => {
+			setStatus(status);
+
+			if (status.value === 'inactive') {
+				setActivePointIndex(null);
+			}
+		},
+		onPointChange: (point, nextStatus) => {
+			switch (nextStatus.value) {
 				case 'hover': {
 					const hoveredPointIndex = getClosestPointIndex(
 						interactivePoints.map(pointMap => points[pointMap.pointIndex]),
@@ -141,6 +150,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 					const [x, y] = point.constrained;
 					const { mapX, mapY, pointIndex } = interactivePoints[activePointIndex];
 					const changes: Partial<typeof value> = {};
+					const isFineTune = keyboardStatus.shiftKey;
 
 					if (mapX) {
 						const [minX] = points[pointIndex - 1] || [0, 0];
@@ -165,12 +175,11 @@ export const InputEnvelope: InputEnvelopeType = props => {
 					break;
 				}
 			}
-		}
+		},
 	});
-	const keyboardStatus = useKeyboardStatus(pointerStatus.status.value !== 'inactive');
 
 	// SVG wrapper element
-	const svgWrapper = pointerStatus.props.ref;
+	const svgWrapper = pointerStatusProps.ref;
 	const wrapper = useRef(null as null | HTMLDivElement);
 	const { width, height } = useSize(svgWrapper);
 	const scalePointToWidth = scaleMIDIValueBetween(0, width / divideWidth);
@@ -194,7 +203,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 	const isInputFocused = getIsInputFocused();
 
 	useEffect(() => {
-		if (pointerStatus.status.isActive && activePointIndex != null) {
+		if (status.isActive && activePointIndex != null) {
 			const point = interactivePoints[activePointIndex];
 			const inputName = point.mapX || point.mapY;
 
@@ -206,10 +215,6 @@ export const InputEnvelope: InputEnvelopeType = props => {
 			}
 		}
 	});
-
-	if (pointerStatus.status.hasChanged && pointerStatus.status.value === 'inactive') {
-		setActivePointIndex(null);
-	}
 
 	return (
 		<div
@@ -257,7 +262,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 				A wrapper is needed for querying dimensions.
 				We cannot query `.width` on an SVG directly in Firefox.
 			*/}
-			<div className={styleSVGWrapper(color)} {...pointerStatus.props}>
+			<div className={styleSVGWrapper(color)} {...pointerStatusProps}>
 				<svg
 					className={styleSvg}
 					width='100%'
