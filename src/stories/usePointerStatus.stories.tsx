@@ -11,6 +11,7 @@ const styleDemoBorder = css`
 
 const styleDemoWrapper = css`
 	${styleDemoBorder}
+	position: relative;
 	max-width: 30rem;
 	margin: 2rem auto;
 	cursor: grab;
@@ -41,16 +42,35 @@ const styleDemoInnerEl = css`
 	}
 `;
 
+const styleDot = css`
+	position: absolute;
+	pointer-events: none;
+	background: rgba(0, 0, 0, 0.4);
+	border-radius: 100%;
+	width: 3rem;
+	height: 3rem;
+	transform: translate(-50%, -50%);
+`;
+
+const styleDotUnconstrained = css`
+	${styleDot}
+	background: rgba(0, 0, 255, 0.4);
+`;
+
 const PointerStatusDemo = () => {
 	// TODO: Rename these for more context when destructuring?
-	const { pointerStatusProps, ...pointerStatus } = usePointerStatus();
+	const { props, ...pointerStatus } = usePointerStatus();
+	const [left, top] = pointerStatus.point.constrained;
+	const [leftUnconstrianed, topUnconstrained] = pointerStatus.point.unconstrained;
 	return (
-		<pre {...pointerStatusProps} className={styleDemoWrapper}>
+		<pre {...props} className={styleDemoWrapper}>
 			{JSON.stringify(pointerStatus, null, 4)}
 			<p className={styleDemoInnerEl}>
 				Nested element to test.<br />
 				Make sure the point values still change when hovering over here.
 			</p>
+			<div className={styleDot} style={{ left, top }} />
+			<div className={styleDotUnconstrained} style={{ left: leftUnconstrianed, top: topUnconstrained }} />
 		</pre>
 	);
 };

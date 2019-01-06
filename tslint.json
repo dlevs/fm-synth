@@ -6,6 +6,7 @@
     "react-unused-props-and-state": false,
 		"switch-default": false,
 		"switch-final-break": false,
-		"triple-equals": [true, "allow-null-check"]
+		"triple-equals": [true, "allow-null-check"],
+		"no-empty": false
   }
 }

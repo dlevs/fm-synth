@@ -5,15 +5,15 @@ import uniq from 'lodash/uniq';
 import flatMap from 'lodash/flatMap';
 import clamp from 'lodash/fp/clamp';
 import { MIDI_MIN, MIDI_MAX, scaleMIDIValueBetween } from '../lib/scales';
-import { cumulativeX, getRelativePointFromEvent } from '../lib/pointUtils';
+import { cumulativeX } from '../lib/pointUtils';
 import { Point, ValueProps } from '../lib/types';
 import { styleVisuallyHidden } from '../lib/utilityStyles';
 import InputRange from './InputRange';
-import useEventListener from '../hooks/useEventListener';
 import SVGLineCircle from './SVGLineCircle';
 import SVGPolyline from './SVGPolyline';
-import useMouseStatus from '../hooks/useMouseStatus';
+import usePointerStatus from '../hooks/usePointerStatus';
 import useSize from '../hooks/useSize';
+import useKeyboardStatus from '../hooks/useKeyboardStatus';
 
 const clampBetween0And1 = clamp(0, 1);
 
@@ -27,18 +27,10 @@ const styleWrapper = css`
 	padding: 12px;
 `;
 
-const styleSvg = (color: string) => css`
+const styleSvg = css`
 	user-select: none;
 	display: block;
 	overflow: visible;
-
-	&[data-hover="true"] {
-		cursor: grab;
-
-		path, polyline {
-			fill: ${Color(color).alpha(0.05).toString()};
-		}
-	}
 `;
 
 const styleSvgBase = (color: string) => css`
@@ -56,6 +48,22 @@ const styleCircle = (color: string) => css`
 
 	&[data-active="true"] {
 		stroke-width: 12;
+	}
+`;
+
+const styleSVGWrapper = (color: string) => css`
+	cursor: grab;
+
+	&:not([data-status="inactive"]) {
+		${styleSvg} {
+			path, polyline {
+				fill: ${Color(color).alpha(0.05).toString()};
+			}
+		}
+	}
+
+	&[data-status="active"] {
+		cursor: grabbing;
 	}
 `;
 
@@ -104,17 +112,65 @@ export function getDivideWidth<T>(
 }
 
 // TODO: Typing directly on the fn works in "withOwnState.tsx". Why not here?
-type InputEnvelopeType = <T extends object>(props: Props<T>) => React.ReactElement<Props<T>>;
+// type InputEnvelopeType = <T extends object>(props: Props<T>) => React.ReactElement<Props<T>>;
 
 export const InputEnvelope: InputEnvelopeType = props => {
 	// Props
 	const { value, pointsConfig, onChange, divideWidth, color = '#444' } = props;
 
+	const [activePointIndex, setActivePointIndexRaw] = useState(null as null | number);
+
 	// State
-	const { isMouseDown, isMouseOver, mouseStatusProps } = useMouseStatus();
+	const pointerStatus = usePointerStatus({
+		onPointChange: (status, point) => {
+			switch (status.value) {
+				case 'hover': {
+					const hoveredPointIndex = getClosestPointIndex(
+						interactivePoints.map(pointMap => points[pointMap.pointIndex]),
+						point.constrained,
+					);
+
+					setActivePointIndex(hoveredPointIndex);
+					break;
+				}
+
+				case 'active': {
+					if (activePointIndex === null) {
+						return;
+					}
+					const [x, y] = point.constrained;
+					const { mapX, mapY, pointIndex } = interactivePoints[activePointIndex];
+					const changes: Partial<typeof value> = {};
+
+					if (mapX) {
+						const [minX] = points[pointIndex - 1] || [0, 0];
+						const maxRangeX = width / divideWidth;
+						const ratioX = clampBetween0And1((x - minX) / maxRangeX);
+						changes[mapX] = ratioX * MIDI_MAX;
+					}
+
+					if (mapY) {
+						const ratioY = clampBetween0And1(y / height);
+						changes[mapY] = MIDI_MAX - (ratioY * MIDI_MAX);
+					}
+
+					if (!(mapX || mapY)) {
+						return;
+					}
+
+					onChange({
+						...value,
+						...changes,
+					});
+					break;
+				}
+			}
+		}
+	});
+	const keyboardStatus = useKeyboardStatus(pointerStatus.status.value !== 'inactive');
 
 	// SVG wrapper element
-	const svgWrapper = useRef(null as null | HTMLDivElement);
+	const svgWrapper = pointerStatus.props.ref;
 	const wrapper = useRef(null as null | HTMLDivElement);
 	const { width, height } = useSize(svgWrapper);
 	const scalePointToWidth = scaleMIDIValueBetween(0, width / divideWidth);
@@ -126,7 +182,6 @@ export const InputEnvelope: InputEnvelopeType = props => {
 		]);
 	const interactivePoints = getInteractivePoints(pointsConfig);
 	const inputs = getPointInputs(interactivePoints);
-	const [activePointIndex, setActivePointIndexRaw] = useState(null as null | number);
 	const setActivePointIndex = (index: null | number) => {
 		if (activePointIndex !== index) {
 			setActivePointIndexRaw(index);
@@ -139,7 +194,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 	const isInputFocused = getIsInputFocused();
 
 	useEffect(() => {
-		if (isMouseDown && activePointIndex != null) {
+		if (pointerStatus.status.isActive && activePointIndex != null) {
 			const point = interactivePoints[activePointIndex];
 			const inputName = point.mapX || point.mapY;
 
@@ -150,65 +205,11 @@ export const InputEnvelope: InputEnvelopeType = props => {
 				}
 			}
 		}
-
-		if (!isMouseDown && !isMouseOver && !getIsInputFocused()) {
-			setActivePointIndex(null);
-		}
 	});
 
-	// Ensure a re-render when size of window changes.
-
-	// TODO: Tidy the rest
-
-	const onMouseMove: EventListener = event => {
-		if (!svgWrapper.current) {
-			return;
-		}
-
-		const [x, y] = getRelativePointFromEvent(event, svgWrapper.current).constrained;
-
-		// TODO: Moving mouse fast out of SVG area causes it to remain in active state. Do some of this logic outside of mousemove
-		if (!isMouseDown && isMouseOver) {
-			const hoveredPointIndex = getClosestPointIndex(
-				interactivePoints.map(pointMap => points[pointMap.pointIndex]),
-				[x, y],
-			);
-
-			setActivePointIndex(hoveredPointIndex);
-
-			return;
-		}
-
-		if (activePointIndex === null || !isMouseDown) {
-			return;
-		}
-
-		const { mapX, mapY, pointIndex } = interactivePoints[activePointIndex];
-		const changes: Partial<typeof value> = {};
-
-		if (mapX) {
-			const [minX] = points[pointIndex - 1] || [0, 0];
-			const maxRangeX = width / divideWidth;
-			const ratioX = clampBetween0And1((x - minX) / maxRangeX);
-			changes[mapX] = ratioX * MIDI_MAX;
-		}
-
-		if (mapY) {
-			const ratioY = clampBetween0And1(y / height);
-			changes[mapY] = MIDI_MAX - (ratioY * MIDI_MAX);
-		}
-
-		if (!(mapX || mapY)) {
-			return;
-		}
-
-		onChange({
-			...value,
-			...changes,
-		});
-	};
-
-	useEventListener(document, 'mousemove', onMouseMove);
+	if (pointerStatus.status.hasChanged && pointerStatus.status.value === 'inactive') {
+		setActivePointIndex(null);
+	}
 
 	return (
 		<div
@@ -256,11 +257,9 @@ export const InputEnvelope: InputEnvelopeType = props => {
 				A wrapper is needed for querying dimensions.
 				We cannot query `.width` on an SVG directly in Firefox.
 			*/}
-			<div ref={svgWrapper} {...mouseStatusProps}>
+			<div className={styleSVGWrapper(color)} {...pointerStatus.props}>
 				<svg
-					className={styleSvg(color)}
-					data-hover={activePointIndex != null}
-					data-active={isInputFocused}
+					className={styleSvg}
 					width='100%'
 					height='300'
 					viewBox={`0 0 ${width} ${height}`}

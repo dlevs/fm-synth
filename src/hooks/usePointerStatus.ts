@@ -1,9 +1,17 @@
 import { useState, useCallback, useRef, RefObject } from 'react';
 import useEventListener from './useEventListener';
-import { getRelativePointFromEvent } from '../lib/pointUtils';
-import { RelativePoint } from '../lib/types';
+import { getRelativePointFromEvent, constrainPoint } from '../lib/pointUtils';
+import { Point, RelativePoint } from '../lib/types';
 
 type Status = 'inactive' | 'hover' | 'active';
+// TODO: Rename
+interface StatusObj {
+	value: Status;
+	last: Status;
+	hasChanged: boolean;
+	isHovered: boolean;
+	isActive: boolean;
+}
 
 /**
  * Get the current status of pointer devices in relation to an element. Returns
@@ -19,11 +27,15 @@ type Status = 'inactive' | 'hover' | 'active';
  * `pointerStatusProps` has the CSS rule `touch-action: none;` in order not to
  * cancel interactions immediately on touch devices due to scrolling.
  */
-const usePointerStatus = () => {
+const usePointerStatus = ({
+	onPointChange = () => {},
+}: {
+	onPointChange?(status: StatusObj, relativePoint: RelativePoint): void;
+	// TODO: onStatusChange? Return point too anyway? Or this causes unnecessary rerenders?
+} = {}) => {
 	// Setup variables
 	const [isPointerOver, setIsPointerOver] = useState(false);
 	const [isPointerDown, setIsPointerDown] = useState(false);
-	const [point, setPoint] = useState(null as null | RelativePoint);
 	const wrapper = useRef(null as null | HTMLElement);
 	const lastStatus = useRef('inactive' as Status);
 	const status: Status = isPointerDown
@@ -31,6 +43,21 @@ const usePointerStatus = () => {
 		: isPointerOver
 			? 'hover'
 			: 'inactive';
+	// TODO: Tidy. Rename.
+	const statusObj: StatusObj = {
+		// Most relevant status as a string
+		value: status,
+		last: lastStatus.current,
+
+		// `hasChanged` status so changes can be responded to
+		hasChanged: status !== lastStatus.current,
+
+		// Boolean breakdown of individual parts of status, since an element
+		// can be both active and hovered at the same time, but you would
+		// not be able to tell from the `status` string alone.
+		isHovered: isPointerOver,
+		isActive: status === 'active',
+	};
 
 	// TODO: Can we use `PointerEvent` type for argument annotation?
 	// TODO: Can we wrap this in "useCallback and keep the "status" inputs logic here?
@@ -88,7 +115,7 @@ const usePointerStatus = () => {
 			event as PointerEvent,
 			wrapper.current,
 		);
-		setPoint(relativePoint);
+		onPointChange(statusObj, relativePoint);
 	// TODO: Pass `wrapper` or `wrapper.current` here? What's best practice?
 	}, eventInputs);
 
@@ -99,22 +126,8 @@ const usePointerStatus = () => {
 
 	// Construct return value
 	const output = {
-		status: {
-			// Most relevant status as a string
-			value: status,
-			last: lastStatus.current,
-
-			// `hasChanged` status so changes can be responded to
-			hasChanged: status !== lastStatus.current,
-
-			// Boolean breakdown of individual parts of status, since an element
-			// can be both active and hovered at the same time, but you would
-			// not be able to tell from the `status` string alone.
-			isHovered: isPointerOver,
-			isActive: status === 'active',
-		},
-		point,
-		pointerStatusProps: {
+		status: statusObj,
+		props: {
 			ref: wrapper as RefObject<any>,
 			// TODO: Do we need "useCallback" here, or is it OK to just use raw function when not prop drilling?
 			onPointerDown: handlePointerEvent,
