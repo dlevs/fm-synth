@@ -1,4 +1,4 @@
-import React, { useState, useRef, RefObject, useEffect } from 'react';
+import React, { useState, useRef, RefObject, useEffect, Fragment } from 'react';
 import { css } from 'emotion';
 import Color from 'color';
 import uniq from 'lodash/uniq';
@@ -17,7 +17,7 @@ import useSize from '../hooks/useSize';
 
 const clampBetween0And1 = clamp(0, 1);
 
-interface Props <T> extends ValueProps<T> {
+interface Props<T> extends ValueProps<T> {
 	divideWidth: number;
 	pointsConfig: PointConfig[];
 	color?: string;
@@ -50,16 +50,21 @@ const styleCircle = (color: string) => css`
 	}
 `;
 
-const styleSVGWrapper = (color: string) => css`
+const styleRangeGuideBox = (color: string) => css`
+	position: relative;
+	z-index: -1;
+	fill: ${Color(color).alpha(0.1).toString()};
+	stoke: none;
+`;
+
+const styleSVGWrapper = css`
 	cursor: grab;
 	user-select: none;
 	touch-action: none;
 
 	&:not([data-status="inactive"]) {
-		${styleSvg} {
-			path, polyline {
-				fill: ${Color(color).alpha(0.05).toString()};
-			}
+		polyline {
+			/* stroke-width: 1.5px; */
 		}
 	}
 
@@ -117,9 +122,14 @@ export function getDivideWidth<T>(
 
 export const InputEnvelope: InputEnvelopeType = props => {
 	// Props
-	const { value, pointsConfig, onChange, divideWidth, color = '#444' } = props;
-
-	const [activePointIndex, setActivePointIndexRaw] = useState(null as null | number);
+	const {
+		value,
+		pointsConfig,
+		onChange,
+		divideWidth,
+		color = '#444',
+	} = props;
+	const [activePointIndex, setActivePointIndex] = useState(-1);
 	const [status, setStatus] = useState(defaultStatus);
 
 	// State
@@ -129,7 +139,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 			setStatus(status);
 
 			if (status.value === 'inactive') {
-				setActivePointIndex(null);
+				setActivePointIndex(-1);
 			}
 		},
 		onPointChange: (point, nextStatus) => {
@@ -145,17 +155,15 @@ export const InputEnvelope: InputEnvelopeType = props => {
 				}
 
 				case 'active': {
-					if (activePointIndex === null) {
+					if (activePointIndex === -1) {
 						return;
 					}
 					const [x, y] = point.constrained;
-					const { mapX, mapY, pointIndex } = interactivePoints[activePointIndex];
+					const { mapX, mapY } = interactivePoints[activePointIndex];
 					const changes: Partial<typeof value> = {};
 					const isFineTune = keyboardStatus.shiftKey;
 
 					if (mapX) {
-						const [minX] = points[pointIndex - 1] || [0, 0];
-						const maxRangeX = width / divideWidth;
 						const ratioX = clampBetween0And1((x - minX) / maxRangeX);
 						changes[mapX] = ratioX * MIDI_MAX;
 					}
@@ -179,11 +187,9 @@ export const InputEnvelope: InputEnvelopeType = props => {
 		},
 	});
 
-	// SVG wrapper element
-	const svgWrapper = pointerStatusProps.ref;
-	const wrapper = useRef(null as null | HTMLDivElement);
-	const { width, height } = useSize(svgWrapper);
-	const scalePointToWidth = scaleMIDIValueBetween(0, width / divideWidth);
+	const { width, height } = useSize(pointerStatusProps.ref);
+	const maxRangeX = width / divideWidth;
+	const scalePointToWidth = scaleMIDIValueBetween(0, maxRangeX);
 	const scalePointToHeight = scaleMIDIValueBetween(0, height);
 	const points = cumulativeX(pointsConfig.map(({ point }) => point))
 		.map(([x, y]): Point => [
@@ -191,12 +197,10 @@ export const InputEnvelope: InputEnvelopeType = props => {
 			scalePointToHeight(y),
 		]);
 	const interactivePoints = getInteractivePoints(pointsConfig);
+	const { pointIndex = -1 } = interactivePoints[activePointIndex] || {};
+	const [minX] = points[pointIndex - 1] || [0];
+	const wrapper = useRef(null as null | HTMLDivElement);
 	const inputs = getPointInputs(interactivePoints);
-	const setActivePointIndex = (index: null | number) => {
-		if (activePointIndex !== index) {
-			setActivePointIndexRaw(index);
-		}
-	};
 	const getIsInputFocused = () => (
 		wrapper.current &&
 		wrapper.current.contains(document.activeElement)
@@ -204,7 +208,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 	const isInputFocused = getIsInputFocused();
 
 	useEffect(() => {
-		if (status.isActive && activePointIndex != null) {
+		if (status.isActive && activePointIndex !== -1) {
 			const point = interactivePoints[activePointIndex];
 			const inputName = point.mapX || point.mapY;
 
@@ -223,7 +227,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 			ref={wrapper}
 			onBlur={(event) => {
 				if (wrapper.current && !wrapper.current.contains(event.relatedTarget)) {
-					setActivePointIndex(null)
+					setActivePointIndex(-1);
 				}
 			}}
 			onFocus={(event: FocusEvent) => {
@@ -232,9 +236,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 					return mapX === name || mapY === name;
 				});
 
-				if (index !== -1) {
-					setActivePointIndex(index);
-				}
+				setActivePointIndex(index);
 			}}
 			// Prevent default on click to not take focus away from input
 			// elements being focused via JS for accessibility.
@@ -263,7 +265,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 				A wrapper is needed for querying dimensions.
 				We cannot query `.width` on an SVG directly in Firefox.
 			*/}
-			<div className={styleSVGWrapper(color)} {...pointerStatusProps}>
+			<div className={styleSVGWrapper} {...pointerStatusProps}>
 				<svg
 					className={styleSvg}
 					width='100%'
@@ -272,6 +274,15 @@ export const InputEnvelope: InputEnvelopeType = props => {
 					preserveAspectRatio='none'
 				>
 					<SVGPolyline className={styleSvgBase(color)} pointsArray={points} />
+					{activePointIndex !== -1 && (
+						<rect
+							x={minX}
+							y={0}
+							width={maxRangeX}
+							height={height}
+							className={styleRangeGuideBox(color)}
+						/>
+					)}
 					{interactivePoints.map((pointMap, i) => (
 						<SVGLineCircle
 							key={i}
