@@ -31,8 +31,8 @@ const usePointerStatus = ({
 	onStatusChange,
 }: {
 	onPointChange?(relativePoint: typeof defaultPoint, nextStatus: typeof defaultStatus): void;
+	// TODO: Is this silly? Return status always as return value instead?
 	onStatusChange?(status: typeof defaultStatus): void;
-	// TODO: onStatusChange? Return point too anyway? Or this causes unnecessary rerenders?
 } = {}) => {
 	// Setup variables
 	const [isPointerOver, setIsPointerOver] = useState(false);

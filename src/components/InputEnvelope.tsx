@@ -28,7 +28,6 @@ const styleWrapper = css`
 `;
 
 const styleSvg = css`
-	user-select: none;
 	display: block;
 	overflow: visible;
 `;
@@ -53,6 +52,8 @@ const styleCircle = (color: string) => css`
 
 const styleSVGWrapper = (color: string) => css`
 	cursor: grab;
+	user-select: none;
+	touch-action: none;
 
 	&:not([data-status="inactive"]) {
 		${styleSvg} {
