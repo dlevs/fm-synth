@@ -27,9 +27,15 @@ export const defaultPoint = constrainPoint([0, 0], [0, 0]);
  * cancel interactions immediately on touch devices due to scrolling.
  */
 const usePointerStatus = ({
+	wrapperRef,
+	relativeToRef,
+	onRawEvent,
 	onPointChange,
 	onStatusChange,
 }: {
+	wrapperRef: RefObject<Element>,
+	relativeToRef?: RefObject<Element>,
+	onRawEvent?(event: PointerEvent): void;
 	onPointChange?(relativePoint: typeof defaultPoint, nextStatus: typeof defaultStatus): void;
 	// TODO: Is this silly? Return status always as return value instead?
 	onStatusChange?(status: typeof defaultStatus): void;
@@ -42,7 +48,6 @@ const usePointerStatus = ({
 		: isPointerOver
 			? 'hover'
 			: 'inactive';
-	const wrapper = useRef(null as null | HTMLElement);
 	const lastStatus = useRef(status);
 
 	// TODO: Tidy. Rename.
@@ -59,11 +64,15 @@ const usePointerStatus = ({
 
 	// TODO: Can we use `PointerEvent` type for argument annotation?
 	// TODO: Can we wrap this in "useCallback and keep the "status" inputs logic here?
-	const eventInputs = [status, wrapper.current, onPointChange, onStatusChange];
+	const eventInputs = [status, wrapperRef.current, onPointChange, onStatusChange];
 	const handlePointerEvent = useCallback((event: Event | React.PointerEvent) => {
 		let shouldSetPoint = true;
 
-		if (!wrapper.current) {
+		if (onRawEvent) {
+			onRawEvent(event);
+		}
+
+		if (!wrapperRef.current) {
 			return;
 		}
 
@@ -96,8 +105,8 @@ const usePointerStatus = ({
 					status === 'inactive' ||
 					(
 						status === 'hover' &&
-						wrapper.current !== event.target &&
-						!wrapper.current.contains(event.target as Element)
+						wrapperRef.current !== event.target &&
+						!wrapperRef.current.contains(event.target as Element)
 					)
 				) {
 					shouldSetPoint = false;
@@ -108,12 +117,14 @@ const usePointerStatus = ({
 		if (shouldSetPoint && onPointChange) {
 			const relativePoint = getRelativePointFromEvent(
 				event as PointerEvent,
-				wrapper.current,
+				relativeToRef
+					? relativeToRef.current
+					: wrapperRef.current,
 			);
 			onPointChange(relativePoint, statusObj);
 		}
 
-	// TODO: Pass `wrapper` or `wrapper.current` here? What's best practice?
+	// TODO: Pass `wrapper` or `wrapperRef.current` here? What's best practice?
 	}, eventInputs);
 
 	// Apply event listeners to track events from outside the element
@@ -128,7 +139,6 @@ const usePointerStatus = ({
 	}, [isPointerOver, isPointerDown]);
 
 	return {
-		ref: wrapper as RefObject<any>,
 		// TODO: Do we need "useCallback" here, or is it OK to just use raw function when not prop drilling?
 		onPointerDown: handlePointerEvent,
 		onPointerEnter: handlePointerEvent,

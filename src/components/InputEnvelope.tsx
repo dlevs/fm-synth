@@ -26,6 +26,19 @@ interface Props<T> extends ValueProps<T> {
 
 const styleWrapper = css`
 	padding: ${padding}px;
+	cursor: grab;
+	user-select: none;
+	touch-action: none;
+
+	&:not([data-status="inactive"]) {
+		polyline {
+			/* stroke-width: 1.5px; */
+		}
+	}
+
+	&[data-status="active"] {
+		cursor: grabbing;
+	}
 `;
 
 const styleSvg = css`
@@ -56,22 +69,6 @@ const styleRangeGuideBox = (color: string) => css`
 	z-index: -1;
 	fill: ${Color(color).alpha(0.1).toString()};
 	stoke: none;
-`;
-
-const styleSVGWrapper = css`
-	cursor: grab;
-	user-select: none;
-	touch-action: none;
-
-	&:not([data-status="inactive"]) {
-		polyline {
-			/* stroke-width: 1.5px; */
-		}
-	}
-
-	&[data-status="active"] {
-		cursor: grabbing;
-	}
 `;
 
 export interface PointConfig {
@@ -132,10 +129,17 @@ export const InputEnvelope: InputEnvelopeType = props => {
 	} = props;
 	const [activePointIndex, setActivePointIndex] = useState(-1);
 	const [status, setStatus] = useState(defaultStatus);
+	const wrapper = useRef(null as null | HTMLDivElement);
+	const svgWrapper = useRef(null as null | SVGSVGElement);
 
 	// State
 	const { shiftKey } = useKeyboardStatus();
 	const pointerStatusProps = usePointerStatus({
+		wrapperRef: wrapper,
+		relativeToRef: svgWrapper,
+		// Prevent default on click to not take focus away from input
+		// elements being focused via JS for accessibility.
+		onRawEvent: event => event.preventDefault(),
 		onStatusChange: status => {
 			setStatus(status);
 
@@ -144,6 +148,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 			}
 		},
 		onPointChange: (point, nextStatus) => {
+			console.log(point.unconstrained, point.constrained)
 			switch (nextStatus.value) {
 				case 'hover': {
 					const hoveredPointIndex = getClosestPointIndex(
@@ -188,7 +193,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 		},
 	});
 
-	const { width, height } = useSize(pointerStatusProps.ref);
+	const { width, height } = useSize(svgWrapper);
 	const maxRangeX = width / divideWidth;
 	const scalePointToWidth = scaleMIDIValueBetween(0, maxRangeX);
 	const scalePointToHeight = scaleMIDIValueBetween(0, height);
@@ -202,7 +207,6 @@ export const InputEnvelope: InputEnvelopeType = props => {
 	const { pointIndex = -1, mapX, mapY } = interactivePoints[activePointIndex] || {};
 	const [minX] = points[pointIndex - 1] || [0, 0];
 	const [x, y] = points[pointIndex] || [0, 0];
-	const wrapper = useRef(null as null | HTMLDivElement);
 	const inputs = getPointInputs(interactivePoints);
 	const getIsInputFocused = () => (
 		wrapper.current &&
@@ -242,9 +246,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 				const index = findInteractivePointIndexFromName(event.target.name);
 				setActivePointIndex(index);
 			}}
-			// Prevent default on click to not take focus away from input
-			// elements being focused via JS for accessibility.
-			onMouseDown={e => e.preventDefault()}
+			{...pointerStatusProps}
 		>
 			<div className={styleVisuallyHidden}>
 				{Object.keys(inputs).map(name => {
@@ -263,6 +265,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 							max={MIDI_MAX}
 							step={step}
 							inputRef={inputs[name]}
+							// TDOD: Break this logic out into a component for 2D accessible slider that doesn't trap focus for 2 clicks of "tab" key
 							onKeyDown={event => {
 								const { key } = event;
 								const index = findInteractivePointIndexFromName(name);
@@ -298,7 +301,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 				A wrapper is needed for querying dimensions.
 				We cannot query `.width` on an SVG directly in Firefox.
 			*/}
-			<div className={styleSVGWrapper} {...pointerStatusProps}>
+			<div ref={svgWrapper}>
 				<svg
 					className={styleSvg}
 					width='100%'
