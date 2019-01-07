@@ -16,6 +16,7 @@ import useKeyboardStatus from '../hooks/useKeyboardStatus';
 import useSize from '../hooks/useSize';
 
 const clampBetween0And1 = clamp(0, 1);
+const padding = 12;
 
 interface Props<T> extends ValueProps<T> {
 	divideWidth: number;
@@ -24,7 +25,7 @@ interface Props<T> extends ValueProps<T> {
 }
 
 const styleWrapper = css`
-	padding: 12px;
+	padding: ${padding}px;
 `;
 
 const styleSvg = css`
@@ -197,8 +198,10 @@ export const InputEnvelope: InputEnvelopeType = props => {
 			scalePointToHeight(y),
 		]);
 	const interactivePoints = getInteractivePoints(pointsConfig);
-	const { pointIndex = -1 } = interactivePoints[activePointIndex] || {};
-	const [minX] = points[pointIndex - 1] || [0];
+	// TODO: Pls tidy all these floating variables...
+	const { pointIndex = -1, mapX, mapY } = interactivePoints[activePointIndex] || {};
+	const [minX] = points[pointIndex - 1] || [0, 0];
+	const [x, y] = points[pointIndex] || [0, 0];
 	const wrapper = useRef(null as null | HTMLDivElement);
 	const inputs = getPointInputs(interactivePoints);
 	const getIsInputFocused = () => (
@@ -307,9 +310,9 @@ export const InputEnvelope: InputEnvelopeType = props => {
 					{activePointIndex !== -1 && (
 						<rect
 							x={minX}
-							y={0}
+							y={mapY ? 0 : y - (padding / 2)}
 							width={maxRangeX}
-							height={height}
+							height={mapY ? height : padding}
 							className={styleRangeGuideBox(color)}
 						/>
 					)}
