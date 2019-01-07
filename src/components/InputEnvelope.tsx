@@ -133,7 +133,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 	const [status, setStatus] = useState(defaultStatus);
 
 	// State
-	const keyboardStatus = useKeyboardStatus();
+	const { shiftKey } = useKeyboardStatus();
 	const pointerStatusProps = usePointerStatus({
 		onStatusChange: status => {
 			setStatus(status);
@@ -161,7 +161,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 					const [x, y] = point.constrained;
 					const { mapX, mapY } = interactivePoints[activePointIndex];
 					const changes: Partial<typeof value> = {};
-					const isFineTune = keyboardStatus.shiftKey;
+					// const isFineTune = keyboardStatus.shiftKey;
 
 					if (mapX) {
 						const ratioX = clampBetween0And1((x - minX) / maxRangeX);
@@ -221,6 +221,11 @@ export const InputEnvelope: InputEnvelopeType = props => {
 		}
 	});
 
+	const findInteractivePointIndexFromName = (name: String) =>
+		interactivePoints.findIndex(({ mapX, mapY }) => {
+			return mapX === name || mapY === name;
+		});
+
 	return (
 		<div
 			className={styleWrapper}
@@ -231,11 +236,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 				}
 			}}
 			onFocus={(event: FocusEvent) => {
-				const { name } = event.target;
-				const index = interactivePoints.findIndex(({ mapX, mapY }) => {
-					return mapX === name || mapY === name;
-				});
-
+				const index = findInteractivePointIndexFromName(event.target.name);
 				setActivePointIndex(index);
 			}}
 			// Prevent default on click to not take focus away from input
@@ -243,23 +244,52 @@ export const InputEnvelope: InputEnvelopeType = props => {
 			onMouseDown={e => e.preventDefault()}
 		>
 			<div className={styleVisuallyHidden}>
-				{Object.keys(inputs).map(name => (
-					<InputRange
-						key={name}
-						label={name}
-						name={name}
-						value={value[name]}
-						min={MIDI_MIN}
-						max={MIDI_MAX}
-						inputRef={inputs[name]}
-						onChange={({ target }) => {
-							onChange({
-								...value,
-								[name]: Number((target as HTMLInputElement).value),
-							});
-						}}
-					/>
-				))}
+				{Object.keys(inputs).map(name => {
+					const min = MIDI_MIN;
+					const max = MIDI_MAX;
+					const step = shiftKey ? 0.5 : 3;
+					const clampValue = clamp(min, max);
+
+					return (
+						<InputRange
+							key={name}
+							label={name}
+							name={name}
+							value={value[name]}
+							min={MIDI_MIN}
+							max={MIDI_MAX}
+							step={step}
+							inputRef={inputs[name]}
+							onKeyDown={event => {
+								const { key } = event;
+								const index = findInteractivePointIndexFromName(name);
+								const { mapX, mapY } = pointsConfig[interactivePoints[index].pointIndex];
+
+								if (
+									!(mapX && mapY) ||
+									!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key)
+								) {
+									return;
+								}
+
+								event.preventDefault();
+								const delta = (key === 'ArrowLeft' || key === 'ArrowDown') ? -step : step;
+								const param = (key === 'ArrowLeft' || key === 'ArrowRight') ? mapX : mapY;
+
+								onChange({
+									...value,
+									[param]: clampValue(value[param] + delta),
+								});
+							}}
+							onChange={({ target }) => {
+								onChange({
+									...value,
+									[name]: Number((target as HTMLInputElement).value),
+								});
+							}}
+						/>
+					);
+				})}
 			</div>
 			{/*
 				A wrapper is needed for querying dimensions.
