@@ -16,7 +16,11 @@ import useKeyboardStatus from '../hooks/useKeyboardStatus';
 import useSize from '../hooks/useSize';
 
 const clampBetween0And1 = clamp(0, 1);
-const padding = 12;
+
+// TODO: Use props instead of these hardcoded values
+const dotSize = 6;
+const dotSizeActive = 12;
+const padding = dotSizeActive;
 
 interface Props<T> extends ValueProps<T> {
 	divideWidth: number;
@@ -57,18 +61,18 @@ const styleCircle = (color: string) => css`
 	${styleSvgBase(color)}
 	position: relative;
 	z-index: 1;
-	stroke-width: 6;
+	stroke-width: ${dotSize};
 
 	&[data-active="true"] {
-		stroke-width: 12;
+		stroke-width: ${dotSizeActive};
 	}
 `;
 
 const styleRangeGuideBox = (color: string) => css`
 	position: relative;
 	z-index: -1;
+	pointer-events: none;
 	fill: ${Color(color).alpha(0.1).toString()};
-	stoke: none;
 `;
 
 export interface PointConfig {
@@ -313,9 +317,9 @@ export const InputEnvelope: InputEnvelopeType = props => {
 					{activePointIndex !== -1 && (
 						<rect
 							x={minX}
-							y={mapY ? 0 : y - (padding / 2)}
+							y={mapY ? 0 : y - (dotSizeActive / 2)}
 							width={maxRangeX}
-							height={mapY ? height : padding}
+							height={mapY ? height : dotSizeActive}
 							className={styleRangeGuideBox(color)}
 						/>
 					)}
