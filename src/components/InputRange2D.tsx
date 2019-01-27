@@ -1,12 +1,22 @@
-import React, { KeyboardEvent, FocusEvent, useState, useRef } from 'react';
+import React, { KeyboardEvent, FocusEvent, HTMLProps, useState, useRef } from 'react';
 import InputRange, { Props as InputRangeProps } from './InputRange';
 
-interface Props {
+interface Props extends HTMLProps<HTMLInputElement> {
 	xProps?: InputRangeProps;
 	yProps?: InputRangeProps;
 }
 
-export const InputRange2D = ({ xProps, yProps }: Props) => {
+/**
+ * Two range inputs that may be interacted with as though they were a single input.
+ *
+ * When using keyboard controls, the user may pres TAB to move focus to one of the
+ * input elements. Pressing TAB again moves focus to the next element outside of
+ * this component, and not the next input field.
+ *
+ * Pressing LEFT or RIGHT will focus the "x" input and change the value.
+ * Pressing UP or DOWN will focus the "y" input and change the value.
+ */
+export const InputRange2D = ({ xProps, yProps, ...sharedProps }: Props) => {
 	const xRef = useRef(null as null | HTMLInputElement);
 	const yRef = useRef(null as null | HTMLInputElement);
 	const [focusedParam, setFocusedParam] = useState(null as null | 'x' | 'y');
@@ -64,24 +74,39 @@ export const InputRange2D = ({ xProps, yProps }: Props) => {
 		}
 	};
 
+	const sharedPropsInternal = {
+		onKeyDown,
+		onBlur,
+	};
+
 	return (
 		<>
 			{xProps && (
 				<InputRange
+					{...sharedProps}
 					{...xProps}
+					label={
+						yProps && yProps.label
+							? `${xProps.label} (press left or right for ${yProps.label})`
+							: xProps.label
+					}
 					ref={xRef}
-					onKeyDown={onKeyDown}
-					onBlur={onBlur}
 					tabIndex={focusedParam === 'y' ? -1 : 0}
+					{...sharedPropsInternal}
 				/>
 			)}
 			{yProps && (
 				<InputRange
+					{...sharedProps}
 					{...yProps}
+					label={
+						xProps && xProps.label
+						? `${yProps.label} (press up or down for ${xProps.label})`
+						: yProps.label
+					}
 					ref={yRef}
-					onKeyDown={onKeyDown}
-					onBlur={onBlur}
 					tabIndex={-1}
+					{...sharedPropsInternal}
 				/>
 			)}
 		</>

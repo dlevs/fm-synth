@@ -2,73 +2,56 @@ import React from 'react';
 import { storiesOf } from '@storybook/react';
 import useOnChange from './storyHelpers/useOnChange';
 import InputRange2D from '../components/InputRange2D';
-import { ChangeHandler } from '../lib/types';
 
-const defaultXProps = {
-	label: 'My Label X',
+const xProps = {
+	label: 'X Controls',
 	name: 'mynamex',
-	min: 0,
-	max: 100,
 };
 
-const defaultYProps = {
-	label: 'My Label Y',
+const yProps = {
+	label: 'Y Controls',
 	name: 'mynamey',
-	min: 0,
-	max: 100,
 };
 
-const Demo2D = () => {
-	const xValueProps = useOnChange(10);
-	const yValueProps = useOnChange(20);
+const Demo2D = () => (
+	<InputRange2D
+		min={0}
+		max={100}
+		xProps={{
+			...xProps,
+			...useOnChange(10),
+		}}
+		yProps={{
+			...yProps,
+			...useOnChange(20),
+		}}
+	/>
+);
 
-	return (
-		<InputRange2D
-			xProps={{
-				...defaultXProps,
-				value: xValueProps.value,
-				onChange: xValueProps.onChange as ChangeHandler<number>,
-			}}
-			yProps={{
-				...defaultYProps,
-				value: yValueProps.value,
-				onChange: yValueProps.onChange as ChangeHandler<number>,
-			}}
-		/>
-	);
-};
+const DemoXOnly = () => (
+	<InputRange2D
+		min={0}
+		max={100}
+		xProps={{
+			...xProps,
+			...useOnChange(10),
+		}}
+	/>
+);
 
-const DemoXOnly = () => {
-	const xValueProps = useOnChange(10);
+const DemoYOnly = () => (
+	<InputRange2D
+		min={0}
+		max={100}
+		xProps={{
+			...yProps,
+			...useOnChange(10),
+		}}
+	/>
+);
 
-	return (
-		<InputRange2D
-			xProps={{
-				...defaultXProps,
-				value: xValueProps.value,
-				onChange: xValueProps.onChange as ChangeHandler<number>,
-			}}
-		/>
-	);
-};
-
-const DemoYOnly = () => {
-	const yValueProps = useOnChange(10);
-
-	return (
-		<InputRange2D
-			xProps={{
-				...defaultYProps,
-				value: yValueProps.value,
-				onChange: yValueProps.onChange as ChangeHandler<number>,
-			}}
-		/>
-	);
-};
-
-// TODO: Make more fields optional? Or not...
 storiesOf('InputRange2D', module)
-	.add('Basic usage', () => (
+	.add('With x and y dimensions', () => (
 		<Demo2D />
 	))
 	.add('With only x dimension', () => (
