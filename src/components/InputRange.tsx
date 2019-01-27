@@ -12,9 +12,9 @@ export interface Props extends HTMLProps<HTMLInputElement> {
 /**
  * A simple range input.
  */
-export const InputRange = forwardRef<HTMLInputElement, Props>((
-	{ label, onChange, ...otherProps },
-	ref,
+export const InputRange = ((
+	{ label, onChange, ...otherProps }: Props,
+	ref: Ref<HTMLInputElement>,
 ) => {
 	const id = useUniqueId();
 
@@ -30,4 +30,4 @@ export const InputRange = forwardRef<HTMLInputElement, Props>((
 	</>;
 });
 
-export default InputRange;
+export default forwardRef(InputRange);

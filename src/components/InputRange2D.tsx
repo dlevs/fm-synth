@@ -1,10 +1,31 @@
-import React, { KeyboardEvent, FocusEvent, HTMLProps, useState, useRef } from 'react';
+import React, {
+	KeyboardEvent,
+	FocusEvent,
+	HTMLProps,
+	Ref,
+	useState,
+	useRef,
+	useImperativeHandle,
+	forwardRef,
+} from 'react';
 import InputRange, { Props as InputRangeProps } from './InputRange';
 
 interface Props extends HTMLProps<HTMLInputElement> {
 	xProps?: InputRangeProps;
 	yProps?: InputRangeProps;
 }
+
+const createLabel = (
+	primaryProps: InputRangeProps,
+	secondaryProps: InputRangeProps | undefined,
+	keys: string[],
+) => {
+	if (!secondaryProps || !secondaryProps.label) {
+		return primaryProps.label;
+	}
+
+	return `${primaryProps.label} (press ${keys.join(' or ')} for ${secondaryProps.label})`;
+};
 
 /**
  * Two range inputs that may be interacted with as though they were a single input.
@@ -15,11 +36,36 @@ interface Props extends HTMLProps<HTMLInputElement> {
  *
  * Pressing LEFT or RIGHT will focus the "x" input and change the value.
  * Pressing UP or DOWN will focus the "y" input and change the value.
+ *
+ * This is likely most useful as a hidden input field to provide keyboard
+ * accessibility to an otherwise unaccessible widget.
  */
-export const InputRange2D = ({ xProps, yProps, ...sharedProps }: Props) => {
+export const InputRange2D = (
+	{ xProps, yProps, ...sharedProps }: Props,
+	ref: Ref<HTMLInputElement>,
+) => {
 	const xRef = useRef(null as null | HTMLInputElement);
 	const yRef = useRef(null as null | HTMLInputElement);
 	const [focusedParam, setFocusedParam] = useState(null as null | 'x' | 'y');
+
+	// TODO: Test these methods by using this in InputEnvelope.tsx
+	useImperativeHandle(ref, () => ({
+		focus: () => {
+			if (xRef.current) {
+				xRef.current.focus();
+			}
+		},
+		blur: () => {
+			if (document.activeElement == null) {
+				return;
+			}
+			if (document.activeElement === xRef.current) {
+				xRef.current.blur();
+			} else if (document.activeElement === yRef.current) {
+				yRef.current.blur();
+			}
+		},
+	}));
 
 	const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
 		const { key } = event;
@@ -85,11 +131,7 @@ export const InputRange2D = ({ xProps, yProps, ...sharedProps }: Props) => {
 				<InputRange
 					{...sharedProps}
 					{...xProps}
-					label={
-						yProps && yProps.label
-							? `${xProps.label} (press left or right for ${yProps.label})`
-							: xProps.label
-					}
+					label={createLabel(xProps, yProps, ['left', 'right'])}
 					ref={xRef}
 					tabIndex={focusedParam === 'y' ? -1 : 0}
 					{...sharedPropsInternal}
@@ -99,11 +141,7 @@ export const InputRange2D = ({ xProps, yProps, ...sharedProps }: Props) => {
 				<InputRange
 					{...sharedProps}
 					{...yProps}
-					label={
-						xProps && xProps.label
-						? `${yProps.label} (press up or down for ${xProps.label})`
-						: yProps.label
-					}
+					label={createLabel(yProps, xProps, ['up', 'down'])}
 					ref={yRef}
 					tabIndex={-1}
 					{...sharedPropsInternal}
@@ -113,4 +151,4 @@ export const InputRange2D = ({ xProps, yProps, ...sharedProps }: Props) => {
 	);
 };
 
-export default InputRange2D;
+export default forwardRef(InputRange2D);
