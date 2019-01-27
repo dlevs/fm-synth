@@ -1,32 +1,79 @@
-import React, { ChangeEvent } from 'react';
+import React from 'react';
 import { storiesOf } from '@storybook/react';
-import { action } from '@storybook/addon-actions';
+import useOnChange from './storyHelpers/useOnChange';
 import InputRange2D from '../components/InputRange2D';
+import { ChangeHandler } from '../lib/types';
 
-// TODO: Move
-const onChange = ({ target }: ChangeEvent<HTMLInputElement>) => {
-	action('onChange')(target.value);
+const defaultXProps = {
+	label: 'My Label X',
+	name: 'mynamex',
+	min: 0,
+	max: 100,
+};
+
+const defaultYProps = {
+	label: 'My Label Y',
+	name: 'mynamey',
+	min: 0,
+	max: 100,
+};
+
+const Demo2D = () => {
+	const xValueProps = useOnChange(10);
+	const yValueProps = useOnChange(20);
+
+	return (
+		<InputRange2D
+			xProps={{
+				...defaultXProps,
+				value: xValueProps.value,
+				onChange: xValueProps.onChange as ChangeHandler<number>,
+			}}
+			yProps={{
+				...defaultYProps,
+				value: yValueProps.value,
+				onChange: yValueProps.onChange as ChangeHandler<number>,
+			}}
+		/>
+	);
+};
+
+const DemoXOnly = () => {
+	const xValueProps = useOnChange(10);
+
+	return (
+		<InputRange2D
+			xProps={{
+				...defaultXProps,
+				value: xValueProps.value,
+				onChange: xValueProps.onChange as ChangeHandler<number>,
+			}}
+		/>
+	);
+};
+
+const DemoYOnly = () => {
+	const yValueProps = useOnChange(10);
+
+	return (
+		<InputRange2D
+			xProps={{
+				...defaultYProps,
+				value: yValueProps.value,
+				onChange: yValueProps.onChange as ChangeHandler<number>,
+			}}
+		/>
+	);
 };
 
 // TODO: Make more fields optional? Or not...
 storiesOf('InputRange2D', module)
 	.add('Basic usage', () => (
-		<InputRange2D
-			xProps={{
-				label: 'My Label X',
-				name: 'mynamex',
-				min: 0,
-				max: 100,
-				value: 10,
-				onChange,
-			}}
-			yProps={{
-				label: 'My Label Y',
-				name: 'mynamey',
-				min: 0,
-				max: 100,
-				value: 20,
-				onChange,
-			}}
-		/>
+		<Demo2D />
+	))
+	.add('With only x dimension', () => (
+		<DemoXOnly />
+	))
+	.add('With only y dimension', () => (
+		<DemoYOnly />
 	));

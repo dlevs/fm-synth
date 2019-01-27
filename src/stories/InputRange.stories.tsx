@@ -1,18 +1,22 @@
-import React, { ChangeEvent } from 'react';
+import React from 'react';
 import { storiesOf } from '@storybook/react';
-import { action } from '@storybook/addon-actions';
+import useOnChange from './storyHelpers/useOnChange';
 import InputRange from '../components/InputRange';
 
-// TODO: Move
-const onChange = ({ target }: ChangeEvent<HTMLInputElement>) => {
-	action('onChange')(target.value);
+const Demo = () => {
+	const { value, onChange } = useOnChange(10);
+
+	return (
+		<InputRange
+			label='My Label'
+			name='myname'
+			value={value}
+			onChange={onChange}
+		/>
+	);
 };
 
 storiesOf('InputRange', module)
 	.add('Basic usage', () => (
-		<InputRange
-			label='My Label'
-			name='myname'
-			value={10}
-			onChange={onChange} />
+		<Demo />
 	));

@@ -4,7 +4,7 @@ import { storiesOf } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 import { color } from '@storybook/addon-knobs';
 import { rangeMIDI } from './knobs';
-import HandleOnChange from './HandleOnChange';
+import HandleOnChange from './useOnChange';
 import { ObjectOf, ValueProps } from '../../lib/types';
 
 type Props<T> = ValueProps<T> & {

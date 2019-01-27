@@ -8,6 +8,8 @@ declare global {
 	}
 }
 
+export type ChangeHandler<T> = (value: T) => void;
+
 // App-specific types
 export type Point = [number, number];
 export interface RelativePoint {
