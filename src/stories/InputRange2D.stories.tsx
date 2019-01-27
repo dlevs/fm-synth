@@ -43,7 +43,7 @@ const DemoYOnly = () => (
 	<InputRange2D
 		min={0}
 		max={100}
-		xProps={{
+		yProps={{
 			...yProps,
 			...useOnChange(10),
 		}}

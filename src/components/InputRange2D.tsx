@@ -143,7 +143,7 @@ export const InputRange2D = (
 					{...yProps}
 					label={createLabel(yProps, xProps, ['up', 'down'])}
 					ref={yRef}
-					tabIndex={-1}
+					tabIndex={xProps ? -1 : 0}
 					{...sharedPropsInternal}
 				/>
 			)}
