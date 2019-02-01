@@ -125,30 +125,28 @@ export const InputRange2D = (
 		onBlur,
 	};
 
-	return (
-		<>
-			{xProps && (
-				<InputRange
-					{...sharedProps}
-					{...xProps}
-					label={createLabel(xProps, yProps, ['left', 'right'])}
-					ref={xRef}
-					tabIndex={focusedParam === 'y' ? -1 : 0}
-					{...sharedPropsInternal}
-				/>
-			)}
-			{yProps && (
-				<InputRange
-					{...sharedProps}
-					{...yProps}
-					label={createLabel(yProps, xProps, ['up', 'down'])}
-					ref={yRef}
-					tabIndex={xProps ? -1 : 0}
-					{...sharedPropsInternal}
-				/>
-			)}
-		</>
-	);
+	return <>
+		{xProps && (
+			<InputRange
+				{...sharedProps}
+				{...xProps}
+				label={createLabel(xProps, yProps, ['left', 'right'])}
+				ref={xRef}
+				tabIndex={focusedParam === 'y' ? -1 : 0}
+				{...sharedPropsInternal}
+			/>
+		)}
+		{yProps && (
+			<InputRange
+				{...sharedProps}
+				{...yProps}
+				label={createLabel(yProps, xProps, ['up', 'down'])}
+				ref={yRef}
+				tabIndex={xProps ? -1 : 0}
+				{...sharedPropsInternal}
+			/>
+		)}
+	</>;
 };
 
 export default forwardRef(InputRange2D);
