@@ -9,6 +9,7 @@ import React, {
 	forwardRef,
 } from 'react';
 import InputRange, { Props as InputRangeProps } from './InputRange';
+import { ChangeHandler } from '../lib/types';
 
 interface Props extends HTMLProps<HTMLInputElement> {
 	xProps?: InputRangeProps;

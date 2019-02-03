@@ -1,109 +1,38 @@
 import React, { useState, useRef, RefObject, useEffect, Fragment } from 'react';
-import { css } from 'emotion';
-import Color from 'color';
 import uniq from 'lodash/uniq';
+import flow from 'lodash/flow';
 import flatMap from 'lodash/flatMap';
 import clamp from 'lodash/fp/clamp';
 import { MIDI_MIN, MIDI_MAX, scaleMIDIValueBetween } from '../lib/scales';
-import { cumulativeX } from '../lib/pointUtils';
-import { Point, ValueProps } from '../lib/types';
+import { expandPointConfigs, cumulativeX } from '../lib/pointUtils';
+import { Point, PointConfig } from '../lib/types';
 import { styleVisuallyHidden } from '../lib/utilityStyles';
-import InputRange from './InputRange';
+import InputRange2D, { Props as InputRange2DProps } from './InputRange2D';
 import SVGLineCircle from './SVGLineCircle';
 import SVGPolyline from './SVGPolyline';
 import usePointerStatus, { defaultStatus } from '../hooks/usePointerStatus';
 import useKeyboardStatus from '../hooks/useKeyboardStatus';
 import useSize from '../hooks/useSize';
 
+import * as style from './InputEnvelope.style';
+import { InputEnvelopeType } from './InputEnvelope.types';
+
 const clampBetween0And1 = clamp(0, 1);
+const defaultPointConfig: Partial<PointConfig> = { point: [0, 0] };
 
-// TODO: Use props instead of these hardcoded values
-const dotSize = 6;
-const dotSizeActive = 12;
-const padding = dotSizeActive;
-
-interface Props<T> extends ValueProps<T> {
-	divideWidth: number;
-	pointsConfig: PointConfig[];
-	color?: string;
-}
-
-const styleWrapper = css`
-	padding: ${padding}px;
-	cursor: grab;
-	user-select: none;
-	touch-action: none;
-
-	&:not([data-status="inactive"]) {
-		polyline {
-			/* stroke-width: 1.5px; */
-		}
-	}
-
-	&[data-status="active"] {
-		cursor: grabbing;
-	}
-`;
-
-const styleSvg = css`
-	display: block;
-	overflow: visible;
-`;
-
-const styleSvgBase = (color: string) => css`
-	vector-effect: non-scaling-stroke;
-	stroke-width: 1;
-	stroke: ${color};
-	fill: none;
-`;
-
-const styleCircle = (color: string) => css`
-	${styleSvgBase(color)}
-	position: relative;
-	z-index: 1;
-	stroke-width: ${dotSize};
-
-	&[data-active="true"] {
-		stroke-width: ${dotSizeActive};
-	}
-`;
-
-const styleRangeGuideBox = (color: string) => css`
-	position: relative;
-	z-index: -1;
-	pointer-events: none;
-	fill: ${Color(color).alpha(0.1).toString()};
-`;
-
-export interface PointConfig {
-	point: Point;
-	mapX?: string;
-	mapY?: string;
-}
-
-const getInteractivePoints = (pointsConfig: PointConfig[]) =>
-	pointsConfig
-		.map(({ mapX, mapY }, pointIndex) => ({ mapX, mapY, pointIndex }))
-		.filter(({ mapX, mapY }) => mapX || mapY);
-
-const getPointInputs = (
-	interactivePoints: ReturnType<typeof getInteractivePoints>,
-): {[key: string]: RefObject<null | HTMLInputElement>} => {
-	const inputNames = flatMap(
-		interactivePoints,
-		({ mapX, mapY }) => [mapX, mapY],
-	).filter(
-		value => typeof value === 'string',
-	) as string[];
-
-	return uniq(inputNames).reduce((accum, name) => ({
-		...accum,
-		[name]: useRef(null as null | HTMLInputElement),
-	}), {});
-};
-
-const getClosestPointIndex = (points: Point[], [x, y]: Point) => {
-	const distances = points.map(([x2, y2]) => Math.abs(x - x2) + Math.abs(y - y2));
+const getClosestPointIndex = (
+	points: ReturnType<typeof expandPointConfigs>,
+	[x, y]: Point,
+) => {
+	const distances = points.map(({
+		point,
+		isInteractive,
+	}) => {
+		const [x2, y2] = point;
+		return isInteractive
+			? Math.abs(x - x2) + Math.abs(y - y2)
+			: Number.POSITIVE_INFINITY;
+	});
 	const distance = Math.min(...distances);
 
 	return distances.indexOf(distance);
@@ -120,7 +49,6 @@ export function getDivideWidth<T>(
 }
 
 // TODO: Typing directly on the fn works in "withOwnState.tsx". Why not here?
-// type InputEnvelopeType = <T extends object>(props: Props<T>) => React.ReactElement<Props<T>>;
 
 export const InputEnvelope: InputEnvelopeType = props => {
 	// Props
@@ -132,12 +60,28 @@ export const InputEnvelope: InputEnvelopeType = props => {
 		color = '#444',
 	} = props;
 	const [activePointIndex, setActivePointIndex] = useState(-1);
-	const [status, setStatus] = useState(defaultStatus);
+	// const [status, setStatus] = useState(defaultStatus);
 	const wrapper = useRef(null as null | HTMLDivElement);
 	const svgWrapper = useRef(null as null | SVGSVGElement);
+	const { width, height } = useSize(svgWrapper);
+	const maxRangeX = width / divideWidth;
+	const points = expandPointConfigs(
+		pointsConfig,
+		scaleMIDIValueBetween(0, maxRangeX),
+		scaleMIDIValueBetween(0, height),
+	);
+	// TODO: Pls tidy all these floating variables...
+	const { mapX, mapY } = points[activePointIndex] || defaultPointConfig;
+	const [x, y] = (points[activePointIndex] || defaultPointConfig).point;
+	const [minX] = (points[activePointIndex - 1] || defaultPointConfig).point;
+	const getIsInputFocused = () => (
+		wrapper.current &&
+		wrapper.current.contains(document.activeElement)
+	);
+	const isInputFocused = getIsInputFocused();
 
 	// State
-	const { shiftKey } = useKeyboardStatus();
+	const keyboardStatus = useKeyboardStatus();
 	const pointerStatusProps = usePointerStatus({
 		wrapperRef: wrapper,
 		relativeToRef: svgWrapper,
@@ -145,21 +89,16 @@ export const InputEnvelope: InputEnvelopeType = props => {
 		// elements being focused via JS for accessibility.
 		onRawEvent: event => event.preventDefault(),
 		onStatusChange: status => {
-			setStatus(status);
+			// setStatus(status);
 
 			if (status.value === 'inactive') {
 				setActivePointIndex(-1);
 			}
 		},
 		onPointChange: (point, nextStatus) => {
-			console.log(point.unconstrained, point.constrained)
 			switch (nextStatus.value) {
 				case 'hover': {
-					const hoveredPointIndex = getClosestPointIndex(
-						interactivePoints.map(pointMap => points[pointMap.pointIndex]),
-						point.constrained,
-					);
-
+					const hoveredPointIndex = getClosestPointIndex(points, point.constrained);
 					setActivePointIndex(hoveredPointIndex);
 					break;
 				}
@@ -169,9 +108,9 @@ export const InputEnvelope: InputEnvelopeType = props => {
 						return;
 					}
 					const [x, y] = point.constrained;
-					const { mapX, mapY } = interactivePoints[activePointIndex];
+					const { mapX, mapY } = points[activePointIndex];
 					const changes: Partial<typeof value> = {};
-					// const isFineTune = keyboardStatus.shiftKey;
+					const isFineTune = keyboardStatus.shiftKey;
 
 					if (mapX) {
 						const ratioX = clampBetween0And1((x - minX) / maxRangeX);
@@ -197,49 +136,23 @@ export const InputEnvelope: InputEnvelopeType = props => {
 		},
 	});
 
-	const { width, height } = useSize(svgWrapper);
-	const maxRangeX = width / divideWidth;
-	const scalePointToWidth = scaleMIDIValueBetween(0, maxRangeX);
-	const scalePointToHeight = scaleMIDIValueBetween(0, height);
-	const points = cumulativeX(pointsConfig.map(({ point }) => point))
-		.map(([x, y]): Point => [
-			scalePointToWidth(x),
-			scalePointToHeight(y),
-		]);
-	const interactivePoints = getInteractivePoints(pointsConfig);
-	// TODO: Pls tidy all these floating variables...
-	const { pointIndex = -1, mapX, mapY } = interactivePoints[activePointIndex] || {};
-	const [minX] = points[pointIndex - 1] || [0, 0];
-	const [x, y] = points[pointIndex] || [0, 0];
-	const inputs = getPointInputs(interactivePoints);
-	const getIsInputFocused = () => (
-		wrapper.current &&
-		wrapper.current.contains(document.activeElement)
-	);
-	const isInputFocused = getIsInputFocused();
-
 	useEffect(() => {
 		if (status.isActive && activePointIndex !== -1) {
-			const point = interactivePoints[activePointIndex];
+			const point = points[activePointIndex];
 			const inputName = point.mapX || point.mapY;
 
 			if (inputName != null) {
-				const relatedInput = inputs[inputName];
-				if (relatedInput && relatedInput.current) {
-					relatedInput.current.focus();
-				}
+				// const relatedInput = inputs[inputName];
+				// if (relatedInput && relatedInput.current) {
+				// 	relatedInput.current.focus();
+				// }
 			}
 		}
 	});
 
-	const findInteractivePointIndexFromName = (name: String) =>
-		interactivePoints.findIndex(({ mapX, mapY }) => {
-			return mapX === name || mapY === name;
-		});
-
 	return (
 		<div
-			className={styleWrapper}
+			className={style.wrapper}
 			ref={wrapper}
 			onBlur={(event) => {
 				if (wrapper.current && !wrapper.current.contains(event.relatedTarget)) {
@@ -247,56 +160,44 @@ export const InputEnvelope: InputEnvelopeType = props => {
 				}
 			}}
 			onFocus={(event: FocusEvent) => {
-				const index = findInteractivePointIndexFromName(event.target.name);
+				const { name } = event.target
+				const index = points.findIndex(({ mapX, mapY }) => {
+					return mapX === name || mapY === name;
+				});
 				setActivePointIndex(index);
 			}}
 			{...pointerStatusProps}
 		>
 			<div className={styleVisuallyHidden}>
-				{Object.keys(inputs).map(name => {
-					const min = MIDI_MIN;
-					const max = MIDI_MAX;
-					const step = shiftKey ? 0.5 : 3;
-					const clampValue = clamp(min, max);
+				{points.map(({
+					mapX,
+					mapY,
+					isInteractive,
+					interactiveKey,
+				}) => {
+					if (!isInteractive) {
+						return null;
+					}
 
 					return (
-						<InputRange
-							key={name}
-							label={name}
-							name={name}
-							value={value[name]}
+						<InputRange2D
+							key={interactiveKey}
+							xProps={!mapX ? undefined : {
+								value: value[mapX],
+								label: mapX,
+								name: mapX,
+								onChange: newValue => onChange({ ...value, [mapX]: newValue }),
+							}}
+							yProps={!mapY ? undefined : {
+								value: value[mapY],
+								label: mapY,
+								name: mapY,
+								onChange: newValue => onChange({ ...value, [mapY]: newValue }),
+							}}
 							min={MIDI_MIN}
 							max={MIDI_MAX}
-							step={step}
-							inputRef={inputs[name]}
-							// TDOD: Break this logic out into a component for 2D accessible slider that doesn't trap focus for 2 clicks of "tab" key
-							onKeyDown={event => {
-								const { key } = event;
-								const index = findInteractivePointIndexFromName(name);
-								const { mapX, mapY } = pointsConfig[interactivePoints[index].pointIndex];
-
-								if (
-									!(mapX && mapY) ||
-									!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key)
-								) {
-									return;
-								}
-
-								event.preventDefault();
-								const delta = (key === 'ArrowLeft' || key === 'ArrowDown') ? -step : step;
-								const param = (key === 'ArrowLeft' || key === 'ArrowRight') ? mapX : mapY;
-
-								onChange({
-									...value,
-									[param]: clampValue(value[param] + delta),
-								});
-							}}
-							onChange={({ target }) => {
-								onChange({
-									...value,
-									[name]: Number((target as HTMLInputElement).value),
-								});
-							}}
+							// step={step}
+							// inputRef={inputs[name]}
 						/>
 					);
 				})}
@@ -307,30 +208,39 @@ export const InputEnvelope: InputEnvelopeType = props => {
 			*/}
 			<div ref={svgWrapper}>
 				<svg
-					className={styleSvg}
+					className={style.svg}
 					width='100%'
 					height='300'
 					viewBox={`0 0 ${width} ${height}`}
 					preserveAspectRatio='none'
 				>
-					<SVGPolyline className={styleSvgBase(color)} pointsArray={points} />
+					<SVGPolyline
+						className={style.svgBase(color)}
+						pointsArray={points.map(({ point }) => point)}
+					/>
 					{activePointIndex !== -1 && (
 						<rect
 							x={minX}
-							y={mapY ? 0 : y - (dotSizeActive / 2)}
+							y={mapY ? 0 : y - (style.dotSizeActive / 2)}
 							width={maxRangeX}
-							height={mapY ? height : dotSizeActive}
-							className={styleRangeGuideBox(color)}
+							height={mapY ? height : style.dotSizeActive}
+							className={style.rangeGuideBox(color)}
 						/>
 					)}
-					{interactivePoints.map((pointMap, i) => (
-						<SVGLineCircle
-							key={i}
-							data-active={i === activePointIndex}
-							className={styleCircle(color)}
-							point={points[pointMap.pointIndex]}
-						/>
-					))}
+					{points.map((config, i) => {
+						if (!config.isInteractive) {
+							return null;
+						}
+
+						return (
+							<SVGLineCircle
+								key={config.interactiveKey}
+								data-active={i === activePointIndex}
+								className={style.circle(color)}
+								point={config.point}
+							/>
+						);
+					})}
 				</svg>
 			</div>
 		</div>

@@ -5,7 +5,7 @@ import { ChangeHandler } from '../lib/types';
 
 export interface Props extends HTMLProps<HTMLInputElement> {
 	label: string;
-	onChange: ChangeHandler<number>;
+	onChange?: ChangeHandler<number>;
 	ref?: Ref<HTMLInputElement>;
 }
 

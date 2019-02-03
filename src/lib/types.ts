@@ -12,9 +12,16 @@ export type ChangeHandler<T> = (value: T) => void;
 
 // App-specific types
 export type Point = [number, number];
+
 export interface RelativePoint {
 	constrained: Point;
 	unconstrained: Point;
+}
+
+export interface PointConfig {
+	point: Point;
+	mapX?: string;
+	mapY?: string;
 }
 
 export interface ADSREnvelope {

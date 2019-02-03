@@ -54,9 +54,6 @@ const getPointsConfig = ({
 		mapX: 'rate4',
 		mapY: 'level4',
 	},
-	{
-		point: [0, MIDI_MAX],
-	},
 ];
 
 const divideWidth = getDivideWidth(maxEnvelope, getPointsConfig);

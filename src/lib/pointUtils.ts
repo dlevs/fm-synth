@@ -1,6 +1,9 @@
 import last from 'lodash/last';
+import flow from 'lodash/flow';
 import clamp from 'lodash/clamp';
-import { Point, RelativePoint } from '../lib/types';
+import { Point, RelativePoint, PointConfig } from '../lib/types';
+
+type NumberTransform = (value: number) => number;
 
 export const cumulativeX = (points: Point[]) => points
 	.reduce((accum, [x, y]) => {
@@ -10,6 +13,29 @@ export const cumulativeX = (points: Point[]) => points
 			[x + lastX, y],
 		] as Point[];
 	}, [] as Point[]);
+
+export const expandPointConfigs = (
+	pointConfigs: PointConfig[],
+	scaleX: NumberTransform,
+	scaleY: NumberTransform,
+) => flow(
+	(configs: PointConfig[]) => configs.map(({ point }) => point),
+	cumulativeX,
+	points => points.map(([currentX, currentY]) => [
+		scaleX(currentX),
+		scaleY(currentY),
+	] as Point),
+	points => points.map((currentPoint, i) => {
+		const config = pointConfigs[i];
+		const { mapX, mapY } = config;
+		return {
+			...config,
+			point: currentPoint,
+			isInteractive: !!(mapX || mapY),
+			interactiveKey: `${mapX}${mapY}`,
+		};
+	}),
+)(pointConfigs);
 
 export const constrainPoint = (
 	[x, y]: Point,
