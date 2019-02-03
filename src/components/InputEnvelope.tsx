@@ -4,7 +4,7 @@ import flow from 'lodash/flow';
 import flatMap from 'lodash/flatMap';
 import clamp from 'lodash/fp/clamp';
 import { MIDI_MIN, MIDI_MAX, scaleMIDIValueBetween } from '../lib/scales';
-import { expandPointConfigs, cumulativeX } from '../lib/pointUtils';
+import { getClosestPointIndex, expandPointConfigs, cumulativeX } from '../lib/pointUtils';
 import { Point, PointConfig } from '../lib/types';
 import { styleVisuallyHidden } from '../lib/utilityStyles';
 import InputRange2D, { Props as InputRange2DProps } from './InputRange2D';
@@ -19,24 +19,6 @@ import { InputEnvelopeType } from './InputEnvelope.types';
 
 const clampBetween0And1 = clamp(0, 1);
 const defaultPointConfig: Partial<PointConfig> = { point: [0, 0] };
-
-const getClosestPointIndex = (
-	points: ReturnType<typeof expandPointConfigs>,
-	[x, y]: Point,
-) => {
-	const distances = points.map(({
-		point,
-		isInteractive,
-	}) => {
-		const [x2, y2] = point;
-		return isInteractive
-			? Math.abs(x - x2) + Math.abs(y - y2)
-			: Number.POSITIVE_INFINITY;
-	});
-	const distance = Math.min(...distances);
-
-	return distances.indexOf(distance);
-};
 
 export function getDivideWidth<T>(
 	maxEnvelope: T,
@@ -59,7 +41,6 @@ export const InputEnvelope: InputEnvelopeType = props => {
 		divideWidth,
 		color = '#444',
 	} = props;
-	const [activePointIndex, setActivePointIndex] = useState(-1);
 	// const [status, setStatus] = useState(defaultStatus);
 	const wrapper = useRef(null as null | HTMLDivElement);
 	const svgWrapper = useRef(null as null | SVGSVGElement);
@@ -70,10 +51,11 @@ export const InputEnvelope: InputEnvelopeType = props => {
 		scaleMIDIValueBetween(0, maxRangeX),
 		scaleMIDIValueBetween(0, height),
 	);
-	// TODO: Pls tidy all these floating variables...
-	const { mapX, mapY } = points[activePointIndex] || defaultPointConfig;
-	const [, y] = (points[activePointIndex] || defaultPointConfig).point;
-	const [minX] = (points[activePointIndex - 1] || defaultPointConfig).point;
+	const [activePointIndex, setActivePointIndex] = useState(-1);
+	const activePointConfig = points[activePointIndex]
+		? points[activePointIndex]
+		: null;
+	const previousPointConfig = points[activePointIndex - 1] || defaultPointConfig;
 	const getIsInputFocused = () => (
 		wrapper.current &&
 		wrapper.current.contains(document.activeElement)
@@ -95,21 +77,28 @@ export const InputEnvelope: InputEnvelopeType = props => {
 				setActivePointIndex(-1);
 			}
 		},
-		onPointChange: (point, nextStatus) => {
+		onPointChange: (nextPoint, nextStatus) => {
 			switch (nextStatus.value) {
 				case 'hover': {
-					const hoveredPointIndex = getClosestPointIndex(points, point.constrained);
+					const hoveredPointIndex = getClosestPointIndex(
+						points.map(({ isInteractive, point }) => {
+							return isInteractive ? point : null;
+						}),
+						nextPoint.constrained,
+					);
 					setActivePointIndex(hoveredPointIndex);
 					break;
 				}
 
 				case 'active': {
-					if (activePointIndex === -1) {
+					if (!activePointConfig) {
 						return;
 					}
-					const [x, y] = point.constrained;
+					const { mapX, mapY } = activePointConfig;
+					const [x, y] = nextPoint.constrained;
 					const changes: Partial<typeof value> = {};
 					const isFineTune = keyboardStatus.shiftKey;
+					const [minX] = previousPointConfig.point;
 
 					if (mapX) {
 						const ratioX = clampBetween0And1((x - minX) / maxRangeX);
@@ -136,6 +125,10 @@ export const InputEnvelope: InputEnvelopeType = props => {
 	});
 
 	useEffect(() => {
+		if (!activePointConfig) {
+			return;
+		}
+		const { mapX, mapY } = activePointConfig;
 		const inputName = mapX || mapY;
 
 		if (inputName != null) {
@@ -144,7 +137,8 @@ export const InputEnvelope: InputEnvelopeType = props => {
 			// 	relatedInput.current.focus();
 			// }
 		}
-	}, [mapX, mapY]);
+		// TODO: Add variable here
+	});
 
 	return (
 		<div
@@ -214,12 +208,16 @@ export const InputEnvelope: InputEnvelopeType = props => {
 						className={style.svgBase(color)}
 						pointsArray={points.map(({ point }) => point)}
 					/>
-					{activePointIndex !== -1 && (
+					{activePointConfig && (
 						<rect
-							x={minX}
-							y={mapY ? 0 : y - (style.dotSizeActive / 2)}
+							x={previousPointConfig.point[0]}
+							y={
+								activePointConfig.mapY
+									? 0
+									: activePointConfig.point[1] - (style.dotSizeActive / 2)
+							}
 							width={maxRangeX}
-							height={mapY ? height : style.dotSizeActive}
+							height={activePointConfig.mapY ? height : style.dotSizeActive}
 							className={style.rangeGuideBox(color)}
 						/>
 					)}

@@ -5,12 +5,37 @@ import { Point, RelativePoint, PointConfig } from '../lib/types';
 
 type NumberTransform = (value: number) => number;
 
+// A tiny number to cumulatively add to each point so that no 2 points
+// ever have the exact same value. This prevents 2 points from getting
+// "stuck together" when dragging them to the same coordinate.
+const NO_STICK_OFFSET = 0.00000001;
+
+export const getClosestPointIndex = (
+	points: (Point | null)[],
+	[x, y]: Point,
+) => {
+	const distances = points.map(point => {
+		if (!point) {
+			return Number.POSITIVE_INFINITY;
+		}
+
+		const [x2, y2] = point;
+		return Math.abs(x - x2) + Math.abs(y - y2);
+	});
+	const distance = Math.min(...distances);
+
+	return distances.indexOf(distance);
+};
+
 export const cumulativeX = (points: Point[]) => points
 	.reduce((accum, [x, y]) => {
 		const [lastX] = last(accum) || [0, 0];
 		return [
 			...accum,
-			[x + lastX, y],
+			[
+				x + lastX + NO_STICK_OFFSET,
+				y + NO_STICK_OFFSET,
+			],
 		] as Point[];
 	}, [] as Point[]);
 
