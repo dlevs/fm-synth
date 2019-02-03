@@ -72,7 +72,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 	);
 	// TODO: Pls tidy all these floating variables...
 	const { mapX, mapY } = points[activePointIndex] || defaultPointConfig;
-	const [x, y] = (points[activePointIndex] || defaultPointConfig).point;
+	const [, y] = (points[activePointIndex] || defaultPointConfig).point;
 	const [minX] = (points[activePointIndex - 1] || defaultPointConfig).point;
 	const getIsInputFocused = () => (
 		wrapper.current &&
@@ -108,7 +108,6 @@ export const InputEnvelope: InputEnvelopeType = props => {
 						return;
 					}
 					const [x, y] = point.constrained;
-					const { mapX, mapY } = points[activePointIndex];
 					const changes: Partial<typeof value> = {};
 					const isFineTune = keyboardStatus.shiftKey;
 
@@ -137,18 +136,15 @@ export const InputEnvelope: InputEnvelopeType = props => {
 	});
 
 	useEffect(() => {
-		if (status.isActive && activePointIndex !== -1) {
-			const point = points[activePointIndex];
-			const inputName = point.mapX || point.mapY;
+		const inputName = mapX || mapY;
 
-			if (inputName != null) {
-				// const relatedInput = inputs[inputName];
-				// if (relatedInput && relatedInput.current) {
-				// 	relatedInput.current.focus();
-				// }
-			}
+		if (inputName != null) {
+			// const relatedInput = inputs[inputName];
+			// if (relatedInput && relatedInput.current) {
+			// 	relatedInput.current.focus();
+			// }
 		}
-	});
+	}, [mapX, mapY]);
 
 	return (
 		<div
