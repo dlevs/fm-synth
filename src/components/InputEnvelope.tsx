@@ -50,17 +50,15 @@ export const InputEnvelope: InputEnvelopeType = props => {
 		pointsConfig,
 		scaleMIDIValueBetween(0, maxRangeX),
 		scaleMIDIValueBetween(0, height),
-	);
+	).map(config => ({
+		...config,
+		ref: useRef(null as null | HTMLInputElement),
+	}));
 	const [activePointIndex, setActivePointIndex] = useState(-1);
 	const activePointConfig = points[activePointIndex]
 		? points[activePointIndex]
 		: null;
 	const previousPointConfig = points[activePointIndex - 1] || defaultPointConfig;
-	const getIsInputFocused = () => (
-		wrapper.current &&
-		wrapper.current.contains(document.activeElement)
-	);
-	const isInputFocused = getIsInputFocused();
 
 	// State
 	const keyboardStatus = useKeyboardStatus();
@@ -71,10 +69,16 @@ export const InputEnvelope: InputEnvelopeType = props => {
 		// elements being focused via JS for accessibility.
 		onRawEvent: event => event.preventDefault(),
 		onStatusChange: status => {
-			// setStatus(status);
+			switch (status.value) {
+				case 'inactive':
+					setActivePointIndex(-1);
+					break;
 
-			if (status.value === 'inactive') {
-				setActivePointIndex(-1);
+				case 'active':
+					if (activePointConfig && activePointConfig.ref.current) {
+						activePointConfig.ref.current.focus();
+					}
+					break;
 			}
 		},
 		onPointChange: (nextPoint, nextStatus) => {
@@ -124,22 +128,6 @@ export const InputEnvelope: InputEnvelopeType = props => {
 		},
 	});
 
-	useEffect(() => {
-		if (!activePointConfig) {
-			return;
-		}
-		const { mapX, mapY } = activePointConfig;
-		const inputName = mapX || mapY;
-
-		if (inputName != null) {
-			// const relatedInput = inputs[inputName];
-			// if (relatedInput && relatedInput.current) {
-			// 	relatedInput.current.focus();
-			// }
-		}
-		// TODO: Add variable here
-	});
-
 	return (
 		<div
 			className={style.wrapper}
@@ -159,30 +147,46 @@ export const InputEnvelope: InputEnvelopeType = props => {
 			{...pointerStatusProps}
 		>
 			<div className={styleVisuallyHidden}>
-				{points.map(({
-					mapX,
-					mapY,
-					isInteractive,
-					interactiveKey,
-				}) => {
+				{points.map((config, i) => {
+					const {
+						mapX,
+						mapY,
+						isInteractive,
+						interactiveKey,
+						ref,
+					} = config;
 					if (!isInteractive) {
 						return null;
 					}
 
+					const createOnChange = (key: string) =>
+						(newValue: number) => {
+							// Set the index, for the rare edge case that a user has an input
+							// field focused, then moves hover away from this component and
+							// uses the arrow keys to change the value of the still-focused
+							// field.
+							if (activePointIndex !== i) {
+								setActivePointIndex(i);
+							}
+
+							onChange({ ...value, [key]: newValue });
+						};
+
 					return (
 						<InputRange2D
+							ref={ref}
 							key={interactiveKey}
 							xProps={!mapX ? undefined : {
 								value: value[mapX],
 								label: mapX,
 								name: mapX,
-								onChange: newValue => onChange({ ...value, [mapX]: newValue }),
+								onChange: createOnChange(mapX),
 							}}
 							yProps={!mapY ? undefined : {
 								value: value[mapY],
 								label: mapY,
 								name: mapY,
-								onChange: newValue => onChange({ ...value, [mapY]: newValue }),
+								onChange: createOnChange(mapY),
 							}}
 							min={MIDI_MIN}
 							max={MIDI_MAX}
