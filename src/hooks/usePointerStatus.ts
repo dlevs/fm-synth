@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, RefObject } from 'react';
+import { useCallback, useRef, RefObject } from 'react';
 import useEventListener from './useEventListener';
 import { getRelativePointFromEvent, constrainPoint } from '../lib/pointUtils';
 
@@ -56,16 +56,15 @@ const getExpandedStatus = (
 const usePointerStatus = ({
 	wrapperRef,
 	relativeToRef,
-	onChangeRaw,
 	onChange,
 }: {
 	wrapperRef: RefObject<Element>;
 	relativeToRef?: RefObject<Element>;
-	onChangeRaw?(event: PointerEvent): void;
-	onChange?(params: {
+	onChange(params: {
 		point: typeof defaultPoint;
 		status: Status;
 		previousStatus: Status;
+		event: Event | React.PointerEvent;
 	}): void;
 }) => {
 	// Setup variables
@@ -75,14 +74,9 @@ const usePointerStatus = ({
 	const point = useRef(defaultPoint);
 
 	// TODO: Can we use `PointerEvent` type for argument annotation?
-	// TODO: Can we wrap this in "useCallback and keep the "status" inputs logic here?
 	const eventInputs = [status, wrapperRef, relativeToRef, onChange];
 	const handlePointerEvent = useCallback((event: Event | React.PointerEvent) => {
 		let shouldSetPoint = true;
-
-		if (onChangeRaw) {
-			onChangeRaw(event);
-		}
 
 		if (!wrapperRef.current) {
 			return;
@@ -137,13 +131,12 @@ const usePointerStatus = ({
 			);
 		}
 
-		if (onChange) {
-			onChange({
-				point: point.current,
-				status: status.value,
-				previousStatus: previousStatus.current,
-			});
-		}
+		onChange({
+			point: point.current,
+			status: status.value,
+			previousStatus: previousStatus.current,
+			event,
+		});
 
 		previousStatus.current = status.value;
 	// TODO: Pass `wrapper` or `wrapperRef.current` here? What's best practice?

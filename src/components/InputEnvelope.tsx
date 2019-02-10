@@ -68,14 +68,16 @@ export const InputEnvelope: InputEnvelopeType = props => {
 	const pointerStatusProps = usePointerStatus({
 		wrapperRef: wrapper,
 		relativeToRef: svgWrapper,
-		// Prevent default on click to not take focus away from input
-		// elements being focused via JS for accessibility.
-		onChangeRaw: event => event.preventDefault(),
 		onChange: ({
 			point: { constrained: [x, y] },
 			status,
 			previousStatus,
+			event,
 		}) => {
+			// Prevent default on click to not take focus away from input
+			// elements being focused via JS for accessibility.
+			event.preventDefault();
+
 			if (status !== previousStatus) {
 				switch (status) {
 					case 'inactive':
