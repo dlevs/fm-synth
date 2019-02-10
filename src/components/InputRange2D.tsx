@@ -57,9 +57,8 @@ export const InputRange2D = (
 			}
 		},
 		blur: () => {
-			if (document.activeElement === null) {
-				return
-			}
+			if (document.activeElement === null) return
+
 			if (document.activeElement === xRef.current) {
 				xRef.current.blur()
 			} else if (document.activeElement === yRef.current) {
@@ -94,9 +93,7 @@ export const InputRange2D = (
 			? xProps
 			: yProps
 
-		if (!input || !relatedProps || !relatedProps.onChange) {
-			return
-		}
+		if (!input || !relatedProps || !relatedProps.onChange) return
 
 		const value = Number(input.value)
 		const step = Number(input.step || 1)

@@ -60,9 +60,8 @@ export const InputKeyboard = ({
 	}
 
 	const releaseMouseNote = () => {
-		if (mouseNote === null) {
-			return
-		}
+		if (mouseNote === null) return
+
 		// TODO: put this logic in "component will update"?
 		onNoteOff({ note: mouseNote, velocity: 127 })
 		setMouseNote(null)
