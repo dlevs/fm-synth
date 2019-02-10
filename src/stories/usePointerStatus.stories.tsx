@@ -22,15 +22,17 @@ const styleDemoWrapper = css`
 	touch-action: none;
 
 	/* Data attributes applied by usePointerStatus */
-	&[data-status="hover"] {
-		background: lightblue;
-	}
-
-	&[data-status="active"] {
-		background: lightgreen;
-		cursor: grabbing;
-	}
 `;
+
+// TODO: Remove me
+// &[data-status="hover"] {
+// 	background: lightblue;
+// }
+
+// &[data-status="active"] {
+// 	background: lightgreen;
+// 	cursor: grabbing;
+// }
 
 const styleDemoInnerEl = css`
 	${styleDemoBorder}

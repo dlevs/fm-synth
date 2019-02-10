@@ -10,7 +10,7 @@ import { styleVisuallyHidden } from '../lib/utilityStyles';
 import InputRange2D, { Props as InputRange2DProps } from './InputRange2D';
 import SVGLineCircle from './SVGLineCircle';
 import SVGPolyline from './SVGPolyline';
-import usePointerStatus, { defaultStatus } from '../hooks/usePointerStatus';
+import usePointerStatus, { defaultStatus, defaultPoint } from '../hooks/usePointerStatus';
 import useKeyboardStatus from '../hooks/useKeyboardStatus';
 import useSize from '../hooks/useSize';
 
@@ -54,6 +54,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 		...config,
 		ref: useRef(null as null | HTMLInputElement),
 	}));
+	const activePointStart = useRef(null as null | Point);
 	const [activePointIndex, setActivePointIndex] = useState(-1);
 	const activePointConfig = points[activePointIndex]
 		? points[activePointIndex]
@@ -62,33 +63,41 @@ export const InputEnvelope: InputEnvelopeType = props => {
 
 	// State
 	const keyboardStatus = useKeyboardStatus();
+	const isFineTune = keyboardStatus.shiftKey;
+
 	const pointerStatusProps = usePointerStatus({
 		wrapperRef: wrapper,
 		relativeToRef: svgWrapper,
 		// Prevent default on click to not take focus away from input
 		// elements being focused via JS for accessibility.
-		onRawEvent: event => event.preventDefault(),
-		onStatusChange: status => {
-			switch (status.value) {
-				case 'inactive':
-					setActivePointIndex(-1);
-					break;
+		onChangeRaw: event => event.preventDefault(),
+		onChange: ({
+			point: { constrained: [x, y] },
+			status,
+			previousStatus,
+		}) => {
+			if (status !== previousStatus) {
+				switch (status) {
+					case 'inactive':
+						setActivePointIndex(-1);
+						break;
 
-				case 'active':
-					if (activePointConfig && activePointConfig.ref.current) {
-						activePointConfig.ref.current.focus();
-					}
-					break;
+					case 'active':
+						activePointStart.current = [x, y];
+						if (activePointConfig && activePointConfig.ref.current) {
+							activePointConfig.ref.current.focus();
+						}
+						break;
+				}
 			}
-		},
-		onPointChange: (nextPoint, nextStatus) => {
-			switch (nextStatus.value) {
+
+			switch (status) {
 				case 'hover': {
 					const hoveredPointIndex = getClosestPointIndex(
 						points.map(({ isInteractive, point }) => {
 							return isInteractive ? point : null;
 						}),
-						nextPoint.constrained,
+						[x, y],
 					);
 					setActivePointIndex(hoveredPointIndex);
 					break;
@@ -99,18 +108,22 @@ export const InputEnvelope: InputEnvelopeType = props => {
 						return;
 					}
 					const { mapX, mapY } = activePointConfig;
-					const [x, y] = nextPoint.constrained;
 					const changes: Partial<typeof value> = {};
-					const isFineTune = keyboardStatus.shiftKey;
 					const [minX] = previousPointConfig.point;
+					// TODO: Variable for these magic numbers:
+					const fineTuneDivisor = isFineTune ? 3 : 1;
+
+					console.log(`The initial point was ${activePointStart.current}`);
 
 					if (mapX) {
-						const ratioX = clampBetween0And1((x - minX) / maxRangeX);
+						const ratioXBase = ((x - minX) / maxRangeX) / fineTuneDivisor;
+						const ratioX = clampBetween0And1(ratioXBase);
 						changes[mapX] = ratioX * MIDI_MAX;
 					}
 
 					if (mapY) {
-						const ratioY = clampBetween0And1(y / height);
+						const ratioYBase = (y / height) / fineTuneDivisor;
+						const ratioY = clampBetween0And1(ratioYBase);
 						changes[mapY] = MIDI_MAX - (ratioY * MIDI_MAX);
 					}
 
@@ -190,8 +203,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 							}}
 							min={MIDI_MIN}
 							max={MIDI_MAX}
-							// step={step}
-							// inputRef={inputs[name]}
+							step={isFineTune ? 1 : 3}
 						/>
 					);
 				})}

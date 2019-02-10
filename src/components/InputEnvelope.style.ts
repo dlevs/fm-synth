@@ -11,17 +11,18 @@ export const wrapper = css`
 	cursor: grab;
 	user-select: none;
 	touch-action: none;
-
-	&:not([data-status="inactive"]) {
-		polyline {
-			/* stroke-width: 1.5px; */
-		}
-	}
-
-	&[data-status="active"] {
-		cursor: grabbing;
-	}
 `;
+
+// TODO: Remove me:
+// &:not([data-status="inactive"]) {
+// 	polyline {
+// 		/* stroke-width: 1.5px; */
+// 	}
+// }
+
+// &[data-status="active"] {
+// 	cursor: grabbing;
+// }
 
 export const svg = css`
 	display: block;

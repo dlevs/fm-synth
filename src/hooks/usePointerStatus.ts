@@ -56,37 +56,32 @@ const getExpandedStatus = (
 const usePointerStatus = ({
 	wrapperRef,
 	relativeToRef,
-	onRawEvent,
-	onPointChange,
-	onStatusChange,
+	onChangeRaw,
+	onChange,
 }: {
 	wrapperRef: RefObject<Element>;
 	relativeToRef?: RefObject<Element>;
-	onRawEvent?(event: PointerEvent): void;
-	onPointChange?(relativePoint: typeof defaultPoint, nextStatus: typeof defaultStatus): void;
-	// TODO: Is this silly? Return status always as return value instead?
-	onStatusChange?(status: typeof defaultStatus): void;
+	onChangeRaw?(event: PointerEvent): void;
+	onChange?(params: {
+		point: typeof defaultPoint;
+		status: Status;
+		previousStatus: Status;
+	}): void;
 }) => {
 	// Setup variables
-	const [isPointerOver, setIsPointerOver] = useState(false);
-	const [isPointerDown, setIsPointerDown] = useState(false);
-	const status = getStatus(isPointerOver, isPointerDown);
-	const lastStatus = useRef(status);
+	const isPointerOver = useRef(false);
+	const isPointerDown = useRef(false);
+	const previousStatus = useRef('inactive' as Status);
+	const point = useRef(defaultPoint);
 
 	// TODO: Can we use `PointerEvent` type for argument annotation?
 	// TODO: Can we wrap this in "useCallback and keep the "status" inputs logic here?
-	const eventInputs = [status, wrapperRef.current, onPointChange, onStatusChange];
+	const eventInputs = [status, wrapperRef, relativeToRef, onChange];
 	const handlePointerEvent = useCallback((event: Event | React.PointerEvent) => {
 		let shouldSetPoint = true;
 
-		// Track the new values, so they may be used to generate the most up-to-date
-		// status to pass to the `onPointChange` callback. Otherwise, the status is
-		// always one step behind.
-		let nextIsPointerOver = isPointerOver;
-		let nextIsPointerDown = isPointerDown;
-
-		if (onRawEvent) {
-			onRawEvent(event);
+		if (onChangeRaw) {
+			onChangeRaw(event);
 		}
 
 		if (!wrapperRef.current) {
@@ -95,33 +90,33 @@ const usePointerStatus = ({
 
 		switch (event.type) {
 			case 'pointerdown':
-				nextIsPointerDown = true;
+				isPointerDown.current = true;
 				break;
 
 			case 'pointerup':
-				if (status === 'active') {
-					nextIsPointerDown = false;
+				if (previousStatus.current === 'active') {
+					isPointerDown.current = false;
 				} else {
 					shouldSetPoint = false;
 				}
 				break;
 
 			case 'pointerenter':
-				nextIsPointerOver = true;
+				isPointerOver.current = true;
 				break;
 
 			case 'pointerleave':
-				if (status !== 'active') {
+				if (previousStatus.current !== 'active') {
 					shouldSetPoint = false;
 				}
-				nextIsPointerOver = false;
+				isPointerOver.current = false;
 				break;
 
 			case 'pointermove':
 				if (
-					status === 'inactive' ||
+					previousStatus.current === 'inactive' ||
 					(
-						status === 'hover' &&
+						previousStatus.current === 'hover' &&
 						wrapperRef.current !== event.target &&
 						!wrapperRef.current.contains(event.target as Element)
 					)
@@ -131,27 +126,26 @@ const usePointerStatus = ({
 				break;
 		}
 
-		if (nextIsPointerOver !== isPointerOver) {
-			setIsPointerOver(nextIsPointerOver);
-		}
+		const status = getExpandedStatus(isPointerOver.current, isPointerDown.current);
 
-		if (nextIsPointerDown !== isPointerDown) {
-			setIsPointerDown(nextIsPointerDown);
-		}
-
-		if (shouldSetPoint && onPointChange) {
-			const relativePoint = getRelativePointFromEvent(
+		if (shouldSetPoint) {
+			point.current = getRelativePointFromEvent(
 				event as PointerEvent,
 				relativeToRef
 					? relativeToRef.current
 					: wrapperRef.current,
 			);
-			onPointChange(
-				relativePoint,
-				getExpandedStatus(nextIsPointerOver, nextIsPointerDown),
-			);
 		}
 
+		if (onChange) {
+			onChange({
+				point: point.current,
+				status: status.value,
+				previousStatus: previousStatus.current,
+			});
+		}
+
+		previousStatus.current = status.value;
 	// TODO: Pass `wrapper` or `wrapperRef.current` here? What's best practice?
 	}, eventInputs);
 
@@ -159,22 +153,12 @@ const usePointerStatus = ({
 	// TODO: We pass inputs here as well?
 	useEventListener(document, 'pointerup', handlePointerEvent, eventInputs);
 	useEventListener(document, 'pointermove', handlePointerEvent, eventInputs);
-	useEffect(() => {
-		if (onStatusChange) {
-			onStatusChange(getExpandedStatus(
-				isPointerOver,
-				isPointerDown,
-			));
-		}
-		lastStatus.current = status;
-	}, [isPointerOver, isPointerDown]);
 
 	return {
 		// TODO: Do we need "useCallback" here, or is it OK to just use raw function when not prop drilling?
 		onPointerDown: handlePointerEvent,
 		onPointerEnter: handlePointerEvent,
 		onPointerLeave: handlePointerEvent,
-		'data-status': status,
 	};
 };
 
