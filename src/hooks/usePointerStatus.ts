@@ -58,13 +58,13 @@ const usePointerStatus = ({
 	relativeToRef,
 	onChange
 }: {
-	wrapperRef: RefObject<Element>;
-	relativeToRef?: RefObject<Element>;
+	wrapperRef: RefObject<Element>
+	relativeToRef?: RefObject<Element>
 	onChange (params: {
-		point: typeof defaultPoint;
-		status: Status;
-		previousStatus: Status;
-		event: Event | React.PointerEvent;
+		point: typeof defaultPoint
+		status: Status
+		previousStatus: Status
+		event: Event | React.PointerEvent
 	}): void;
 }) => {
 	// Setup variables
@@ -76,60 +76,53 @@ const usePointerStatus = ({
 	// TODO: Can we use `PointerEvent` type for argument annotation?
 	const eventInputs = [status, wrapperRef, relativeToRef, onChange]
 	const handlePointerEvent = useCallback((event: Event | React.PointerEvent) => {
-		let shouldSetPoint = true
+		if (!wrapperRef.current) return
 
-		if (!wrapperRef.current) {
-			return
-		}
+		const eventPoint = getRelativePointFromEvent(
+			event as PointerEvent,
+			relativeToRef ? relativeToRef.current : wrapperRef.current
+		)
 
 		switch (event.type) {
 			case 'pointerdown':
 				isPointerDown.current = true
+				point.current = eventPoint
 				break
 
 			case 'pointerup':
 				if (previousStatus.current === 'active') {
 					isPointerDown.current = false
-				} else {
-					shouldSetPoint = false
+					point.current = eventPoint
 				}
 				break
 
 			case 'pointerenter':
 				isPointerOver.current = true
+				point.current = eventPoint
 				break
 
 			case 'pointerleave':
-				if (previousStatus.current !== 'active') {
-					shouldSetPoint = false
+				if (previousStatus.current === 'active') {
+					point.current = eventPoint
 				}
 				isPointerOver.current = false
 				break
 
 			case 'pointermove':
 				if (
-					previousStatus.current === 'inactive' ||
-					(
+					previousStatus.current !== 'inactive' &&
+					!(
 						previousStatus.current === 'hover' &&
 						wrapperRef.current !== event.target &&
 						!wrapperRef.current.contains(event.target as Element)
 					)
 				) {
-					shouldSetPoint = false
+					point.current = eventPoint
 				}
 				break
 		}
 
 		const status = getExpandedStatus(isPointerOver.current, isPointerDown.current)
-
-		if (shouldSetPoint) {
-			point.current = getRelativePointFromEvent(
-				event as PointerEvent,
-				relativeToRef
-					? relativeToRef.current
-					: wrapperRef.current
-			)
-		}
 
 		onChange({
 			point: point.current,

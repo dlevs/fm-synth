@@ -17,8 +17,16 @@ import useSize from '../hooks/useSize'
 import * as style from './InputEnvelope.style'
 import { InputEnvelopeType } from './InputEnvelope.types'
 
+const clampInMIDIRange = clamp(MIDI_MIN, MIDI_MAX)
 const clampBetween0And1 = clamp(0, 1)
 const defaultPointConfig: Partial<PointConfig> = { point: [0, 0] }
+const getInteractivePoints = ({
+	isInteractive,
+	point
+}: {
+	isInteractive: boolean
+	point: Point
+}) => isInteractive ? point : null
 
 export function getDivideWidth<T> (
 	maxEnvelope: T,
@@ -28,6 +36,15 @@ export function getDivideWidth<T> (
 	const maxPointsCumulative = cumulativeX(maxPoints.map(({ point }) => point))
 	const [maxX] = maxPointsCumulative[maxPointsCumulative.length - 1]
 	return maxX / MIDI_MAX
+}
+
+const getValueFromPoint = (value, minValue, range) => {
+	const ratio = clampBetween0And1((value - minValue) / range)
+	return ratio * MIDI_MAX
+}
+
+const getPointFromValue = (value, minValue, range) => {
+	return ((value / MIDI_MAX) * range) + minValue
 }
 
 // TODO: Typing directly on the fn works in "withOwnState.tsx". Why not here?
@@ -54,8 +71,8 @@ export const InputEnvelope: InputEnvelopeType = props => {
 		...config,
 		ref: useRef(null as null | HTMLInputElement)
 	}))
-	const activePointStart = useRef(null as null | Point)
 	const [activePointIndex, setActivePointIndex] = useState(-1)
+	const activeValueStart = useRef(value)
 	const activePointConfig = points[activePointIndex]
 		? points[activePointIndex]
 		: null
@@ -65,11 +82,15 @@ export const InputEnvelope: InputEnvelopeType = props => {
 	const keyboardStatus = useKeyboardStatus()
 	const isFineTune = keyboardStatus.shiftKey
 
+	useEffect(() => {
+		activeValueStart.current = value
+	}, [keyboardStatus.shiftKey])
+
 	const pointerStatusProps = usePointerStatus({
 		wrapperRef: wrapper,
 		relativeToRef: svgWrapper,
 		onChange: ({
-			point: { constrained: [x, y] },
+			point,
 			status,
 			previousStatus,
 			event
@@ -85,7 +106,8 @@ export const InputEnvelope: InputEnvelopeType = props => {
 						break
 
 					case 'active':
-						activePointStart.current = [x, y]
+						activeValueStart.current = value
+
 						if (activePointConfig && activePointConfig.ref.current) {
 							activePointConfig.ref.current.focus()
 						}
@@ -96,10 +118,8 @@ export const InputEnvelope: InputEnvelopeType = props => {
 			switch (status) {
 				case 'hover': {
 					const hoveredPointIndex = getClosestPointIndex(
-						points.map(({ isInteractive, point }) => {
-							return isInteractive ? point : null
-						}),
-						[x, y]
+						points.map(getInteractivePoints),
+						point.constrained
 					)
 					setActivePointIndex(hoveredPointIndex)
 					break
@@ -110,27 +130,33 @@ export const InputEnvelope: InputEnvelopeType = props => {
 
 					const { mapX, mapY } = activePointConfig
 					const changes: Partial<typeof value> = {}
+					const [x, y] = point.constrained
 					const [minX] = previousPointConfig.point
-					// TODO: Variable for these magic numbers:
-					const fineTuneDivisor = isFineTune ? 3 : 1
+					const start = activeValueStart.current
+					const sensitivity = isFineTune ? 4 : 1
 
-					console.log(`The initial point was ${activePointStart.current}`)
-
-					if (mapX) {
-						const ratioXBase = ((x - minX) / maxRangeX) / fineTuneDivisor
-						const ratioX = clampBetween0And1(ratioXBase)
-						changes[mapX] = ratioX * MIDI_MAX
+					if (mapX && start) {
+						if (isFineTune) {
+							// TODO: Always use this approach. Make point only snap to cursor on first pointerDown event, but once fine tune is on, don't snap again
+							const startValue = start[mapX]
+							const startX = getPointFromValue(startValue, minX, maxRangeX)
+							const ratioX = (x - minX) / (startX - minX)
+							const difference = (startValue * ratioX) - startValue
+							changes[mapX] = clampInMIDIRange(startValue + (difference / sensitivity))
+						} else {
+							changes[mapX] = getValueFromPoint(x, minX, maxRangeX)
+						}
 					}
 
 					if (mapY) {
-						const ratioYBase = (y / height) / fineTuneDivisor
-						const ratioY = clampBetween0And1(ratioYBase)
-						changes[mapY] = MIDI_MAX - (ratioY * MIDI_MAX)
+						changes[mapY] = MIDI_MAX - getValueFromPoint(y, 0, height)
+
+						// const ratioYBase = (y / height) / fineTuneDivisor
+						// const ratioY = clampBetween0And1(ratioYBase)
+						// changes[mapY] = MIDI_MAX - (ratioY * MIDI_MAX)
 					}
 
-					if (!(mapX || mapY)) {
-						return
-					}
+					if (!(mapX || mapY)) return
 
 					onChange({
 						...value,
