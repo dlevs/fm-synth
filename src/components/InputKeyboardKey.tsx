@@ -1,13 +1,13 @@
-import React, { MouseEvent } from 'react';
-import Color from 'color';
-import { velocityColorMixScale } from '../lib/scales';
-import { css, cx } from 'emotion';
-import { KEY_INDEX_TO_KEYBOARD_KEY_MAP } from '../lib/constants';
+import React, { MouseEvent } from 'react'
+import Color from 'color'
+import { velocityColorMixScale } from '../lib/scales'
+import { css, cx } from 'emotion'
+import { KEY_INDEX_TO_KEYBOARD_KEY_MAP } from '../lib/constants'
 
-const COLOR_ACTIVE_KEY = Color('#2c76ec');
-const COLOR_WHITE_KEY = Color('#fff');
-const COLOR_BLACK_KEY = Color('#111');
-const COLOR_HOVER_RATIO = 0.1;
+const COLOR_ACTIVE_KEY = Color('#2c76ec')
+const COLOR_WHITE_KEY = Color('#fff')
+const COLOR_BLACK_KEY = Color('#111')
+const COLOR_HOVER_RATIO = 0.1
 
 // TODO: Make a naming convention for style variable names
 const baseKey = css`
@@ -22,7 +22,7 @@ const baseKey = css`
 	padding-bottom: 10px;
 	user-select: none;
 	transition: background 300ms, color 300ms;
-`;
+`
 
 const whiteKey = css`
 	${baseKey}
@@ -34,7 +34,7 @@ const whiteKey = css`
 	&:hover, &:focus {
 		background: ${COLOR_WHITE_KEY.darken(COLOR_HOVER_RATIO).toString()};
 	}
-`;
+`
 
 const blackKey = css`
 	${baseKey}
@@ -53,35 +53,35 @@ const blackKey = css`
 	&:hover, &:focus {
 		background: ${COLOR_BLACK_KEY.lighten(COLOR_HOVER_RATIO).toString()};
 	}
-`;
+`
 
 // TODO: might make more sense to have velocity be between 0 - 1 here. Decide at which point to decouple from MIDI scale 0 - 127.
 const activeKey = (backgroundColor: Color, velocity: number) => css`
 	background: ${backgroundColor.mix(COLOR_ACTIVE_KEY, velocityColorMixScale(velocity)).toString()} !important;
 	color: #fff;
 	transition: all 0s;
-`;
+`
 
 const colorSettingsMap = {
 	white: {
 		cssClass: whiteKey,
-		backgroundColor: COLOR_WHITE_KEY,
+		backgroundColor: COLOR_WHITE_KEY
 	},
 	black: {
 		cssClass: blackKey,
-		backgroundColor: COLOR_BLACK_KEY,
-	},
-};
+		backgroundColor: COLOR_BLACK_KEY
+	}
+}
 
 interface Props {
-	color: 'white' | 'black';
-	velocity: number;
-	note: number;
-	style?: React.CSSProperties;
-	onMouseDown(event: MouseEvent): void;
-	onMouseUp(event: MouseEvent): void;
-	onMouseEnter(event: MouseEvent): void;
-	onMouseLeave(event: MouseEvent): void;
+	color: 'white' | 'black'
+	velocity: number
+	note: number
+	style?: React.CSSProperties
+	onMouseDown (event: MouseEvent): void
+	onMouseUp (event: MouseEvent): void
+	onMouseEnter (event: MouseEvent): void
+	onMouseLeave (event: MouseEvent): void
 }
 
 const InputKeyboardKey = ({
@@ -92,13 +92,13 @@ const InputKeyboardKey = ({
 	onMouseEnter,
 	onMouseLeave,
 	velocity,
-	note,
+	note
 }: Props) => {
-	const { cssClass, backgroundColor } = colorSettingsMap[color];
-	const cssClasses = [cssClass];
+	const { cssClass, backgroundColor } = colorSettingsMap[color]
+	const cssClasses = [cssClass]
 
 	if (velocity > 0) {
-		cssClasses.push(activeKey(backgroundColor, velocity));
+		cssClasses.push(activeKey(backgroundColor, velocity))
 	}
 
 	return (
@@ -113,7 +113,7 @@ const InputKeyboardKey = ({
 		>
 			{KEY_INDEX_TO_KEYBOARD_KEY_MAP[note] || ''}
 		</div>
-	);
-};
+	)
+}
 
-export default InputKeyboardKey;
+export default InputKeyboardKey

@@ -1,32 +1,32 @@
-import { useCallback, useRef, RefObject } from 'react';
-import useEventListener from './useEventListener';
-import { getRelativePointFromEvent, constrainPoint } from '../lib/pointUtils';
+import { useCallback, useRef, RefObject } from 'react'
+import useEventListener from './useEventListener'
+import { getRelativePointFromEvent, constrainPoint } from '../lib/pointUtils'
 
-type Status = 'inactive' | 'hover' | 'active';
+type Status = 'inactive' | 'hover' | 'active'
 
 export const defaultStatus = {
 	value: 'inactive' as Status,
 	isHovered: false,
-	isActive: false,
-};
+	isActive: false
+}
 
-export const defaultPoint = constrainPoint([0, 0], [0, 0]);
+export const defaultPoint = constrainPoint([0, 0], [0, 0])
 
 const getStatus = (
 	isPointerOver: boolean,
-	isPointerDown: boolean,
+	isPointerDown: boolean
 ): Status =>
 	isPointerDown
 		? 'active'
 		: isPointerOver
 			? 'hover'
-			: 'inactive';
+			: 'inactive'
 
 const getExpandedStatus = (
 	isPointerOver: boolean,
-	isPointerDown: boolean,
+	isPointerDown: boolean
 ): typeof defaultStatus => {
-	const status = getStatus(isPointerOver, isPointerDown);
+	const status = getStatus(isPointerOver, isPointerDown)
 	return {
 		// Most relevant status as a string
 		value: status,
@@ -35,9 +35,9 @@ const getExpandedStatus = (
 		// can be both active and hovered at the same time, but you would
 		// not be able to tell from the `status` string alone.
 		isHovered: isPointerOver,
-		isActive: status === 'active',
-	};
-};
+		isActive: status === 'active'
+	}
+}
 
 /**
  * Get the current status of pointer devices in relation to an element. Returns
@@ -56,11 +56,11 @@ const getExpandedStatus = (
 const usePointerStatus = ({
 	wrapperRef,
 	relativeToRef,
-	onChange,
+	onChange
 }: {
 	wrapperRef: RefObject<Element>;
 	relativeToRef?: RefObject<Element>;
-	onChange(params: {
+	onChange (params: {
 		point: typeof defaultPoint;
 		status: Status;
 		previousStatus: Status;
@@ -68,43 +68,43 @@ const usePointerStatus = ({
 	}): void;
 }) => {
 	// Setup variables
-	const isPointerOver = useRef(false);
-	const isPointerDown = useRef(false);
-	const previousStatus = useRef('inactive' as Status);
-	const point = useRef(defaultPoint);
+	const isPointerOver = useRef(false)
+	const isPointerDown = useRef(false)
+	const previousStatus = useRef('inactive' as Status)
+	const point = useRef(defaultPoint)
 
 	// TODO: Can we use `PointerEvent` type for argument annotation?
-	const eventInputs = [status, wrapperRef, relativeToRef, onChange];
+	const eventInputs = [status, wrapperRef, relativeToRef, onChange]
 	const handlePointerEvent = useCallback((event: Event | React.PointerEvent) => {
-		let shouldSetPoint = true;
+		let shouldSetPoint = true
 
 		if (!wrapperRef.current) {
-			return;
+			return
 		}
 
 		switch (event.type) {
 			case 'pointerdown':
-				isPointerDown.current = true;
-				break;
+				isPointerDown.current = true
+				break
 
 			case 'pointerup':
 				if (previousStatus.current === 'active') {
-					isPointerDown.current = false;
+					isPointerDown.current = false
 				} else {
-					shouldSetPoint = false;
+					shouldSetPoint = false
 				}
-				break;
+				break
 
 			case 'pointerenter':
-				isPointerOver.current = true;
-				break;
+				isPointerOver.current = true
+				break
 
 			case 'pointerleave':
 				if (previousStatus.current !== 'active') {
-					shouldSetPoint = false;
+					shouldSetPoint = false
 				}
-				isPointerOver.current = false;
-				break;
+				isPointerOver.current = false
+				break
 
 			case 'pointermove':
 				if (
@@ -115,44 +115,44 @@ const usePointerStatus = ({
 						!wrapperRef.current.contains(event.target as Element)
 					)
 				) {
-					shouldSetPoint = false;
+					shouldSetPoint = false
 				}
-				break;
+				break
 		}
 
-		const status = getExpandedStatus(isPointerOver.current, isPointerDown.current);
+		const status = getExpandedStatus(isPointerOver.current, isPointerDown.current)
 
 		if (shouldSetPoint) {
 			point.current = getRelativePointFromEvent(
 				event as PointerEvent,
 				relativeToRef
 					? relativeToRef.current
-					: wrapperRef.current,
-			);
+					: wrapperRef.current
+			)
 		}
 
 		onChange({
 			point: point.current,
 			status: status.value,
 			previousStatus: previousStatus.current,
-			event,
-		});
+			event
+		})
 
-		previousStatus.current = status.value;
-	// TODO: Pass `wrapper` or `wrapperRef.current` here? What's best practice?
-	}, eventInputs);
+		previousStatus.current = status.value
+		// TODO: Pass `wrapper` or `wrapperRef.current` here? What's best practice?
+	}, eventInputs)
 
 	// Apply event listeners to track events from outside the element
 	// TODO: We pass inputs here as well?
-	useEventListener(document, 'pointerup', handlePointerEvent, eventInputs);
-	useEventListener(document, 'pointermove', handlePointerEvent, eventInputs);
+	useEventListener(document, 'pointerup', handlePointerEvent, eventInputs)
+	useEventListener(document, 'pointermove', handlePointerEvent, eventInputs)
 
 	return {
 		// TODO: Do we need "useCallback" here, or is it OK to just use raw function when not prop drilling?
 		onPointerDown: handlePointerEvent,
 		onPointerEnter: handlePointerEvent,
-		onPointerLeave: handlePointerEvent,
-	};
-};
+		onPointerLeave: handlePointerEvent
+	}
+}
 
-export default usePointerStatus;
+export default usePointerStatus

@@ -1,5 +1,5 @@
-import produce from 'immer';
-import { Oscillator } from '../../../lib/types';
+import produce from 'immer'
+import { Oscillator } from '../../../lib/types'
 
 const initialState: Oscillator[] = [
 	{
@@ -11,8 +11,8 @@ const initialState: Oscillator[] = [
 			attack: 0.01,
 			decay: 0.1,
 			sustain: 0.5,
-			release: 2,
-		},
+			release: 2
+		}
 	},
 	{
 		id: 'TODO:some-short-id-here2',
@@ -23,10 +23,10 @@ const initialState: Oscillator[] = [
 			attack: 0.01,
 			decay: 0.1,
 			sustain: 0.5,
-			release: 2,
-		},
-	},
-];
+			release: 2
+		}
+	}
+]
 
 const oscillatorsReducer = (state = initialState) =>
 	produce(state, () => {
@@ -38,6 +38,6 @@ const oscillatorsReducer = (state = initialState) =>
 		// 	case SET_POLYPHONY:
 		// 		draft.polyphony = action.value;
 		// }
-	});
+	})
 
-export default oscillatorsReducer;
+export default oscillatorsReducer

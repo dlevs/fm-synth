@@ -1,12 +1,12 @@
-import React, { HTMLProps, forwardRef, Ref } from 'react';
-import useUniqueId from '../hooks/useUniqueId';
-import { createOnChangeHandler } from '../lib/eventUtils';
-import { ChangeHandler } from '../lib/types';
+import React, { HTMLProps, forwardRef, Ref } from 'react'
+import useUniqueId from '../hooks/useUniqueId'
+import { createOnChangeHandler } from '../lib/eventUtils'
+import { ChangeHandler } from '../lib/types'
 
 export interface Props extends HTMLProps<HTMLInputElement> {
-	label: string;
-	onChange?: ChangeHandler<number>;
-	ref?: Ref<HTMLInputElement>;
+	label: string
+	onChange?: ChangeHandler<number>
+	ref?: Ref<HTMLInputElement>
 }
 
 /**
@@ -14,9 +14,9 @@ export interface Props extends HTMLProps<HTMLInputElement> {
  */
 export const InputRange = ((
 	{ label, onChange, ...otherProps }: Props,
-	ref: Ref<HTMLInputElement>,
+	ref: Ref<HTMLInputElement>
 ) => {
-	const id = useUniqueId();
+	const id = useUniqueId()
 
 	return <>
 		<label htmlFor={id}>{label}</label>
@@ -27,7 +27,7 @@ export const InputRange = ((
 			onChange={createOnChangeHandler(onChange, Number)}
 			{...otherProps}
 		/>
-	</>;
-});
+	</>
+})
 
-export default forwardRef(InputRange);
+export default forwardRef(InputRange)

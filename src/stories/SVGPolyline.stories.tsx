@@ -1,14 +1,14 @@
-import React from 'react';
-import { storiesOf } from '@storybook/react';
-import { number } from '@storybook/addon-knobs';
-import SVGPolyline from '../components/SVGPolyline';
+import React from 'react'
+import { storiesOf } from '@storybook/react'
+import { number } from '@storybook/addon-knobs'
+import SVGPolyline from '../components/SVGPolyline'
 
 const rangeOptions = {
 	range: true,
 	min: 0,
 	max: 100,
-	step: 1,
-};
+	step: 1
+}
 
 storiesOf('SVGPolyline', module)
 	.add('Basic usage', () => (
@@ -27,11 +27,11 @@ storiesOf('SVGPolyline', module)
 					[0, 50],
 					[
 						number('x', 40, rangeOptions),
-						number('y', 100, rangeOptions),
+						number('y', 100, rangeOptions)
 					],
 					[60, 20],
-					[100, 50],
+					[100, 50]
 				]}
 			/>
 		</svg>
-	));
+	))

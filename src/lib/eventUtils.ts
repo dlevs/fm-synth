@@ -1,19 +1,19 @@
-import { ChangeEvent } from 'react';
-import { ChangeHandler } from './types';
+import { ChangeEvent } from 'react'
+import { ChangeHandler } from './types'
 
 // TODO: ChangeHandler type to live here?
 
-export function createOnChangeHandler<T>(
+export function createOnChangeHandler<T extends Function> (
 	onChange: ChangeHandler,
-	castValue?: T,
+	castValue?: T
 ) {
 	return (event: ChangeEvent<HTMLInputElement>) => {
-		const { value } = event.target as HTMLInputElement;
+		const { value } = event.target as HTMLInputElement
 
-		if (typeof castValue === 'function') {
-			onChange(castValue(value));
+		if (castValue) {
+			onChange(castValue(value))
 		} else {
-			onChange(value);
+			onChange(value)
 		}
-	};
+	}
 }

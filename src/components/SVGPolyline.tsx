@@ -1,8 +1,8 @@
-import React, { SVGProps } from 'react';
-import { Point } from '../lib/types';
+import React, { SVGProps } from 'react'
+import { Point } from '../lib/types'
 
 interface Props extends SVGProps<SVGPolylineElement> {
-	pointsArray: Point[];
+	pointsArray: Point[]
 }
 
 export const SVGPolyline = ({ pointsArray, ...otherProps }: Props) =>
@@ -13,6 +13,6 @@ export const SVGPolyline = ({ pointsArray, ...otherProps }: Props) =>
 				.join(' ')
 		}
 		{...otherProps}
-	/>;
+	/>
 
-export default SVGPolyline;
+export default SVGPolyline

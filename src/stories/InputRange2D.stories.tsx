@@ -1,17 +1,17 @@
-import React from 'react';
-import { storiesOf } from '@storybook/react';
-import useOnChange from './storyHelpers/useOnChange';
-import InputRange2D from '../components/InputRange2D';
+import React from 'react'
+import { storiesOf } from '@storybook/react'
+import useOnChange from './storyHelpers/useOnChange'
+import InputRange2D from '../components/InputRange2D'
 
 const xProps = {
 	label: 'X Controls',
-	name: 'mynamex',
-};
+	name: 'mynamex'
+}
 
 const yProps = {
 	label: 'Y Controls',
-	name: 'mynamey',
-};
+	name: 'mynamey'
+}
 
 const Demo2D = () => (
 	<InputRange2D
@@ -19,14 +19,14 @@ const Demo2D = () => (
 		max={100}
 		xProps={{
 			...xProps,
-			...useOnChange(10),
+			...useOnChange(10)
 		}}
 		yProps={{
 			...yProps,
-			...useOnChange(20),
+			...useOnChange(20)
 		}}
 	/>
-);
+)
 
 const DemoXOnly = () => (
 	<InputRange2D
@@ -34,10 +34,10 @@ const DemoXOnly = () => (
 		max={100}
 		xProps={{
 			...xProps,
-			...useOnChange(10),
+			...useOnChange(10)
 		}}
 	/>
-);
+)
 
 const DemoYOnly = () => (
 	<InputRange2D
@@ -45,10 +45,10 @@ const DemoYOnly = () => (
 		max={100}
 		yProps={{
 			...yProps,
-			...useOnChange(10),
+			...useOnChange(10)
 		}}
 	/>
-);
+)
 
 storiesOf('InputRange2D', module)
 	.add('With x and y dimensions', () => (
@@ -59,4 +59,4 @@ storiesOf('InputRange2D', module)
 	))
 	.add('With only y dimension', () => (
 		<DemoYOnly />
-	));
+	))

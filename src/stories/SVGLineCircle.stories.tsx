@@ -1,18 +1,18 @@
-import React from 'react';
-import { storiesOf } from '@storybook/react';
-import { number } from '@storybook/addon-knobs';
-import SVGLineCircle from '../components/SVGLineCircle';
-import { css } from 'emotion';
+import React from 'react'
+import { storiesOf } from '@storybook/react'
+import { number } from '@storybook/addon-knobs'
+import SVGLineCircle from '../components/SVGLineCircle'
+import { css } from 'emotion'
 
 const styleOuterWrapper = css`
 	display: flex;
-`;
+`
 
 const styleDemoWrapper = css`
 	padding: 30px;
 	margin: 15px;
 	border: 1px solid #444;
-`;
+`
 
 const svgProps = {
 	viewBox: '0 0 100 100',
@@ -20,8 +20,8 @@ const svgProps = {
 	fill: '#000',
 	height: '300',
 	width: '100%',
-	preserveAspectRatio: 'none',
-};
+	preserveAspectRatio: 'none'
+}
 
 storiesOf('SVGLineCircle', module)
 	.add('Basic usage', () => {
@@ -29,8 +29,8 @@ storiesOf('SVGLineCircle', module)
 			range: true,
 			min: 0,
 			max: 50,
-			step: 1,
-		});
+			step: 1
+		})
 
 		return (
 			<div className={styleOuterWrapper}>
@@ -60,5 +60,5 @@ storiesOf('SVGLineCircle', module)
 					</svg>
 				</div>
 			</div>
-		);
-	});
+		)
+	})

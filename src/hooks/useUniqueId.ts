@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState } from 'react'
 
-let uniqueIdCounter = 0;
+let uniqueIdCounter = 0
 
 const useUniqueId = () => {
-	const [id] = useState(`unique-id-input-${uniqueIdCounter++}`);
+	const [id] = useState(`unique-id-input-${uniqueIdCounter++}`)
 
-	return id;
-};
+	return id
+}
 
-export default useUniqueId;
+export default useUniqueId

@@ -1,33 +1,33 @@
-import React, { useState, useRef, RefObject, useEffect, Fragment } from 'react';
-import uniq from 'lodash/uniq';
-import flow from 'lodash/flow';
-import flatMap from 'lodash/flatMap';
-import clamp from 'lodash/fp/clamp';
-import { MIDI_MIN, MIDI_MAX, scaleMIDIValueBetween } from '../lib/scales';
-import { getClosestPointIndex, expandPointConfigs, cumulativeX } from '../lib/pointUtils';
-import { Point, PointConfig } from '../lib/types';
-import { styleVisuallyHidden } from '../lib/utilityStyles';
-import InputRange2D, { Props as InputRange2DProps } from './InputRange2D';
-import SVGLineCircle from './SVGLineCircle';
-import SVGPolyline from './SVGPolyline';
-import usePointerStatus, { defaultStatus, defaultPoint } from '../hooks/usePointerStatus';
-import useKeyboardStatus from '../hooks/useKeyboardStatus';
-import useSize from '../hooks/useSize';
+import React, { useState, useRef, RefObject, useEffect, Fragment } from 'react'
+import uniq from 'lodash/uniq'
+import flow from 'lodash/flow'
+import flatMap from 'lodash/flatMap'
+import clamp from 'lodash/fp/clamp'
+import { MIDI_MIN, MIDI_MAX, scaleMIDIValueBetween } from '../lib/scales'
+import { getClosestPointIndex, expandPointConfigs, cumulativeX } from '../lib/pointUtils'
+import { Point, PointConfig } from '../lib/types'
+import { styleVisuallyHidden } from '../lib/utilityStyles'
+import InputRange2D, { Props as InputRange2DProps } from './InputRange2D'
+import SVGLineCircle from './SVGLineCircle'
+import SVGPolyline from './SVGPolyline'
+import usePointerStatus, { defaultStatus, defaultPoint } from '../hooks/usePointerStatus'
+import useKeyboardStatus from '../hooks/useKeyboardStatus'
+import useSize from '../hooks/useSize'
 
-import * as style from './InputEnvelope.style';
-import { InputEnvelopeType } from './InputEnvelope.types';
+import * as style from './InputEnvelope.style'
+import { InputEnvelopeType } from './InputEnvelope.types'
 
-const clampBetween0And1 = clamp(0, 1);
-const defaultPointConfig: Partial<PointConfig> = { point: [0, 0] };
+const clampBetween0And1 = clamp(0, 1)
+const defaultPointConfig: Partial<PointConfig> = { point: [0, 0] }
 
-export function getDivideWidth<T>(
+export function getDivideWidth<T> (
 	maxEnvelope: T,
-	getPointsConfig: (envelope: T) => PointConfig[],
+	getPointsConfig: (envelope: T) => PointConfig[]
 ) {
-	const maxPoints = getPointsConfig(maxEnvelope);
-	const maxPointsCumulative = cumulativeX(maxPoints.map(({ point }) => point));
-	const [maxX] = maxPointsCumulative[maxPointsCumulative.length - 1];
-	return maxX / MIDI_MAX;
+	const maxPoints = getPointsConfig(maxEnvelope)
+	const maxPointsCumulative = cumulativeX(maxPoints.map(({ point }) => point))
+	const [maxX] = maxPointsCumulative[maxPointsCumulative.length - 1]
+	return maxX / MIDI_MAX
 }
 
 // TODO: Typing directly on the fn works in "withOwnState.tsx". Why not here?
@@ -39,31 +39,31 @@ export const InputEnvelope: InputEnvelopeType = props => {
 		pointsConfig,
 		onChange,
 		divideWidth,
-		color = '#444',
-	} = props;
+		color = '#444'
+	} = props
 	// const [status, setStatus] = useState(defaultStatus);
-	const wrapper = useRef(null as null | HTMLDivElement);
-	const svgWrapper = useRef(null as null | SVGSVGElement);
-	const { width, height } = useSize(svgWrapper);
-	const maxRangeX = width / divideWidth;
+	const wrapper = useRef(null as null | HTMLDivElement)
+	const svgWrapper = useRef(null as null | SVGSVGElement)
+	const { width, height } = useSize(svgWrapper)
+	const maxRangeX = width / divideWidth
 	const points = expandPointConfigs(
 		pointsConfig,
 		scaleMIDIValueBetween(0, maxRangeX),
-		scaleMIDIValueBetween(0, height),
+		scaleMIDIValueBetween(0, height)
 	).map(config => ({
 		...config,
-		ref: useRef(null as null | HTMLInputElement),
-	}));
-	const activePointStart = useRef(null as null | Point);
-	const [activePointIndex, setActivePointIndex] = useState(-1);
+		ref: useRef(null as null | HTMLInputElement)
+	}))
+	const activePointStart = useRef(null as null | Point)
+	const [activePointIndex, setActivePointIndex] = useState(-1)
 	const activePointConfig = points[activePointIndex]
 		? points[activePointIndex]
-		: null;
-	const previousPointConfig = points[activePointIndex - 1] || defaultPointConfig;
+		: null
+	const previousPointConfig = points[activePointIndex - 1] || defaultPointConfig
 
 	// State
-	const keyboardStatus = useKeyboardStatus();
-	const isFineTune = keyboardStatus.shiftKey;
+	const keyboardStatus = useKeyboardStatus()
+	const isFineTune = keyboardStatus.shiftKey
 
 	const pointerStatusProps = usePointerStatus({
 		wrapperRef: wrapper,
@@ -72,24 +72,24 @@ export const InputEnvelope: InputEnvelopeType = props => {
 			point: { constrained: [x, y] },
 			status,
 			previousStatus,
-			event,
+			event
 		}) => {
 			// Prevent default on click to not take focus away from input
 			// elements being focused via JS for accessibility.
-			event.preventDefault();
+			event.preventDefault()
 
 			if (status !== previousStatus) {
 				switch (status) {
 					case 'inactive':
-						setActivePointIndex(-1);
-						break;
+						setActivePointIndex(-1)
+						break
 
 					case 'active':
-						activePointStart.current = [x, y];
+						activePointStart.current = [x, y]
 						if (activePointConfig && activePointConfig.ref.current) {
-							activePointConfig.ref.current.focus();
+							activePointConfig.ref.current.focus()
 						}
-						break;
+						break
 				}
 			}
 
@@ -97,51 +97,50 @@ export const InputEnvelope: InputEnvelopeType = props => {
 				case 'hover': {
 					const hoveredPointIndex = getClosestPointIndex(
 						points.map(({ isInteractive, point }) => {
-							return isInteractive ? point : null;
+							return isInteractive ? point : null
 						}),
-						[x, y],
-					);
-					setActivePointIndex(hoveredPointIndex);
-					break;
+						[x, y]
+					)
+					setActivePointIndex(hoveredPointIndex)
+					break
 				}
 
 				case 'active': {
-					if (!activePointConfig) {
-						return;
-					}
-					const { mapX, mapY } = activePointConfig;
-					const changes: Partial<typeof value> = {};
-					const [minX] = previousPointConfig.point;
-					// TODO: Variable for these magic numbers:
-					const fineTuneDivisor = isFineTune ? 3 : 1;
+					if (!activePointConfig) return
 
-					console.log(`The initial point was ${activePointStart.current}`);
+					const { mapX, mapY } = activePointConfig
+					const changes: Partial<typeof value> = {}
+					const [minX] = previousPointConfig.point
+					// TODO: Variable for these magic numbers:
+					const fineTuneDivisor = isFineTune ? 3 : 1
+
+					console.log(`The initial point was ${activePointStart.current}`)
 
 					if (mapX) {
-						const ratioXBase = ((x - minX) / maxRangeX) / fineTuneDivisor;
-						const ratioX = clampBetween0And1(ratioXBase);
-						changes[mapX] = ratioX * MIDI_MAX;
+						const ratioXBase = ((x - minX) / maxRangeX) / fineTuneDivisor
+						const ratioX = clampBetween0And1(ratioXBase)
+						changes[mapX] = ratioX * MIDI_MAX
 					}
 
 					if (mapY) {
-						const ratioYBase = (y / height) / fineTuneDivisor;
-						const ratioY = clampBetween0And1(ratioYBase);
-						changes[mapY] = MIDI_MAX - (ratioY * MIDI_MAX);
+						const ratioYBase = (y / height) / fineTuneDivisor
+						const ratioY = clampBetween0And1(ratioYBase)
+						changes[mapY] = MIDI_MAX - (ratioY * MIDI_MAX)
 					}
 
 					if (!(mapX || mapY)) {
-						return;
+						return
 					}
 
 					onChange({
 						...value,
-						...changes,
-					});
-					break;
+						...changes
+					})
+					break
 				}
 			}
-		},
-	});
+		}
+	})
 
 	return (
 		<div
@@ -149,15 +148,15 @@ export const InputEnvelope: InputEnvelopeType = props => {
 			ref={wrapper}
 			onBlur={(event) => {
 				if (wrapper.current && !wrapper.current.contains(event.relatedTarget)) {
-					setActivePointIndex(-1);
+					setActivePointIndex(-1)
 				}
 			}}
 			onFocus={(event: FocusEvent) => {
 				const { name } = event.target
 				const index = points.findIndex(({ mapX, mapY }) => {
-					return mapX === name || mapY === name;
-				});
-				setActivePointIndex(index);
+					return mapX === name || mapY === name
+				})
+				setActivePointIndex(index)
 			}}
 			{...pointerStatusProps}
 		>
@@ -168,10 +167,10 @@ export const InputEnvelope: InputEnvelopeType = props => {
 						mapY,
 						isInteractive,
 						interactiveKey,
-						ref,
-					} = config;
+						ref
+					} = config
 					if (!isInteractive) {
-						return null;
+						return null
 					}
 
 					const createOnChange = (key: string) =>
@@ -181,11 +180,11 @@ export const InputEnvelope: InputEnvelopeType = props => {
 							// uses the arrow keys to change the value of the still-focused
 							// field.
 							if (activePointIndex !== i) {
-								setActivePointIndex(i);
+								setActivePointIndex(i)
 							}
 
-							onChange({ ...value, [key]: newValue });
-						};
+							onChange({ ...value, [key]: newValue })
+						}
 
 					return (
 						<InputRange2D
@@ -195,19 +194,19 @@ export const InputEnvelope: InputEnvelopeType = props => {
 								value: value[mapX],
 								label: mapX,
 								name: mapX,
-								onChange: createOnChange(mapX),
+								onChange: createOnChange(mapX)
 							}}
 							yProps={!mapY ? undefined : {
 								value: value[mapY],
 								label: mapY,
 								name: mapY,
-								onChange: createOnChange(mapY),
+								onChange: createOnChange(mapY)
 							}}
 							min={MIDI_MIN}
 							max={MIDI_MAX}
 							step={isFineTune ? 1 : 3}
 						/>
-					);
+					)
 				})}
 			</div>
 			{/*
@@ -241,7 +240,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 					)}
 					{points.map((config, i) => {
 						if (!config.isInteractive) {
-							return null;
+							return null
 						}
 
 						return (
@@ -251,12 +250,12 @@ export const InputEnvelope: InputEnvelopeType = props => {
 								className={style.circle(color)}
 								point={config.point}
 							/>
-						);
+						)
 					})}
 				</svg>
 			</div>
 		</div>
-	);
-};
+	)
+}
 
-export default InputEnvelope;
+export default InputEnvelope

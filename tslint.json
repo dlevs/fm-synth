@@ -1,12 +1,6 @@
 {
-  "extends": ["@dlevs/tslint-config"],
-  "rules": {
-    "comment-format": [true, "check-space"],
-    "variable-name": [true, "ban-keywords", "check-format", "allow-pascal-case"],
-    "react-unused-props-and-state": false,
-		"switch-default": false,
-		"switch-final-break": false,
-		"triple-equals": [true, "allow-null-check"],
-		"no-empty": false
-  }
+	"extends": ["tslint-config-standard"],
+	"rules": {
+		"ter-indent": [true, "tab", { "SwitchCase": 1 }]
+	}
 }

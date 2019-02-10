@@ -6,27 +6,27 @@ import React, {
 	useState,
 	useRef,
 	useImperativeHandle,
-	forwardRef,
-} from 'react';
-import InputRange, { Props as InputRangeProps } from './InputRange';
-import { ChangeHandler } from '../lib/types';
+	forwardRef
+} from 'react'
+import InputRange, { Props as InputRangeProps } from './InputRange'
+import { ChangeHandler } from '../lib/types'
 
 interface Props extends HTMLProps<HTMLInputElement> {
-	xProps?: InputRangeProps;
-	yProps?: InputRangeProps;
+	xProps?: InputRangeProps
+	yProps?: InputRangeProps
 }
 
 const createLabel = (
 	primaryProps: InputRangeProps,
 	secondaryProps: InputRangeProps | undefined,
-	keys: string[],
+	keys: string[]
 ) => {
 	if (!secondaryProps || !secondaryProps.label) {
-		return primaryProps.label;
+		return primaryProps.label
 	}
 
-	return `${primaryProps.label} (press ${keys.join(' or ')} for ${secondaryProps.label})`;
-};
+	return `${primaryProps.label} (press ${keys.join(' or ')} for ${secondaryProps.label})`
+}
 
 /**
  * Two range inputs that may be interacted with as though they were a single input.
@@ -43,33 +43,33 @@ const createLabel = (
  */
 export const InputRange2D = (
 	{ xProps, yProps, ...sharedProps }: Props,
-	ref: Ref<HTMLInputElement>,
+	ref: Ref<HTMLInputElement>
 ) => {
-	const xRef = useRef(null as null | HTMLInputElement);
-	const yRef = useRef(null as null | HTMLInputElement);
-	const [focusedParam, setFocusedParam] = useState(null as null | 'x' | 'y');
+	const xRef = useRef(null as null | HTMLInputElement)
+	const yRef = useRef(null as null | HTMLInputElement)
+	const [focusedParam, setFocusedParam] = useState(null as null | 'x' | 'y')
 
 	// TODO: Test these methods by using this in InputEnvelope.tsx
 	useImperativeHandle(ref, () => ({
 		focus: () => {
 			if (xRef.current) {
-				xRef.current.focus();
+				xRef.current.focus()
 			}
 		},
 		blur: () => {
-			if (document.activeElement == null) {
-				return;
+			if (document.activeElement === null) {
+				return
 			}
 			if (document.activeElement === xRef.current) {
-				xRef.current.blur();
+				xRef.current.blur()
 			} else if (document.activeElement === yRef.current) {
-				yRef.current.blur();
+				yRef.current.blur()
 			}
-		},
-	}));
+		}
+	}))
 
 	const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-		const { key } = event;
+		const { key } = event
 
 		if (
 			!(xProps && yProps) ||
@@ -77,54 +77,54 @@ export const InputRange2D = (
 				'ArrowLeft',
 				'ArrowRight',
 				'ArrowUp',
-				'ArrowDown',
+				'ArrowDown'
 			].includes(key)
 		) {
-			return;
+			return
 		}
-		event.preventDefault();
+		event.preventDefault()
 
 		const param = (key === 'ArrowLeft' || key === 'ArrowRight')
 			? 'x'
-			: 'y';
+			: 'y'
 		const input = param === 'x'
 			? xRef.current
-			: yRef.current;
+			: yRef.current
 		const relatedProps = param === 'x'
 			? xProps
-			: yProps;
+			: yProps
 
 		if (!input || !relatedProps || !relatedProps.onChange) {
-			return;
+			return
 		}
 
-		const value = Number(input.value);
-		const step = Number(input.step || 1);
+		const value = Number(input.value)
+		const step = Number(input.step || 1)
 		const delta = (key === 'ArrowLeft' || key === 'ArrowDown')
 			? -step
-			: step;
+			: step
 
 		if (param !== focusedParam) {
-			input.focus();
-			setFocusedParam(param);
+			input.focus()
+			setFocusedParam(param)
 		}
 
-		relatedProps.onChange(value + delta);
-	};
+		relatedProps.onChange(value + delta)
+	}
 
 	const onBlur = (event: FocusEvent<HTMLInputElement>) => {
 		if (![
 			xRef.current,
-			yRef.current,
+			yRef.current
 		].includes(event.relatedTarget as any)) {
-			setFocusedParam(null);
+			setFocusedParam(null)
 		}
-	};
+	}
 
 	const sharedPropsInternal = {
 		onKeyDown,
-		onBlur,
-	};
+		onBlur
+	}
 
 	return <>
 		{xProps && (
@@ -147,7 +147,7 @@ export const InputRange2D = (
 				{...sharedPropsInternal}
 			/>
 		)}
-	</>;
-};
+	</>
+}
 
-export default forwardRef(InputRange2D);
+export default forwardRef(InputRange2D)

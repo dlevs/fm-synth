@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { css } from 'emotion';
-import { storiesOf } from '@storybook/react';
-import usePointerStatus, { defaultStatus, defaultPoint } from '../hooks/usePointerStatus';
+import React, { useState } from 'react'
+import { css } from 'emotion'
+import { storiesOf } from '@storybook/react'
+import usePointerStatus, { defaultStatus, defaultPoint } from '../hooks/usePointerStatus'
 
 const styleDemoBorder = css`
 	margin: 0;
 	padding: 2rem;
 	border: 1px solid #444;
-`;
+`
 
 const styleDemoWrapper = css`
 	${styleDemoBorder}
@@ -22,7 +22,7 @@ const styleDemoWrapper = css`
 	touch-action: none;
 
 	/* Data attributes applied by usePointerStatus */
-`;
+`
 
 // TODO: Remove me
 // &[data-status="hover"] {
@@ -42,7 +42,7 @@ const styleDemoInnerEl = css`
 	&:hover {
 		background: rgba(0, 0, 0, 0.1);
 	}
-`;
+`
 
 const styleDot = css`
 	position: absolute;
@@ -52,28 +52,28 @@ const styleDot = css`
 	width: 3rem;
 	height: 3rem;
 	transform: translate(-50%, -50%);
-`;
+`
 
 const styleDotUnconstrained = css`
 	${styleDot}
 	background: rgba(0, 0, 255, 0.4);
-`;
+`
 
 const PointerStatusDemo = () => {
-	const [point, setPoint] = useState(defaultPoint);
-	const [status, setStatus] = useState(defaultStatus);
+	const [point, setPoint] = useState(defaultPoint)
+	const [status, setStatus] = useState(defaultStatus)
 	// TODO: Rename these for more context when destructuring?
 	const pointerStatusProps = usePointerStatus({
 		onPointChange: setPoint,
-		onStatusChange: setStatus,
-	});
-	const [left, top] = point.constrained;
-	const [leftUnconstrianed, topUnconstrained] = point.unconstrained;
+		onStatusChange: setStatus
+	})
+	const [left, top] = point.constrained
+	const [leftUnconstrianed, topUnconstrained] = point.unconstrained
 	return (
 		<pre {...pointerStatusProps} className={styleDemoWrapper}>
 			{JSON.stringify({
 				status,
-				point,
+				point
 			}, null, 4)}
 			<p className={styleDemoInnerEl}>
 				Nested element to test.<br />
@@ -82,10 +82,10 @@ const PointerStatusDemo = () => {
 			<div className={styleDot} style={{ left, top }} />
 			<div className={styleDotUnconstrained} style={{ left: leftUnconstrianed, top: topUnconstrained }} />
 		</pre>
-	);
-};
+	)
+}
 
 storiesOf('usePointerStatus', module)
 	.add('Basic usage', () => (
 		<PointerStatusDemo />
-	));
+	))

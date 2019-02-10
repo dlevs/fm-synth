@@ -1,32 +1,32 @@
-import { useEffect } from 'react';
+import { useEffect } from 'react'
 
 export const baseUseEventListener = (
 	element: EventTarget,
 	event: string | string[],
-	callback: EventListener,
+	callback: EventListener
 ) => {
-	const events = typeof event === 'string' ? [event] : event;
+	const events = typeof event === 'string' ? [event] : event
 
 	events.forEach(eventName => {
-		element.addEventListener(eventName, callback as EventListener);
-	});
+		element.addEventListener(eventName, callback)
+	})
 
 	return () => {
 		events.forEach(eventName => {
-			element.removeEventListener(eventName, callback as EventListener);
-		});
-	};
-};
+			element.removeEventListener(eventName, callback)
+		})
+	}
+}
 
 const useEventListener = (
 	element: EventTarget,
 	event: string | string[],
 	callback: EventListener,
-	inputs?: any[],
+	inputs?: any[]
 ) => {
 	useEffect(() => {
-		return baseUseEventListener(element, event, callback);
-	}, inputs);
-};
+		return baseUseEventListener(element, event, callback)
+	}, inputs)
+}
 
-export default useEventListener;
+export default useEventListener

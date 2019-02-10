@@ -1,13 +1,13 @@
-import React, { SVGProps } from 'react';
-import { Point } from '../lib/types';
+import React, { SVGProps } from 'react'
+import { Point } from '../lib/types'
 
 // Safari browser (version 12.0.1 (14606.2.104.1.1)) will not respect the CSS
 // rule `vector-effect: non-scaling-stroke;` if `x1 === x2` or `y1 === y2`.
 // Add a small offset to render correctly.
-const SAFARI_BUG_OFFSET = 0.00001;
+const SAFARI_BUG_OFFSET = 0.00001
 
 interface Props extends SVGProps<SVGLineElement> {
-	point: Point;
+	point: Point
 }
 
 /**
@@ -25,6 +25,6 @@ export const SVGLineCircle = ({ point, ...otherProps }: Props) =>
 		y2={point[1] + SAFARI_BUG_OFFSET}
 		strokeLinecap='round'
 		{...otherProps}
-	/>;
+	/>
 
-export default SVGLineCircle;
+export default SVGLineCircle
