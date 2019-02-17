@@ -72,18 +72,22 @@ export const InputEnvelope: InputEnvelopeType = props => {
 		ref: useRef(null as null | HTMLInputElement)
 	}))
 	const [activePointIndex, setActivePointIndex] = useState(-1)
-	const activeValueStart = useRef(value)
+	const activeValueStartPrev = useRef(value)
+	const activeValueStartClick = useRef(value)
 	const activePointConfig = points[activePointIndex]
 		? points[activePointIndex]
 		: null
 	const previousPointConfig = points[activePointIndex - 1] || defaultPointConfig
+	const [minX] = previousPointConfig.point
 
 	// State
 	const keyboardStatus = useKeyboardStatus()
 	const isFineTune = keyboardStatus.shiftKey
 
 	useEffect(() => {
-		activeValueStart.current = value
+		activeValueStartPrev.current = value
+		// activeValueStartOffset.current = getValueFromPoint(x, minX, maxRangeX)
+		console.log('setting in effect!')
 	}, [keyboardStatus.shiftKey])
 
 	const pointerStatusProps = usePointerStatus({
@@ -99,6 +103,9 @@ export const InputEnvelope: InputEnvelopeType = props => {
 			// elements being focused via JS for accessibility.
 			event.preventDefault()
 
+			const [x, y] = point.constrained
+			const sensitivity = isFineTune ? 4 : 1
+
 			if (status !== previousStatus) {
 				switch (status) {
 					case 'inactive':
@@ -106,8 +113,6 @@ export const InputEnvelope: InputEnvelopeType = props => {
 						break
 
 					case 'active':
-						activeValueStart.current = value
-
 						if (activePointConfig && activePointConfig.ref.current) {
 							activePointConfig.ref.current.focus()
 						}
@@ -130,39 +135,52 @@ export const InputEnvelope: InputEnvelopeType = props => {
 
 					const { mapX, mapY } = activePointConfig
 					const changes: Partial<typeof value> = {}
-					const [x, y] = point.constrained
-					const [minX] = previousPointConfig.point
-					const start = activeValueStart.current
-					const sensitivity = isFineTune ? 4 : 1
 
-					if (mapX && start) {
-						if (isFineTune) {
-							// TODO: Always use this approach. Make point only snap to cursor on first pointerDown event, but once fine tune is on, don't snap again
-							const startValue = start[mapX]
-							const startX = getPointFromValue(startValue, minX, maxRangeX)
-							const ratioX = (x - minX) / (startX - minX)
-							const difference = (startValue * ratioX) - startValue
-							changes[mapX] = clampInMIDIRange(startValue + (difference / sensitivity))
-						} else {
+					if (previousStatus !== 'active') {
+						if (mapX) {
 							changes[mapX] = getValueFromPoint(x, minX, maxRangeX)
 						}
+
+						if (mapY) {
+							changes[mapY] = getValueFromPoint(y, 0, height)
+						}
+
+						activeValueStartPrev.current = value
+						activeValueStartClick.current = {
+							...value,
+							...changes
+						}
+					} else {
+						if (mapX) {
+							// TODO: Store the raw point, not value. Can we store single offset values, not calculate every time?
+							const valuePrev = activeValueStartPrev.current[mapX]
+							const valueClick = activeValueStartClick.current[mapX]
+
+							const xPrev = getPointFromValue(valuePrev, minX, maxRangeX)
+							const xClick = getPointFromValue(valueClick, minX, maxRangeX)
+
+							const xDifference = (x - xClick) / sensitivity
+							const xOffsetted = xPrev + xDifference
+							const newValue = getValueFromPoint(xOffsetted, minX, maxRangeX)
+
+							changes[mapX] = clampInMIDIRange(newValue)
+						}
+
+						if (mapY) {
+							changes[mapY] = MIDI_MAX - getValueFromPoint(y, 0, height)
+
+							// const ratioYBase = (y / height) / fineTuneDivisor
+							// const ratioY = clampBetween0And1(ratioYBase)
+							// changes[mapY] = MIDI_MAX - (ratioY * MIDI_MAX)
+						}
+
+						if (!(mapX || mapY)) return
+
+						onChange({
+							...value,
+							...changes
+						})
 					}
-
-					if (mapY) {
-						changes[mapY] = MIDI_MAX - getValueFromPoint(y, 0, height)
-
-						// const ratioYBase = (y / height) / fineTuneDivisor
-						// const ratioY = clampBetween0And1(ratioYBase)
-						// changes[mapY] = MIDI_MAX - (ratioY * MIDI_MAX)
-					}
-
-					if (!(mapX || mapY)) return
-
-					onChange({
-						...value,
-						...changes
-					})
-					break
 				}
 			}
 		}
