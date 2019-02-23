@@ -62,7 +62,7 @@ const styleDotUnconstrained = css`
 const PointerStatusDemo = () => {
 	const [point, setPoint] = useState(defaultPoint)
 	const [status, setStatus] = useState(defaultStatus.value)
-	const wrapperRef = useRef(null as null | HTMLDivElement)
+	const wrapperRef = useRef(null as null | HTMLPreElement)
 	const pointerStatusProps = usePointerStatus({
 		wrapperRef,
 		onChange: data => {
@@ -73,7 +73,11 @@ const PointerStatusDemo = () => {
 	const [left, top] = point.constrained
 	const [leftUnconstrianed, topUnconstrained] = point.unconstrained
 	return (
-		<pre {...pointerStatusProps} className={styleDemoWrapper}>
+		<pre
+			{...pointerStatusProps}
+			className={styleDemoWrapper}
+			ref={wrapperRef}
+		>
 			{JSON.stringify({
 				status,
 				point
