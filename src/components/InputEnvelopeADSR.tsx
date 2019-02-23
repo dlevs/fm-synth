@@ -1,10 +1,12 @@
 import React from 'react'
 import { MIDI_MIN, MIDI_MAX } from '../lib/scales'
-import { ADSREnvelope, ValueProps, PointConfig } from '../lib/types'
+import { ADSREnvelope, PointConfig } from '../lib/types'
 import InputEnvelope, { getDivideWidth } from './InputEnvelope'
 
-type Props = ValueProps<ADSREnvelope> & {
-	color?: string;
+type Props = {
+	value: ADSREnvelope
+	setValue: (value: ADSREnvelope) => void
+	color?: string
 }
 
 const maxEnvelope: ADSREnvelope = {
@@ -45,14 +47,14 @@ const divideWidth = getDivideWidth(maxEnvelope, getPointsConfig)
 
 export const InputEnvelopeADSR = ({
 	value,
-	onChange,
+	setValue,
 	color
 }: Props) => (
 	<InputEnvelope
 		color={color}
-		onChange={onChange}
 		divideWidth={divideWidth}
 		value={value}
+		setValue={setValue}
 		pointsConfig={getPointsConfig(value)}
 	/>
 )

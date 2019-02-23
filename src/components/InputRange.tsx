@@ -1,11 +1,10 @@
 import React, { HTMLProps, forwardRef, Ref } from 'react'
 import useUniqueId from '../hooks/useUniqueId'
-import { createOnChangeHandler } from '../lib/eventUtils'
-import { ChangeHandler, Omit } from '../lib/types'
+import { provideEventTargetValue } from '../lib/eventUtils'
 
-export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'onChange'> {
+export interface Props extends HTMLProps<HTMLInputElement> {
 	label: string
-	onChange?: ChangeHandler<number>
+	setValue?: (value: number) => void
 	ref?: Ref<HTMLInputElement>
 }
 
@@ -13,7 +12,7 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'onChange'> {
  * A simple range input.
  */
 export const InputRange = ((
-	{ label, onChange, ...otherProps }: Props,
+	{ label, setValue, ...otherProps }: Props,
 	ref: Ref<HTMLInputElement>
 ) => {
 	const id = useUniqueId()
@@ -24,7 +23,7 @@ export const InputRange = ((
 			id={id}
 			ref={ref}
 			type='range'
-			onChange={createOnChangeHandler(onChange, Number)}
+			onChange={provideEventTargetValue(Number, setValue)}
 			{...otherProps}
 		/>
 	</>

@@ -1,14 +1,12 @@
 // Globals
 declare global {
-interface Window {
-	__REDUX_DEVTOOLS_EXTENSION__: any
-	AudioContext: typeof AudioContext
-	webkitAudioContext: typeof AudioContext
-	TouchEvent: typeof TouchEvent
+	interface Window {
+		__REDUX_DEVTOOLS_EXTENSION__: any
+		AudioContext: typeof AudioContext
+		webkitAudioContext: typeof AudioContext
+		TouchEvent: typeof TouchEvent
+	}
 }
-}
-
-export type ChangeHandler<T> = (value: T) => void
 
 // App-specific types
 export type Point = [number, number]
@@ -72,10 +70,7 @@ export type Oscillator = OscillatorFixed | OscillatorRatio
 
 // Utilities
 export interface ObjectOf<T> { [key: string]: T }
-export interface ValueProps<T> {
-	value: T
-	onChange (value: T): void
-}
+
 export type Omit<T, K> = Pick<T, Exclude<keyof T, K>>
 export type Subtract<T, K> = Omit<T, keyof K>
 export type ValueOf<T> = T[keyof T]

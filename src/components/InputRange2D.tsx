@@ -9,7 +9,6 @@ import React, {
 	forwardRef
 } from 'react'
 import InputRange, { Props as InputRangeProps } from './InputRange'
-import { ChangeHandler } from '../lib/types'
 
 interface Props extends HTMLProps<HTMLInputElement> {
 	xProps?: InputRangeProps
@@ -43,13 +42,12 @@ const createLabel = (
  */
 export const InputRange2D = (
 	{ xProps, yProps, ...sharedProps }: Props,
-	ref: Ref<HTMLInputElement>
+	ref: Ref<Pick<HTMLInputElement, 'focus' | 'blur'>>
 ) => {
 	const xRef = useRef(null as null | HTMLInputElement)
 	const yRef = useRef(null as null | HTMLInputElement)
 	const [focusedParam, setFocusedParam] = useState(null as null | 'x' | 'y')
 
-	// TODO: Test these methods by using this in InputEnvelope.tsx
 	useImperativeHandle(ref, () => ({
 		focus: () => {
 			if (xRef.current) {
@@ -93,7 +91,7 @@ export const InputRange2D = (
 			? xProps
 			: yProps
 
-		if (!input || !relatedProps || !relatedProps.onChange) return
+		if (!input || !relatedProps || !relatedProps.setValue) return
 
 		const value = Number(input.value)
 		const step = Number(input.step || 1)
@@ -106,7 +104,7 @@ export const InputRange2D = (
 			setFocusedParam(param)
 		}
 
-		relatedProps.onChange(value + delta)
+		relatedProps.setValue(value + delta)
 	}
 
 	const onBlur = (event: FocusEvent<HTMLInputElement>) => {

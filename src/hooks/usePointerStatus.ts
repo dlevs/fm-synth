@@ -80,7 +80,9 @@ const usePointerStatus = ({
 
 		const eventPoint = getRelativePointFromEvent(
 			event as PointerEvent,
-			relativeToRef ? relativeToRef.current : wrapperRef.current
+			relativeToRef && relativeToRef.current
+				? relativeToRef.current
+				: wrapperRef.current
 		)
 
 		switch (event.type) {

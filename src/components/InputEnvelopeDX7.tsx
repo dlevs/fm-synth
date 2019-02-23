@@ -1,9 +1,11 @@
 import React from 'react'
 import { MIDI_MIN, MIDI_MAX } from '../lib/scales'
-import { DX7Envelope, ValueProps, PointConfig } from '../lib/types'
+import { DX7Envelope, PointConfig } from '../lib/types'
 import InputEnvelope, { getDivideWidth } from './InputEnvelope'
 
-type Props = ValueProps<DX7Envelope> & {
+type Props = {
+	value: DX7Envelope
+	setValue: (value: DX7Envelope) => void
 	color?: string;
 }
 
@@ -60,14 +62,14 @@ const divideWidth = getDivideWidth(maxEnvelope, getPointsConfig)
 
 export const InputEnvelopeDX7 = ({
 	value,
-	onChange,
+	setValue,
 	color
 }: Props) => (
 	<InputEnvelope
 		color={color}
-		onChange={onChange}
 		divideWidth={divideWidth}
 		value={value}
+		setValue={setValue}
 		pointsConfig={getPointsConfig(value)}
 	/>
 )

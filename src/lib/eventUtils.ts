@@ -1,19 +1,14 @@
 import { ChangeEvent } from 'react'
-import { ChangeHandler } from './types'
 
-// TODO: ChangeHandler type to live here?
-
-export function createOnChangeHandler<T extends Function> (
-	onChange: ChangeHandler,
-	castValue?: T
+export function provideEventTargetValue<T> (
+	castValue: (stringValue: string) => T,
+	setValue?: (value: T) => void
 ) {
 	return (event: ChangeEvent<HTMLInputElement>) => {
-		const { value } = event.target as HTMLInputElement
+		if (!setValue) return
 
-		if (castValue) {
-			onChange(castValue(value))
-		} else {
-			onChange(value)
-		}
+		const { value } = event.target as (HTMLInputElement | HTMLTextAreaElement)
+
+		setValue(castValue(value))
 	}
 }

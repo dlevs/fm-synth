@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { css } from 'emotion'
 import { storiesOf } from '@storybook/react'
 import usePointerStatus, { defaultStatus, defaultPoint } from '../hooks/usePointerStatus'
@@ -61,11 +61,14 @@ const styleDotUnconstrained = css`
 
 const PointerStatusDemo = () => {
 	const [point, setPoint] = useState(defaultPoint)
-	const [status, setStatus] = useState(defaultStatus)
-	// TODO: Rename these for more context when destructuring?
+	const [status, setStatus] = useState(defaultStatus.value)
+	const wrapperRef = useRef(null as null | HTMLDivElement)
 	const pointerStatusProps = usePointerStatus({
-		onPointChange: setPoint,
-		onStatusChange: setStatus
+		wrapperRef,
+		onChange: data => {
+			setPoint(data.point)
+			setStatus(data.status)
+		}
 	})
 	const [left, top] = point.constrained
 	const [leftUnconstrianed, topUnconstrained] = point.unconstrained

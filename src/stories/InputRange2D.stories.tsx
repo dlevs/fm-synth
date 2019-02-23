@@ -1,6 +1,6 @@
 import React from 'react'
 import { storiesOf } from '@storybook/react'
-import useOnChange from './storyHelpers/useOnChange'
+import useValue from './storyHelpers/useValue'
 import InputRange2D from '../components/InputRange2D'
 
 const xProps = {
@@ -19,11 +19,11 @@ const Demo2D = () => (
 		max={100}
 		xProps={{
 			...xProps,
-			...useOnChange(10)
+			...useValue(10)
 		}}
 		yProps={{
 			...yProps,
-			...useOnChange(20)
+			...useValue(20)
 		}}
 	/>
 )
@@ -34,7 +34,7 @@ const DemoXOnly = () => (
 		max={100}
 		xProps={{
 			...xProps,
-			...useOnChange(10)
+			...useValue(10)
 		}}
 	/>
 )
@@ -45,7 +45,7 @@ const DemoYOnly = () => (
 		max={100}
 		yProps={{
 			...yProps,
-			...useOnChange(10)
+			...useValue(10)
 		}}
 	/>
 )

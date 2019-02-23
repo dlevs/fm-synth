@@ -1,20 +1,15 @@
 import React from 'react'
 import { storiesOf } from '@storybook/react'
-import useOnChange from './storyHelpers/useOnChange'
+import useValue from './storyHelpers/useValue'
 import InputRange from '../components/InputRange'
 
-const Demo = () => {
-	const { value, onChange } = useOnChange(10)
-
-	return (
-		<InputRange
-			label='My Label'
-			name='myname'
-			value={value}
-			onChange={onChange}
-		/>
-	)
-}
+const Demo = () => (
+	<InputRange
+		label='My Label'
+		name='myname'
+		{...useValue(10)}
+	/>
+)
 
 storiesOf('InputRange', module)
 	.add('Basic usage', () => (

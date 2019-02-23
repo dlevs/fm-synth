@@ -50,8 +50,8 @@ export const InputEnvelope: InputEnvelopeType = props => {
 	// Props
 	const {
 		value,
+		setValue,
 		pointsConfig,
-		onChange,
 		divideWidth,
 		color = '#444'
 	} = props
@@ -161,7 +161,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 
 						if (!(mapX || mapY)) return
 
-						onChange({
+						setValue({
 							...value,
 							...changes
 						})
@@ -205,7 +205,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 						return null
 					}
 
-					const createOnChange = (key: string) =>
+					const createSetValue = (key: string) =>
 						(newValue: number) => {
 							// Set the index, for the rare edge case that a user has an input
 							// field focused, then moves hover away from this component and
@@ -215,7 +215,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 								setActivePointIndex(i)
 							}
 
-							onChange({
+							setValue({
 								...value,
 								[key]: clampInMIDIRange(newValue)
 							})
@@ -229,13 +229,13 @@ export const InputEnvelope: InputEnvelopeType = props => {
 								value: value[mapX],
 								label: mapX,
 								name: mapX,
-								onChange: createOnChange(mapX)
+								setValue: createSetValue(mapX)
 							}}
 							yProps={!mapY ? undefined : {
 								value: value[mapY],
 								label: mapY,
 								name: mapY,
-								onChange: createOnChange(mapY)
+								setValue: createSetValue(mapY)
 							}}
 							min={MIDI_MIN}
 							max={MIDI_MAX}

@@ -4,11 +4,13 @@ import { storiesOf } from '@storybook/react'
 import { action } from '@storybook/addon-actions'
 import { color } from '@storybook/addon-knobs'
 import { rangeMIDI } from './knobs'
-import useOnChange from './useOnChange'
-import { ObjectOf, ValueProps } from '../../lib/types'
+import useValue from './useValue'
+import { ObjectOf } from '../../lib/types'
 
-type Props<T> = ValueProps<T> & {
-	color?: string;
+type Props<T> = {
+	color?: string
+	value: T
+	setValue: (value: T) => void
 }
 
 export default <T extends ObjectOf<number>>(
@@ -17,7 +19,7 @@ export default <T extends ObjectOf<number>>(
 ) => {
 	const Demo = () => (
 		<Component
-			{...useOnChange(defaults)}
+			{...useValue(defaults)}
 			color={color('color', '#444')}
 		/>
 	)
@@ -34,8 +36,8 @@ export default <T extends ObjectOf<number>>(
 					defaults,
 					(defaultValue, prop) => rangeMIDI(prop, defaultValue)
 				) as T}
+				setValue={action('setValue')}
 				color={color('color', '#444')}
-				onChange={action('onChange')}
 			/>
 		))
 }

@@ -1,6 +1,8 @@
-import { ValueProps, PointConfig } from '../lib/types'
+import { PointConfig } from '../lib/types'
 
-export interface Props<T> extends ValueProps<T> {
+export interface Props<T> {
+	value: T
+	setValue: (value: T) => void
 	divideWidth: number
 	pointsConfig: PointConfig[]
 	color?: string
