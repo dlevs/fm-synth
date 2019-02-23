@@ -1,5 +1,5 @@
 import parseMidi from 'parse-midi'
-import { Store } from 'redux'
+import { Store } from 'redux-starter-kit'
 import { actions as notesActions } from '../store/reducers/notesReducer'
 
 type MidiMessageEventCallback = (event: WebMidi.MIDIMessageEvent) => void

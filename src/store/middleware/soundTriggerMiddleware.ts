@@ -1,4 +1,4 @@
-import { Middleware } from 'redux'
+import { Middleware } from 'redux-starter-kit'
 import { actions, Action } from '../reducers/notesReducer'
 import PolyVoice from '../../lib/audio/Voice'
 
