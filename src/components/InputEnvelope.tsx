@@ -72,22 +72,25 @@ export const InputEnvelope: InputEnvelopeType = props => {
 		ref: useRef(null as null | HTMLInputElement)
 	}))
 	const [activePointIndex, setActivePointIndex] = useState(-1)
-	const activeValueStartPrev = useRef(value)
-	const activeValueStartClick = useRef(value)
 	const activePointConfig = points[activePointIndex]
 		? points[activePointIndex]
 		: null
 	const previousPointConfig = points[activePointIndex - 1] || defaultPointConfig
 	const [minX] = previousPointConfig.point
 
+	const activePointStartPrev = useRef(defaultPoint.unconstrained)
+	const activePointStartClick = useRef(defaultPoint.unconstrained)
+	const hoverPoint = useRef(defaultPoint.unconstrained)
+
 	// State
 	const keyboardStatus = useKeyboardStatus()
 	const isFineTune = keyboardStatus.shiftKey
 
 	useEffect(() => {
-		activeValueStartPrev.current = value
-		// activeValueStartOffset.current = getValueFromPoint(x, minX, maxRangeX)
-		console.log('setting in effect!')
+		if (!activePointConfig) return
+
+		activePointStartPrev.current = activePointConfig.point
+		activePointStartClick.current = hoverPoint.current
 	}, [keyboardStatus.shiftKey])
 
 	const pointerStatusProps = usePointerStatus({
@@ -103,7 +106,9 @@ export const InputEnvelope: InputEnvelopeType = props => {
 			// elements being focused via JS for accessibility.
 			event.preventDefault()
 
-			const [x, y] = point.constrained
+			hoverPoint.current = point.unconstrained
+
+			const [x, y] = point.unconstrained
 			const sensitivity = isFineTune ? 4 : 1
 
 			if (status !== previousStatus) {
@@ -137,41 +142,26 @@ export const InputEnvelope: InputEnvelopeType = props => {
 					const changes: Partial<typeof value> = {}
 
 					if (previousStatus !== 'active') {
-						if (mapX) {
-							changes[mapX] = getValueFromPoint(x, minX, maxRangeX)
-						}
-
-						if (mapY) {
-							changes[mapY] = getValueFromPoint(y, 0, height)
-						}
-
-						activeValueStartPrev.current = value
-						activeValueStartClick.current = {
-							...value,
-							...changes
-						}
+						activePointStartPrev.current = activePointConfig.point
+						activePointStartClick.current = point.unconstrained
 					} else {
+						const [xPrev, yPrev] = activePointStartPrev.current
+						const [xClick, yClick] = activePointStartClick.current
+
 						if (mapX) {
-							// TODO: Store the raw point, not value. Can we store single offset values, not calculate every time?
-							const valuePrev = activeValueStartPrev.current[mapX]
-							const valueClick = activeValueStartClick.current[mapX]
-
-							const xPrev = getPointFromValue(valuePrev, minX, maxRangeX)
-							const xClick = getPointFromValue(valueClick, minX, maxRangeX)
-
-							const xDifference = (x - xClick) / sensitivity
-							const xOffsetted = xPrev + xDifference
-							const newValue = getValueFromPoint(xOffsetted, minX, maxRangeX)
+							const difference = (x - xClick) / sensitivity
+							const offsetted = xPrev + difference
+							const newValue = getValueFromPoint(offsetted, minX, maxRangeX)
 
 							changes[mapX] = clampInMIDIRange(newValue)
 						}
 
 						if (mapY) {
-							changes[mapY] = MIDI_MAX - getValueFromPoint(y, 0, height)
+							const difference = (y - yClick) / sensitivity
+							const offsetted = yPrev + difference
+							const newValue = getValueFromPoint(offsetted, 0, height)
 
-							// const ratioYBase = (y / height) / fineTuneDivisor
-							// const ratioY = clampBetween0And1(ratioYBase)
-							// changes[mapY] = MIDI_MAX - (ratioY * MIDI_MAX)
+							changes[mapY] = MIDI_MAX - clampInMIDIRange(newValue)
 						}
 
 						if (!(mapX || mapY)) return
@@ -227,7 +217,10 @@ export const InputEnvelope: InputEnvelopeType = props => {
 								setActivePointIndex(i)
 							}
 
-							onChange({ ...value, [key]: newValue })
+							onChange({
+								...value,
+								[key]: clampInMIDIRange(newValue)
+							})
 						}
 
 					return (
