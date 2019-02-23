@@ -1,7 +1,7 @@
 import React from 'react'
 import { MIDI_MIN, MIDI_MAX } from '../lib/scales'
-import { ADSREnvelope, ValueProps } from '../lib/types'
-import InputEnvelope, { PointConfig, getDivideWidth } from './InputEnvelope'
+import { ADSREnvelope, ValueProps, PointConfig } from '../lib/types'
+import InputEnvelope, { getDivideWidth } from './InputEnvelope'
 
 type Props = ValueProps<ADSREnvelope> & {
 	color?: string;

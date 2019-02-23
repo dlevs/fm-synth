@@ -1,16 +1,13 @@
-import React, { useState, useRef, RefObject, useEffect, Fragment } from 'react'
-import uniq from 'lodash/uniq'
-import flow from 'lodash/flow'
-import flatMap from 'lodash/flatMap'
+import React, { useState, useRef, useEffect } from 'react'
 import clamp from 'lodash/fp/clamp'
 import { MIDI_MIN, MIDI_MAX, scaleMIDIValueBetween } from '../lib/scales'
 import { getClosestPointIndex, expandPointConfigs, cumulativeX } from '../lib/pointUtils'
 import { Point, PointConfig } from '../lib/types'
 import { styleVisuallyHidden } from '../lib/utilityStyles'
-import InputRange2D, { Props as InputRange2DProps } from './InputRange2D'
+import InputRange2D from './InputRange2D'
 import SVGLineCircle from './SVGLineCircle'
 import SVGPolyline from './SVGPolyline'
-import usePointerStatus, { defaultStatus, defaultPoint } from '../hooks/usePointerStatus'
+import usePointerStatus, { defaultPoint } from '../hooks/usePointerStatus'
 import useKeyboardStatus from '../hooks/useKeyboardStatus'
 import useSize from '../hooks/useSize'
 
@@ -38,13 +35,13 @@ export function getDivideWidth<T> (
 	return maxX / MIDI_MAX
 }
 
-const getValueFromPoint = (value, minValue, range) => {
+const getValueFromPoint = (
+	value: number,
+	minValue: number,
+	range: number
+) => {
 	const ratio = clampBetween0And1((value - minValue) / range)
 	return ratio * MIDI_MAX
-}
-
-const getPointFromValue = (value, minValue, range) => {
-	return ((value / MIDI_MAX) * range) + minValue
 }
 
 // TODO: Typing directly on the fn works in "withOwnState.tsx". Why not here?
@@ -58,9 +55,8 @@ export const InputEnvelope: InputEnvelopeType = props => {
 		divideWidth,
 		color = '#444'
 	} = props
-	// const [status, setStatus] = useState(defaultStatus);
 	const wrapper = useRef(null as null | HTMLDivElement)
-	const svgWrapper = useRef(null as null | SVGSVGElement)
+	const svgWrapper = useRef(null as null | HTMLDivElement)
 	const { width, height } = useSize(svgWrapper)
 	const maxRangeX = width / divideWidth
 	const points = expandPointConfigs(
@@ -82,7 +78,6 @@ export const InputEnvelope: InputEnvelopeType = props => {
 	const activePointStartClick = useRef(defaultPoint.unconstrained)
 	const hoverPoint = useRef(defaultPoint.unconstrained)
 
-	// State
 	const keyboardStatus = useKeyboardStatus()
 	const isFineTune = keyboardStatus.shiftKey
 
@@ -180,12 +175,15 @@ export const InputEnvelope: InputEnvelopeType = props => {
 		<div
 			className={style.wrapper}
 			ref={wrapper}
-			onBlur={(event) => {
-				if (wrapper.current && !wrapper.current.contains(event.relatedTarget)) {
-					setActivePointIndex(-1)
-				}
+			onBlur={event => {
+				if (!wrapper.current) return
+				if (wrapper.current.contains(event.relatedTarget as Element)) return
+
+				setActivePointIndex(-1)
 			}}
-			onFocus={(event: FocusEvent) => {
+			onFocus={event => {
+				if (!(event.target instanceof HTMLInputElement)) return
+
 				const { name } = event.target
 				const index = points.findIndex(({ mapX, mapY }) => {
 					return mapX === name || mapY === name
