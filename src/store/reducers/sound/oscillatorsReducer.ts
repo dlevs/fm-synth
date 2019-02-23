@@ -1,4 +1,3 @@
-import produce from 'immer'
 import { Oscillator } from '../../../lib/types'
 
 const initialState: Oscillator[] = [
@@ -28,16 +27,6 @@ const initialState: Oscillator[] = [
 	}
 ]
 
-const oscillatorsReducer = (state = initialState) =>
-	produce(state, () => {
-		// switch (action.type) {
-		// 	case SET_BASE_FREQUENCY:
-		// 		draft.baseFrequency = action.value;
-		// 		break;
-
-		// 	case SET_POLYPHONY:
-		// 		draft.polyphony = action.value;
-		// }
-	})
+const oscillatorsReducer = (state = initialState) => state
 
 export default oscillatorsReducer

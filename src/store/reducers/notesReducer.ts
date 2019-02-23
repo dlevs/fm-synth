@@ -1,68 +1,56 @@
-// TODO: Move import of immer and replace with redux-starter-kit
-import produce from 'immer'
-import createAction from '../../lib/createAction'
-import { ValueOf, Note, NoteStatus } from '../../lib/types'
+import { createSlice } from 'redux-starter-kit'
+import { NoteStatus, ValueOf } from '../../lib/types'
 
 export type Action = ReturnType<ValueOf<typeof actions>>
 
-const initialState = {
-	activeNotes: [] as NoteStatus[],
-	isSustainActive: false,
-	isSostenutoActive: false
-}
-
-export const actions = {
-	// TODO: We need to prepend all fn names with "trigger"?
-	triggerNoteOn: createAction<'NOTE_ON', Note>('NOTE_ON'),
-	triggerNoteOff: createAction<'NOTE_OFF', Note>('NOTE_OFF'),
-	triggerAllNotesOff: createAction('ALL_NOTES_OFF'),
-	triggerSustainOn: createAction('SUSTAIN_ON'),
-	triggerSustainOff: createAction('SUSTAIN_OFF')
-}
-
 // TODO: What does all of this achieve? Sound generator will not be as declarative.
 // It may be easier to do this in redux middleware / outside of redux completely
-const notesReducer = (state = initialState, action: Action) =>
-	produce(state, draft => {
-		switch (action.type) {
-			case actions.triggerNoteOn.type:
-				draft.activeNotes.push({
-					note: action.payload.note,
-					velocity: action.payload.velocity,
-					isReleased: false,
-					isSostenuto: false
-				})
-				break
+const notes = createSlice({
+	slice: 'notes',
+	initialState: {
+		activeNotes: [] as NoteStatus[],
+		isSustainActive: false,
+		isSostenutoActive: false
+	},
+	reducers: {
+		triggerNoteOn: (state, action) => {
+			const { note, velocity } = action.payload
 
-			case actions.triggerNoteOff.type:
-				const noteToRemove = draft.activeNotes.find(({ note, isReleased }) =>
-					note === action.payload.note && !isReleased
-				)
+			state.activeNotes.push({
+				note,
+				velocity,
+				isReleased: false,
+				isSostenuto: false
+			})
+		},
+		triggerNoteOff: (state, action) => {
+			const noteToRemove = state.activeNotes.find(({ note, isReleased }) =>
+				note === action.payload.note && !isReleased
+			)
 
-				if (!noteToRemove) {
-					break
-				}
+			if (!noteToRemove) {
+				return
+			}
 
-				if (draft.isSustainActive) {
-					noteToRemove.isReleased = true
-					break
-				}
+			if (state.isSustainActive) {
+				noteToRemove.isReleased = true
+				return
+			}
 
-				draft.activeNotes = draft.activeNotes.filter(note => note !== noteToRemove)
-				break
-
-			case actions.triggerAllNotesOff.type:
-				draft.activeNotes = []
-				break
-
-			case actions.triggerSustainOn.type:
-				draft.isSustainActive = true
-				break
-
-			case actions.triggerSustainOff.type:
-				draft.isSustainActive = false
-				draft.activeNotes = draft.activeNotes.filter(({ isReleased }) => !isReleased)
+			state.activeNotes = state.activeNotes.filter(note => note !== noteToRemove)
+		},
+		triggerAllNotesOff: state => {
+			state.activeNotes = []
+		},
+		triggerSustainOn: state => {
+			state.isSustainActive = true
+		},
+		triggerSustainOff: state => {
+			state.isSustainActive = false
+			state.activeNotes = state.activeNotes.filter(({ isReleased }) => !isReleased)
 		}
-	})
+	}
+})
 
-export default notesReducer
+export default notes.reducer
+export const { actions } = notes
