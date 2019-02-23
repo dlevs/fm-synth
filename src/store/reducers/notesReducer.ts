@@ -1,5 +1,5 @@
-import { createSlice } from 'redux-starter-kit'
-import { NoteStatus, ValueOf } from '../../lib/types'
+import { createSlice, PayloadAction } from 'redux-starter-kit'
+import { NoteStatus, ValueOf, Note } from '../../lib/types'
 
 export type Action = ReturnType<ValueOf<typeof actions>>
 
@@ -13,7 +13,7 @@ const notes = createSlice({
 		isSostenutoActive: false
 	},
 	reducers: {
-		triggerNoteOn: (state, action) => {
+		triggerNoteOn: (state, action: PayloadAction<Note>) => {
 			const { note, velocity } = action.payload
 
 			state.activeNotes.push({
@@ -23,7 +23,7 @@ const notes = createSlice({
 				isSostenuto: false
 			})
 		},
-		triggerNoteOff: (state, action) => {
+		triggerNoteOff: (state, action: PayloadAction<Note>) => {
 			const noteToRemove = state.activeNotes.find(({ note, isReleased }) =>
 				note === action.payload.note && !isReleased
 			)

@@ -1,4 +1,4 @@
-import { createSlice } from 'redux-starter-kit'
+import { createSlice, PayloadAction } from 'redux-starter-kit'
 
 const settings = createSlice({
 	slice: 'settings',
@@ -7,10 +7,10 @@ const settings = createSlice({
 		polyphony: 8
 	},
 	reducers: {
-		setBaseFrequency: (state, action) => {
+		setBaseFrequency: (state, action: PayloadAction<number>) => {
 			state.baseFrequency = action.payload
 		},
-		setPolyphony: (state, action) => {
+		setPolyphony: (state, action: PayloadAction<number>) => {
 			state.polyphony = action.payload
 		}
 	}
