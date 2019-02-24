@@ -1,5 +1,5 @@
-import React, { MouseEvent, RefObject, useRef, useState } from 'react'
-import { css } from 'emotion'
+import { jsx } from '@emotion/core'
+import { MouseEvent, RefObject, useRef, useState } from 'react'
 import findLast from 'lodash/findLast'
 import range from 'lodash/range'
 import InputKeyboardKey from './InputKeyboardKey'
@@ -75,11 +75,11 @@ export const InputKeyboard = ({
 	return (
 		<div
 			ref={container as RefObject<HTMLDivElement>}
-			className={css({
+			css={{
 				position: 'relative',
 				display: 'flex',
 				height: 200
-			})}
+			}}
 			{...mouseDownProps}
 		>
 			{range(numberOfWhiteKeys).map(i => {

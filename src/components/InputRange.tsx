@@ -1,4 +1,5 @@
-import React, { HTMLProps, forwardRef, Ref } from 'react'
+import { jsx } from '@emotion/core'
+import { HTMLProps, forwardRef, Ref, Fragment } from 'react'
 import useUniqueId from '../hooks/useUniqueId'
 import { provideEventTargetValue } from '../lib/eventUtils'
 
@@ -17,16 +18,18 @@ export const InputRange = ((
 ) => {
 	const id = useUniqueId()
 
-	return <>
-		<label htmlFor={id}>{label}</label>
-		<input
-			id={id}
-			ref={ref}
-			type='range'
-			onChange={provideEventTargetValue(Number, setValue)}
-			{...otherProps}
-		/>
-	</>
+	return (
+		<Fragment>
+			<label htmlFor={id}>{label}</label>
+			<input
+				id={id}
+				ref={ref}
+				type='range'
+				onChange={provideEventTargetValue(Number, setValue)}
+				{...otherProps}
+			/>
+		</Fragment>
+	)
 })
 
 export default forwardRef(InputRange)

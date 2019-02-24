@@ -3,17 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test --env=jsdom",
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test --env=jsdom",
     "eject": "react-scripts eject",
     "storybook": "start-storybook -p 9009 -s public",
     "build-storybook": "build-storybook -s public",
     "lint": "tslint --config tslint.json --project tsconfig.json 'src/**/*.+(ts|tsx)'"
   },
   "dependencies": {
+    "@emotion/core": "^10.0.7",
     "color": "3.1.0",
-    "emotion": "10.0.7",
     "lodash": "4.17.11",
     "parse-midi": "1.0.6",
     "react": "16.8.3",
@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@babel/core": "7.2.2",
+    "@emotion/babel-preset-css-prop": "^10.0.7",
     "@storybook/addon-actions": "4.1.11",
     "@storybook/addon-info": "4.1.11",
     "@storybook/addon-knobs": "4.1.11",
@@ -43,6 +44,8 @@
     "@types/storybook__react": "4.0.0",
     "@types/webmidi": "2.0.2",
     "babel-loader": "8.0.5",
+    "customize-cra": "^0.2.11",
+    "react-app-rewired": "^2.1.0",
     "react-scripts": "2.1.5",
     "tslint": "5.12.0",
     "tslint-config-standard": "8.0.1",

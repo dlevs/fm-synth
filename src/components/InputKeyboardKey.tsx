@@ -1,10 +1,10 @@
-import React, { MouseEvent } from 'react'
+import { jsx, css } from '@emotion/core'
+import { MouseEvent } from 'react'
 import Color from 'color'
-import { velocityColorMixScale } from '../lib/scales'
-import { css, cx } from 'emotion'
+// import { velocityColorMixScale } from '../lib/scales'
 import { KEY_INDEX_TO_KEYBOARD_KEY_MAP } from '../lib/constants'
 
-const COLOR_ACTIVE_KEY = Color('#2c76ec')
+// const COLOR_ACTIVE_KEY = Color('#2c76ec')
 const COLOR_WHITE_KEY = Color('#fff')
 const COLOR_BLACK_KEY = Color('#111')
 const COLOR_HOVER_RATIO = 0.1
@@ -62,11 +62,11 @@ const blackKey = css([
 
 // TODO: might make more sense to have velocity be between 0 - 1 here. Decide at which point to decouple from MIDI scale 0 - 127.
 // TODO: Is !important necessary??
-const activeKey = (backgroundColor: Color, velocity: number) => css({
-	background: `${backgroundColor.mix(COLOR_ACTIVE_KEY, velocityColorMixScale(velocity)).toString()} !important`,
-	color: '#fff',
-	transition: 'all 0s'
-})
+// const activeKey = (backgroundColor: Color, velocity: number) => css({
+// 	background: `${backgroundColor.mix(COLOR_ACTIVE_KEY, velocityColorMixScale(velocity)).toString()} !important`,
+// 	color: '#fff',
+// 	transition: 'all 0s'
+// })
 
 const colorSettingsMap = {
 	white: {
@@ -100,16 +100,17 @@ const InputKeyboardKey = ({
 	velocity,
 	note
 }: Props) => {
-	const { cssClass, backgroundColor } = colorSettingsMap[color]
-	const cssClasses = [cssClass]
+	const { cssClass } = colorSettingsMap[color]
+	// TODO: Add this back:
+	// const cssClasses = [cssClass]
 
-	if (velocity > 0) {
-		cssClasses.push(activeKey(backgroundColor, velocity))
-	}
+	// if (velocity > 0) {
+	// 	cssClasses.push(activeKey(backgroundColor, velocity))
+	// }
 
 	return (
 		<div
-			className={cx(cssClasses)}
+			css={cssClass}
 			style={style}
 			onMouseDown={onMouseDown}
 			onMouseUp={onMouseUp}

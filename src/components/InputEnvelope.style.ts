@@ -1,6 +1,6 @@
 // TODO: Do separate style files for other components
 import Color from 'color'
-import { css } from 'emotion'
+import { css } from '@emotion/core'
 
 export const dotSize = 6
 export const dotSizeActive = 12

@@ -1,4 +1,5 @@
-import React, { SVGProps } from 'react'
+import { jsx } from '@emotion/core'
+import { SVGProps } from 'react'
 import { Point } from '../lib/types'
 
 // Safari browser (version 12.0.1 (14606.2.104.1.1)) will not respect the CSS

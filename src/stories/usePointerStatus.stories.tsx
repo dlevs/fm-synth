@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react'
-import { css } from 'emotion'
+import { jsx, css } from '@emotion/core'
+import { useState, useRef } from 'react'
 import { storiesOf } from '@storybook/react'
 import usePointerStatus, { defaultStatus, defaultPoint } from '../hooks/usePointerStatus'
 
@@ -81,19 +81,19 @@ const PointerStatusDemo = () => {
 	return (
 		<pre
 			{...pointerStatusProps}
-			className={styleDemoWrapper}
+			css={styleDemoWrapper}
 			ref={wrapperRef}
 		>
 			{JSON.stringify({
 				status,
 				point
 			}, null, 4)}
-			<p className={styleDemoInnerEl}>
+			<p css={styleDemoInnerEl}>
 				Nested element to test.<br />
 				Make sure the point values still change when hovering over here.
 			</p>
-			<div className={styleDot} style={{ left, top }} />
-			<div className={styleDotUnconstrained} style={{ left: leftUnconstrianed, top: topUnconstrained }} />
+			<div css={styleDot} style={{ left, top }} />
+			<div css={styleDotUnconstrained} style={{ left: leftUnconstrianed, top: topUnconstrained }} />
 		</pre>
 	)
 }

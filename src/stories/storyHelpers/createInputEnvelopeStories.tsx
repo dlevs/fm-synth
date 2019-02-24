@@ -1,4 +1,5 @@
-import React, { ComponentType } from 'react'
+import { jsx } from '@emotion/core'
+import { ComponentType } from 'react'
 import mapValues from 'lodash/mapValues'
 import { storiesOf } from '@storybook/react'
 import { action } from '@storybook/addon-actions'

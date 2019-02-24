@@ -1,4 +1,5 @@
-import React, { StrictMode } from 'react'
+import { jsx } from '@emotion/core'
+import { StrictMode } from 'react'
 import ReactDOM from 'react-dom'
 import { Provider } from 'react-redux'
 import App from './App'

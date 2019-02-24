@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react'
+import { jsx } from '@emotion/core'
+import { useState, useRef, useEffect } from 'react'
 import clamp from 'lodash/fp/clamp'
 import { MIDI_MIN, MIDI_MAX, scaleMIDIValueBetween } from '../lib/scales'
 import { getClosestPointIndex, expandPointConfigs, cumulativeX } from '../lib/pointUtils'
@@ -172,7 +173,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 
 	return (
 		<div
-			className={style.wrapper}
+			css={style.wrapper}
 			ref={wrapper}
 			onBlur={event => {
 				if (!wrapper.current) return
@@ -191,7 +192,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 			}}
 			{...pointerStatusProps}
 		>
-			<div className={styleVisuallyHidden}>
+			<div css={styleVisuallyHidden}>
 				{points.map((config, i) => {
 					const {
 						mapX,
@@ -249,14 +250,14 @@ export const InputEnvelope: InputEnvelopeType = props => {
 			*/}
 			<div ref={svgWrapper}>
 				<svg
-					className={style.svg}
+					css={style.svg}
 					width='100%'
 					height='300'
 					viewBox={`0 0 ${width} ${height}`}
 					preserveAspectRatio='none'
 				>
 					<SVGPolyline
-						className={style.svgBase(color)}
+						css={style.svgBase(color)}
 						pointsArray={points.map(({ point }) => point)}
 					/>
 					{activePointConfig && (
@@ -269,7 +270,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 							}
 							width={maxRangeX}
 							height={activePointConfig.mapY ? height : style.dotSizeActive}
-							className={style.rangeGuideBox(color)}
+							css={style.rangeGuideBox(color)}
 						/>
 					)}
 					{points.map((config, i) => {
@@ -281,7 +282,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 							<SVGLineCircle
 								key={config.interactiveKey}
 								data-active={i === activePointIndex}
-								className={style.circle(color)}
+								css={style.circle(color)}
 								point={config.point}
 							/>
 						)

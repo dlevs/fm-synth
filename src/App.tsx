@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import { jsx } from '@emotion/core'
+import { useState, Fragment } from 'react'
 import InputADSR from './components/InputEnvelopeADSR'
 import KeyboardMain from './containers/KeyboardMain'
 
@@ -12,13 +13,13 @@ const App = () => {
 	})
 
 	return (
-		<>
+		<Fragment>
 			<InputADSR
 				value={ADSRValue}
 				setValue={setADSRValue}
 			/>
 			<KeyboardMain />
-		</>
+		</Fragment>
 	)
 }
 

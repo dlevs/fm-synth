@@ -1,4 +1,5 @@
-import React, { SVGProps } from 'react'
+import { jsx } from '@emotion/core'
+import { SVGProps } from 'react'
 import { Point } from '../lib/types'
 
 interface Props extends SVGProps<SVGPolylineElement> {

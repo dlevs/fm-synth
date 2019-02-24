@@ -1,4 +1,4 @@
-import React from 'react'
+import { jsx } from '@emotion/core'
 import { storiesOf } from '@storybook/react'
 import { action } from '@storybook/addon-actions'
 import { number } from '@storybook/addon-knobs'

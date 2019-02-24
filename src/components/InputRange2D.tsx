@@ -1,4 +1,5 @@
-import React, {
+import { jsx } from '@emotion/core'
+import {
 	KeyboardEvent,
 	FocusEvent,
 	HTMLProps,
@@ -6,7 +7,8 @@ import React, {
 	useState,
 	useRef,
 	useImperativeHandle,
-	forwardRef
+	forwardRef,
+	Fragment
 } from 'react'
 import InputRange, { Props as InputRangeProps } from './InputRange'
 
@@ -121,28 +123,30 @@ export const InputRange2D = (
 		onBlur
 	}
 
-	return <>
-		{xProps && (
-			<InputRange
-				{...sharedProps}
-				{...xProps}
-				label={createLabel(xProps, yProps, ['left', 'right'])}
-				ref={xRef}
-				tabIndex={focusedParam === 'y' ? -1 : 0}
-				{...sharedPropsInternal}
-			/>
-		)}
-		{yProps && (
-			<InputRange
-				{...sharedProps}
-				{...yProps}
-				label={createLabel(yProps, xProps, ['up', 'down'])}
-				ref={yRef}
-				tabIndex={xProps ? -1 : 0}
-				{...sharedPropsInternal}
-			/>
-		)}
-	</>
+	return (
+		<Fragment>
+			{xProps && (
+				<InputRange
+					{...sharedProps}
+					{...xProps}
+					label={createLabel(xProps, yProps, ['left', 'right'])}
+					ref={xRef}
+					tabIndex={focusedParam === 'y' ? -1 : 0}
+					{...sharedPropsInternal}
+				/>
+			)}
+			{yProps && (
+				<InputRange
+					{...sharedProps}
+					{...yProps}
+					label={createLabel(yProps, xProps, ['up', 'down'])}
+					ref={yRef}
+					tabIndex={xProps ? -1 : 0}
+					{...sharedPropsInternal}
+				/>
+			)}
+		</Fragment>
+	)
 }
 
 export default forwardRef(InputRange2D)

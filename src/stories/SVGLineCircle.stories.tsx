@@ -1,8 +1,7 @@
-import React from 'react'
+import { jsx, css } from '@emotion/core'
 import { storiesOf } from '@storybook/react'
 import { number } from '@storybook/addon-knobs'
 import SVGLineCircle from '../components/SVGLineCircle'
-import { css } from 'emotion'
 
 const styleDemoWrapper = css({
 	padding: 30,
@@ -29,8 +28,8 @@ storiesOf('SVGLineCircle', module)
 		})
 
 		return (
-			<div className={css({ display: 'flex' })}>
-				<div className={styleDemoWrapper}>
+			<div css={{ display: 'flex' }}>
+				<div css={styleDemoWrapper}>
 					<h2>{'<SVGLineCircle>'}</h2>
 					<p>{'<SVGLineCircle> is always a perfect circle. The `strokeWidth` property can be used to set a predictable pixel value for the size.'}</p>
 					<p>Circle radius: <strong>{String(radius)}px</strong></p>
@@ -42,7 +41,7 @@ storiesOf('SVGLineCircle', module)
 						/>
 					</svg>
 				</div>
-				<div className={styleDemoWrapper}>
+				<div css={styleDemoWrapper}>
 					<h2>{'<circle>'}</h2>
 					<p>{'The aspect ratio of <circle> is not maintained when the SVG is stretched, and it is not possible to set the size of the shape independently from the size of the entire <svg> parent.'}</p>
 					<p>Circle radius: <strong>who knows mate...</strong></p>

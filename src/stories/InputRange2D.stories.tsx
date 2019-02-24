@@ -1,4 +1,4 @@
-import React from 'react'
+import { jsx } from '@emotion/core'
 import { storiesOf } from '@storybook/react'
 import useValue from './storyHelpers/useValue'
 import InputRange2D from '../components/InputRange2D'
