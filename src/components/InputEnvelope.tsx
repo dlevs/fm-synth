@@ -74,6 +74,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 	const previousPointConfig = points[activePointIndex - 1] || defaultPointConfig
 	const [minX] = previousPointConfig.point
 
+	/** TODO: Test comment. Foo bar. Add comments to this file. */
 	const activePointStartPrev = useRef(defaultPoint.unconstrained)
 	const activePointStartClick = useRef(defaultPoint.unconstrained)
 	const hoverPoint = useRef(defaultPoint.unconstrained)

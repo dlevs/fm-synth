@@ -4,15 +4,11 @@ import { number } from '@storybook/addon-knobs'
 import SVGLineCircle from '../components/SVGLineCircle'
 import { css } from 'emotion'
 
-const styleOuterWrapper = css`
-	display: flex;
-`
-
-const styleDemoWrapper = css`
-	padding: 30px;
-	margin: 15px;
-	border: 1px solid #444;
-`
+const styleDemoWrapper = css({
+	padding: 30,
+	margin: 15,
+	border: '1px solid #444'
+})
 
 const svgProps = {
 	viewBox: '0 0 100 100',
@@ -33,7 +29,7 @@ storiesOf('SVGLineCircle', module)
 		})
 
 		return (
-			<div className={styleOuterWrapper}>
+			<div className={css({ display: 'flex' })}>
 				<div className={styleDemoWrapper}>
 					<h2>{'<SVGLineCircle>'}</h2>
 					<p>{'<SVGLineCircle> is always a perfect circle. The `strokeWidth` property can be used to set a predictable pixel value for the size.'}</p>

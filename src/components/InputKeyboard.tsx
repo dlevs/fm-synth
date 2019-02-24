@@ -8,12 +8,6 @@ import useMouseDownStatus from '../hooks/useMouseDownStatus'
 import { WHITE_KEYS_WITH_BLACK, WHITE_KEYS_PER_OCTAVE } from '../lib/constants'
 import { Note } from '../lib/types'
 
-const keyContainer = css`
-	position: relative;
-	display: flex;
-	height: 200px;
-`
-
 interface Props {
 	onNoteOn (data: Note): void
 	onNoteOff (data: Note): void
@@ -81,7 +75,11 @@ export const InputKeyboard = ({
 	return (
 		<div
 			ref={container as RefObject<HTMLDivElement>}
-			className={keyContainer}
+			className={css({
+				position: 'relative',
+				display: 'flex',
+				height: 200
+			})}
 			{...mouseDownProps}
 		>
 			{range(numberOfWhiteKeys).map(i => {
