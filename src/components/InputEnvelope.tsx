@@ -41,7 +41,7 @@ const getValueFromPoint = (
 	range: number
 ) => {
 	const ratio = clampBetween0And1((value - minValue) / range)
-	return ratio * MIDI_MAX
+	return clampInMIDIRange(ratio * MIDI_MAX)
 }
 
 // TODO: Typing directly on the fn works in "withOwnState.tsx". Why not here?
@@ -146,17 +146,15 @@ export const InputEnvelope: InputEnvelopeType = props => {
 						if (mapX) {
 							const difference = (x - xClick) / sensitivity
 							const offsetted = xPrev + difference
-							const newValue = getValueFromPoint(offsetted, minX, maxRangeX)
 
-							changes[mapX] = clampInMIDIRange(newValue)
+							changes[mapX] = getValueFromPoint(offsetted, minX, maxRangeX)
 						}
 
 						if (mapY) {
 							const difference = (y - yClick) / sensitivity
 							const offsetted = yPrev + difference
-							const newValue = getValueFromPoint(offsetted, 0, height)
 
-							changes[mapY] = MIDI_MAX - clampInMIDIRange(newValue)
+							changes[mapY] = MIDI_MAX - getValueFromPoint(offsetted, 0, height)
 						}
 
 						if (!(mapX || mapY)) return
