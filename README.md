@@ -1,5 +1,7 @@
 An FM synth built with react and the Web Audio API.
 
+[View the component library.](https://adoring-wescoff-e8b9ad.netlify.com/)
+
 ## Dependencies
 
 This project was bootstrapped with:
