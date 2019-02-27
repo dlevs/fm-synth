@@ -42,8 +42,10 @@ export const circle = (color: string) => css([
 		position: 'relative',
 		zIndex: 1,
 		strokeWidth: dotSize,
+		transition: 'stroke-width 0.1s',
 
 		'&[data-active="true"]': {
+			transition: 'stroke-width 0s',
 			strokeWidth: dotSizeActive
 		}
 	}
