@@ -3,9 +3,9 @@ import mapValues from 'lodash/mapValues'
 import { storiesOf } from '@storybook/react'
 import { action } from '@storybook/addon-actions'
 import { color } from '@storybook/addon-knobs'
-import { rangeMIDI } from './knobs'
-import useValue from './useValue'
-import { ObjectOf } from '../../lib/types'
+import { rangeMIDI } from './storybookKnobs'
+import useValue from '../../hooks/useValue'
+import { ObjectOf } from '../types'
 
 type Props<T> = {
 	color?: string

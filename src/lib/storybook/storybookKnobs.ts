@@ -1,5 +1,5 @@
 import { number } from '@storybook/addon-knobs'
-import { MIDI_MIN, MIDI_MAX } from '../../lib/scales'
+import { MIDI_MIN, MIDI_MAX } from '../scales'
 
 export const rangeMIDI = (name: string, value: number) =>
 	number(name, value, {

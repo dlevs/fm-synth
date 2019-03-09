@@ -1,7 +1,7 @@
 import React from 'react'
 import { storiesOf } from '@storybook/react'
-import useValue from './storyHelpers/useValue'
-import InputRange from '../components/InputRange'
+import useValue from '../hooks/useValue'
+import InputRange from './InputRange'
 
 const Demo = () => (
 	<InputRange

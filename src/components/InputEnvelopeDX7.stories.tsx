@@ -1,5 +1,5 @@
-import createInputEnvelopeStories from './storyHelpers/createInputEnvelopeStories'
-import InputEnvelopeDX7 from '../components/InputEnvelopeDX7'
+import createInputEnvelopeStories from '../lib/storybook/createInputEnvelopeStories'
+import InputEnvelopeDX7 from './InputEnvelopeDX7'
 
 createInputEnvelopeStories(InputEnvelopeDX7, {
 	rate1: 100,

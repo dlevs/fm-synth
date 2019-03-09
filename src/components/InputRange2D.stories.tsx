@@ -1,7 +1,7 @@
 import React from 'react'
 import { storiesOf } from '@storybook/react'
-import useValue from './storyHelpers/useValue'
-import InputRange2D from '../components/InputRange2D'
+import useValue from '../hooks/useValue'
+import InputRange2D from './InputRange2D'
 
 const xProps = {
 	label: 'X Controls',
