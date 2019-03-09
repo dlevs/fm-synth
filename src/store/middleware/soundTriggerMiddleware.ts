@@ -6,7 +6,7 @@ import { Note } from '../../lib/types'
 let voices: PolyVoice[] = []
 
 // tslint:disable-next-line:no-unused
-const soundTriggerMiddleware: Middleware = store => next => (action: Action) => {
+const soundTriggerMiddleware: Middleware = () => next => (action: Action) => {
 	if (action) {
 		if (action.type === actions.triggerNoteOn.toString()) {
 			const { note, velocity } = action.payload as Note

@@ -19,6 +19,7 @@
     "noImplicitReturns": true,
     "suppressImplicitAnyIndexErrors": true,
     "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "skipLibCheck": false,
     "esModuleInterop": true,
     "strict": true,

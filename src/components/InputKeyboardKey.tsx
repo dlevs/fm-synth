@@ -97,7 +97,6 @@ const InputKeyboardKey = ({
 	onMouseUp,
 	onMouseEnter,
 	onMouseLeave,
-	velocity,
 	note
 }: Props) => {
 	const { cssClass } = colorSettingsMap[color]
