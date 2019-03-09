@@ -1,4 +1,3 @@
-import { jsx } from '@emotion/core'
 import { MouseEvent, RefObject, useRef, useState } from 'react'
 import findLast from 'lodash/findLast'
 import range from 'lodash/range'

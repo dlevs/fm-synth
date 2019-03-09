@@ -1,4 +1,3 @@
-import { jsx } from '@emotion/core'
 import { useState, Fragment } from 'react'
 import InputADSR from './components/InputEnvelopeADSR'
 import KeyboardMain from './containers/KeyboardMain'

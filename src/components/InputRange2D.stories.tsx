@@ -1,4 +1,3 @@
-import { jsx } from '@emotion/core'
 import { storiesOf } from '@storybook/react'
 import useValue from '../hooks/useValue'
 import InputRange2D from './InputRange2D'

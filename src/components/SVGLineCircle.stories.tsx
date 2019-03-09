@@ -1,4 +1,4 @@
-import { jsx, css } from '@emotion/core'
+import { css } from '@emotion/core'
 import { storiesOf } from '@storybook/react'
 import { number } from '@storybook/addon-knobs'
 import SVGLineCircle from './SVGLineCircle'

@@ -1,4 +1,3 @@
-import { jsx } from '@emotion/core'
 import { storiesOf } from '@storybook/react'
 import { number } from '@storybook/addon-knobs'
 import SVGPolyline from './SVGPolyline'

@@ -1,4 +1,4 @@
-import { jsx, css } from '@emotion/core'
+import { css } from '@emotion/core'
 import { useState, useRef } from 'react'
 import { storiesOf } from '@storybook/react'
 import usePointerStatus, { defaultStatus, defaultPoint } from '../hooks/usePointerStatus'

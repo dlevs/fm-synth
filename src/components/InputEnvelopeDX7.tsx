@@ -1,4 +1,3 @@
-import { jsx } from '@emotion/core'
 import { MIDI_MIN, MIDI_MAX } from '../lib/scales'
 import { DX7Envelope, PointConfig } from '../lib/types'
 import InputEnvelope, { getDivideWidth } from './InputEnvelope'

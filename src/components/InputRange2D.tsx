@@ -1,4 +1,3 @@
-import { jsx } from '@emotion/core'
 import {
 	KeyboardEvent,
 	FocusEvent,

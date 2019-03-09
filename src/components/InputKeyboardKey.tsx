@@ -1,4 +1,4 @@
-import { jsx, css } from '@emotion/core'
+import { css } from '@emotion/core'
 import { MouseEvent } from 'react'
 import Color from 'color'
 // import { velocityColorMixScale } from '../lib/scales'

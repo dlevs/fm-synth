@@ -1,4 +1,3 @@
-import { jsx } from '@emotion/core'
 import { HTMLProps, forwardRef, Ref, Fragment } from 'react'
 import useUniqueId from '../hooks/useUniqueId'
 import { provideEventTargetValue } from '../lib/eventUtils'

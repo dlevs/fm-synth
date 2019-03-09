@@ -1,4 +1,3 @@
-import { jsx } from '@emotion/core'
 import { useState, useRef, useEffect } from 'react'
 import clamp from 'lodash/fp/clamp'
 import { MIDI_MIN, MIDI_MAX, scaleMIDIValueBetween } from '../lib/scales'

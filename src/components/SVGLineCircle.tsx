@@ -1,4 +1,3 @@
-import { jsx } from '@emotion/core'
 import { SVGProps } from 'react'
 import { Point } from '../lib/types'
 
