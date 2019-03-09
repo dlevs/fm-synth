@@ -55,6 +55,7 @@ export const InputEnvelopeADSR = ({
 		value={value}
 		setValue={setValue}
 		pointsConfig={getPointsConfig(value)}
+		guides
 	/>
 )
 

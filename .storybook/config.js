@@ -10,9 +10,6 @@ function loadStories() {
   req.keys().forEach(filename => req(filename));
 }
 
-addDecorator(withOptions({
-	addonPanelInRight: true,
-}));
 addDecorator(withKnobs);
 addDecorator(withInfo({
 	inline: true,

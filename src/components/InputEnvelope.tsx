@@ -53,7 +53,8 @@ export const InputEnvelope: InputEnvelopeType = props => {
 		setValue,
 		pointsConfig,
 		divideWidth,
-		color = '#444'
+		color = '#444',
+		guides
 	} = props
 	const wrapper = useRef(null as null | HTMLDivElement)
 	const svgWrapper = useRef(null as null | HTMLDivElement)
@@ -259,7 +260,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 						css={style.svgBase(color)}
 						pointsArray={points.map(({ point }) => point)}
 					/>
-					{activePointConfig && (
+					{guides && activePointConfig && (
 						<rect
 							x={previousPointConfig.point[0]}
 							y={

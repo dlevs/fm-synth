@@ -5,6 +5,7 @@ export interface Props<T> {
 	setValue: (value: T) => void
 	divideWidth: number
 	pointsConfig: PointConfig[]
+	guides?: boolean
 	color?: string
 }
 

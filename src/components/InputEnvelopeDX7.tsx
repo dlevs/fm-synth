@@ -70,6 +70,7 @@ export const InputEnvelopeDX7 = ({
 		value={value}
 		setValue={setValue}
 		pointsConfig={getPointsConfig(value)}
+		guides
 	/>
 )
 

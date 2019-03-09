@@ -24,7 +24,7 @@ const getPointsConfig = ({ value, orient }: Pick<Props, 'value' | 'orient'>): Po
 			point: flipPoint([value, yCenter]),
 			[isVertical ? 'mapY' : 'mapX']: 'value'
 		},
-		{ point: flipPoint([MIDI_MAX, yCenter]) }
+		{ point: flipPoint([MIDI_MAX - value, yCenter]) }
 	]
 }
 
