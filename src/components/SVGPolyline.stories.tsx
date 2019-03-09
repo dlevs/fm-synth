@@ -1,7 +1,7 @@
 import { jsx } from '@emotion/core'
 import { storiesOf } from '@storybook/react'
 import { number } from '@storybook/addon-knobs'
-import SVGPolyline from '../components/SVGPolyline'
+import SVGPolyline from './SVGPolyline'
 
 const rangeOptions = {
 	range: true,

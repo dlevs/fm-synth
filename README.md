@@ -1,4 +1,22 @@
+# FM Synth
+
 An FM synth built with react and the Web Audio API.
+
+## Links
+
+- [CI build](https://fm-synth.netlify.com/)
+- [Component library](https://fm-synth-storybook.netlify.com/)
+
+## Getting started
+
+Install [Node.js](https://nodejs.org/en/), then run in the root of this repository:
+
+```bash
+npm install
+npm start
+```
+
+See [package.json](./package.json) for all available commands.
 
 ## Dependencies
 

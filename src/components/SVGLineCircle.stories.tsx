@@ -1,7 +1,7 @@
 import { jsx, css } from '@emotion/core'
 import { storiesOf } from '@storybook/react'
 import { number } from '@storybook/addon-knobs'
-import SVGLineCircle from '../components/SVGLineCircle'
+import SVGLineCircle from './SVGLineCircle'
 
 const styleDemoWrapper = css({
 	padding: 30,
