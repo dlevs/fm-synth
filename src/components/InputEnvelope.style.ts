@@ -1,5 +1,5 @@
 // TODO: Do separate style files for other components
-import Color from 'color'
+import { opacify } from 'polished'
 import { css } from '@emotion/core'
 
 export const dotSize = 6
@@ -55,5 +55,5 @@ export const rangeGuideBox = (fill: string) => css({
 	position: 'relative',
 	zIndex: -1,
 	pointerEvents: 'none',
-	fill: Color(fill).alpha(0.1).toString()
+	fill: opacify(-0.9, fill)
 })

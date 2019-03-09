@@ -4,6 +4,7 @@ module.exports = async ({ config }) => {
 	})
 
 	babelLoader.options.presets.push('@emotion/babel-preset-css-prop')
+	babelLoader.options.plugins.push('polished')
 
   return config
 }

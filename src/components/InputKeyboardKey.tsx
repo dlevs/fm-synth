@@ -1,12 +1,12 @@
 import { css } from '@emotion/core'
 import { MouseEvent } from 'react'
-import Color from 'color'
+import { darken, lighten } from 'polished'
 // import { velocityColorMixScale } from '../lib/scales'
 import { KEY_INDEX_TO_KEYBOARD_KEY_MAP } from '../lib/constants'
 
 // const COLOR_ACTIVE_KEY = Color('#2c76ec')
-const COLOR_WHITE_KEY = Color('#fff')
-const COLOR_BLACK_KEY = Color('#111')
+const COLOR_WHITE_KEY = '#fff'
+const COLOR_BLACK_KEY = '#111'
 const COLOR_HOVER_RATIO = 0.1
 
 // TODO: Make a naming convention for style variable names
@@ -30,10 +30,10 @@ const whiteKey = css([
 		color: '#111',
 		outline: '1px solid #111',
 		flex: 1,
-		background: COLOR_WHITE_KEY.toString(),
+		background: COLOR_WHITE_KEY,
 
 		':hover, :focus': {
-			background: COLOR_WHITE_KEY.darken(COLOR_HOVER_RATIO).toString()
+			background: darken(COLOR_HOVER_RATIO, COLOR_WHITE_KEY)
 		}
 	}
 ])
@@ -43,7 +43,7 @@ const blackKey = css([
 
 	{
 		color: '#fff',
-		background: COLOR_BLACK_KEY.toString(),
+		background: COLOR_BLACK_KEY,
 		position: 'absolute',
 		top: 0,
 		bottom: '40%',
@@ -55,7 +55,7 @@ const blackKey = css([
 		borderBottomRightRadius: 8,
 
 		':hover, :focus': {
-			background: COLOR_BLACK_KEY.lighten(COLOR_HOVER_RATIO).toString()
+			background: lighten(COLOR_HOVER_RATIO, COLOR_BLACK_KEY)
 		}
 	}
 ])
@@ -63,7 +63,7 @@ const blackKey = css([
 // TODO: might make more sense to have velocity be between 0 - 1 here. Decide at which point to decouple from MIDI scale 0 - 127.
 // TODO: Is !important necessary??
 // const activeKey = (backgroundColor: Color, velocity: number) => css({
-// 	background: `${backgroundColor.mix(COLOR_ACTIVE_KEY, velocityColorMixScale(velocity)).toString()} !important`,
+// 	background: `${backgroundColor.mix(COLOR_ACTIVE_KEY, velocityColorMixScale(velocity))} !important`,
 // 	color: '#fff',
 // 	transition: 'all 0s'
 // })
