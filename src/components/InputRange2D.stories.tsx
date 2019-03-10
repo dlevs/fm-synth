@@ -1,61 +1,33 @@
 import { storiesOf } from '@storybook/react'
-import useValue from '../hooks/useValue'
+import { useValue, enableHooks } from '../lib/storybookUtils'
 import InputRange2D from './InputRange2D'
 
-const xProps = {
-	label: 'X Controls',
-	name: 'mynamex'
-}
-
-const yProps = {
-	label: 'Y Controls',
-	name: 'mynamey'
-}
-
-const Demo2D = () => (
-	<InputRange2D
-		min={0}
-		max={100}
-		xProps={{
-			...xProps,
-			...useValue(10)
-		}}
-		yProps={{
-			...yProps,
-			...useValue(20)
-		}}
-	/>
-)
-
-const DemoXOnly = () => (
-	<InputRange2D
-		min={0}
-		max={100}
-		xProps={{
-			...xProps,
-			...useValue(10)
-		}}
-	/>
-)
-
-const DemoYOnly = () => (
-	<InputRange2D
-		min={0}
-		max={100}
-		yProps={{
-			...yProps,
-			...useValue(10)
-		}}
-	/>
-)
-
 storiesOf('InputRange2D', module)
-	.add('With x and y dimensions', () => (
-		<Demo2D />
-	))
-	.add('With only x dimension', () => (
-		<DemoXOnly />
-	))
-	.add('With only y dimension', () => (
-		<DemoYOnly />
-	))
+	.add('With x and y dimensions', enableHooks(() => (
+		<InputRange2D
+			xProps={{
+				label: 'X Controls',
+				...useValue(10)
+			}}
+			yProps={{
+				label: 'Y Controls',
+				...useValue(20)
+			}}
+		/>
+	)))
+	.add('With only x dimension', enableHooks(() => (
+		<InputRange2D
+			xProps={{
+				label: 'X Controls',
+				...useValue(10)
+			}}
+		/>
+	)))
+	.add('With only y dimension', enableHooks(() => (
+		<InputRange2D
+			yProps={{
+				label: 'Y Controls',
+				...useValue(10)
+			}}
+		/>
+	)))

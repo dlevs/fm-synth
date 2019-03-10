@@ -1,20 +1,13 @@
-import requireContext from 'require-context.macro';
-import { configure, addDecorator } from '@storybook/react';
-import { withOptions } from '@storybook/addon-options';
-import { withKnobs } from '@storybook/addon-knobs';
-import { withInfo } from '@storybook/addon-info';
+import requireContext from 'require-context.macro'
+import { configure, addDecorator } from '@storybook/react'
+import { withKnobs } from '@storybook/addon-knobs'
 
-const req = requireContext('../src', true, /\.stories\.+(js|ts)x?$/);
+const req = requireContext('../src', true, /\.stories\.(js|ts)x?$/)
 
 function loadStories() {
-  req.keys().forEach(filename => req(filename));
+	req.keys().forEach(filename => req(filename))
 }
 
-addDecorator(withKnobs);
-addDecorator(withInfo({
-	inline: true,
-	maxPropObjectKeys: 15,
-	maxPropArrayLength: 15,
-}));
+addDecorator(withKnobs)
 
-configure(loadStories, module);
+configure(loadStories, module)

@@ -1,6 +1,7 @@
 import { css } from '@emotion/core'
 import { useState, useRef } from 'react'
 import { storiesOf } from '@storybook/react'
+import { enableHooks } from '../lib/storybookUtils'
 import usePointerStatus, { defaultStatus, defaultPoint } from '../hooks/usePointerStatus'
 
 const styleDemoBorder = css({
@@ -65,40 +66,36 @@ const styleDotUnconstrained = css([
 	}
 ])
 
-const PointerStatusDemo = () => {
-	const [point, setPoint] = useState(defaultPoint)
-	const [status, setStatus] = useState(defaultStatus.value)
-	const wrapperRef = useRef(null as null | HTMLPreElement)
-	const pointerStatusProps = usePointerStatus({
-		wrapperRef,
-		onChange: data => {
-			setPoint(data.point)
-			setStatus(data.status)
-		}
-	})
-	const [left, top] = point.constrained
-	const [leftUnconstrianed, topUnconstrained] = point.unconstrained
-	return (
-		<pre
-			{...pointerStatusProps}
-			css={styleDemoWrapper}
-			ref={wrapperRef}
-		>
-			{JSON.stringify({
-				status,
-				point
-			}, null, 4)}
-			<p css={styleDemoInnerEl}>
-				Nested element to test.<br />
-				Make sure the point values still change when hovering over here.
-			</p>
-			<div css={styleDot} style={{ left, top }} />
-			<div css={styleDotUnconstrained} style={{ left: leftUnconstrianed, top: topUnconstrained }} />
-		</pre>
-	)
-}
-
 storiesOf('usePointerStatus', module)
-	.add('Basic usage', () => (
-		<PointerStatusDemo />
-	))
+	.add('Basic usage', enableHooks(() => {
+		const [point, setPoint] = useState(defaultPoint)
+		const [status, setStatus] = useState(defaultStatus.value)
+		const wrapperRef = useRef(null as null | HTMLPreElement)
+		const pointerStatusProps = usePointerStatus({
+			wrapperRef,
+			onChange: data => {
+				setPoint(data.point)
+				setStatus(data.status)
+			}
+		})
+		const [left, top] = point.constrained
+		const [leftUnconstrianed, topUnconstrained] = point.unconstrained
+		return (
+			<pre
+				{...pointerStatusProps}
+				css={styleDemoWrapper}
+				ref={wrapperRef}
+			>
+				{JSON.stringify({
+					status,
+					point
+				}, null, 4)}
+				<p css={styleDemoInnerEl}>
+					Nested element to test.<br />
+					Make sure the point values still change when hovering over here.
+				</p>
+				<div css={styleDot} style={{ left, top }} />
+				<div css={styleDotUnconstrained} style={{ left: leftUnconstrianed, top: topUnconstrained }} />
+			</pre>
+		)
+	}))
