@@ -51,6 +51,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 	const {
 		value,
 		setValue,
+		labels,
 		pointsConfig,
 		divideWidth,
 		color = '#444',
@@ -227,13 +228,13 @@ export const InputEnvelope: InputEnvelopeType = props => {
 							key={interactiveKey}
 							xProps={!mapX ? undefined : {
 								value: value[mapX],
-								label: mapX,
+								label: labels[mapX],
 								name: mapX,
 								setValue: createSetValue(mapX)
 							}}
 							yProps={!mapY ? undefined : {
 								value: value[mapY],
-								label: mapY,
+								label: labels[mapY],
 								name: mapY,
 								setValue: createSetValue(mapY)
 							}}

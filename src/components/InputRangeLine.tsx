@@ -5,6 +5,7 @@ import InputEnvelope from './InputEnvelope'
 type Props = {
 	value: number
 	setValue: (value: number) => void
+	label: string
 	orient?: 'vertical' | 'horizontal'
 	color?: string
 }
@@ -31,6 +32,7 @@ const getPointsConfig = ({ value, orient }: Pick<Props, 'value' | 'orient'>): Po
 export const InputRangeLine = ({
 	value,
 	setValue,
+	label,
 	orient = 'horizontal',
 	color
 }: Props) => (
@@ -39,6 +41,7 @@ export const InputRangeLine = ({
 		divideWidth={3}
 		value={{ value }}
 		setValue={({ value }) => setValue(value)}
+		labels={{ value: label }}
 		pointsConfig={getPointsConfig({ value, orient })}
 	/>
 )

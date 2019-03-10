@@ -15,6 +15,13 @@ const maxEnvelope: ADSREnvelope = {
 	release: MIDI_MAX
 }
 
+const labels = {
+	attack: 'Attack',
+	decay: 'Decay',
+	sustain: 'Sustain',
+	release: 'Release'
+}
+
 const getPointsConfig = ({
 	attack,
 	decay,
@@ -54,6 +61,7 @@ export const InputEnvelopeADSR = ({
 		divideWidth={divideWidth}
 		value={value}
 		setValue={setValue}
+		labels={labels}
 		pointsConfig={getPointsConfig(value)}
 		guides
 	/>

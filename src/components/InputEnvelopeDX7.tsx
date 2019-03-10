@@ -19,6 +19,17 @@ const maxEnvelope: DX7Envelope = {
 	level4: MIDI_MAX
 }
 
+const labels = {
+	rate1: 'Rate 1',
+	rate2: 'Rate 2',
+	rate3: 'Rate 3',
+	rate4: 'Rate 4',
+	level1: 'Level 1',
+	level2: 'Level 2',
+	level3: 'Level 3',
+	level4: 'Level 4'
+}
+
 const getPointsConfig = ({
 	rate1,
 	rate2,
@@ -69,6 +80,7 @@ export const InputEnvelopeDX7 = ({
 		divideWidth={divideWidth}
 		value={value}
 		setValue={setValue}
+		labels={labels}
 		pointsConfig={getPointsConfig(value)}
 		guides
 	/>

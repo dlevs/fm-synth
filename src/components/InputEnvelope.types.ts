@@ -3,6 +3,7 @@ import { PointConfig } from '../lib/types'
 export interface Props<T> {
 	value: T
 	setValue: (value: T) => void
+	labels: { [P in keyof T]: string }
 	divideWidth: number
 	pointsConfig: PointConfig[]
 	guides?: boolean
