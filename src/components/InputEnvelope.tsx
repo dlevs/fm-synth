@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, MutableRefObject } from 'react'
 import { useAutoCallback } from 'hooks.macro'
 import clamp from 'lodash/fp/clamp'
 import { MIDI_MIN, MIDI_MAX, scaleMIDIValueBetween } from '../lib/scales'
@@ -47,6 +47,28 @@ const getValueFromPoint = (
 
 // TODO: Typing directly on the fn works in "withOwnState.tsx". Why not here?
 
+// TODO: Move me
+function useMultiRef<T> () {
+	const initialValue: {
+		[key: string]: MutableRefObject<T | null>;
+		[key: number]: MutableRefObject<T | null>;
+	} = {}
+	const refs = useRef(initialValue)
+
+	// TODO: Add `useMemo`
+	return new Proxy(refs.current, {
+		get: (obj, prop) => {
+			// TODO: Remove `tsSafeProp` when TypeScript resolves symbol property keys,
+			// and change type of initialValue to `{ [key: PropertyKey]: T }`
+			// https://github.com/Microsoft/TypeScript/issues/1863
+			const tsSafeProp = prop as string
+			obj[tsSafeProp] = obj[tsSafeProp] || { current: null }
+
+			return obj[tsSafeProp]
+		}
+	})
+}
+
 export const InputEnvelope: InputEnvelopeType = props => {
 	// Props
 	const {
@@ -60,7 +82,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 	} = props
 	const wrapper = useRef(null as null | HTMLDivElement)
 	const svgWrapper = useRef(null as null | HTMLDivElement)
-	const pointRefs = useRef([] as (HTMLInputElement | undefined)[])
+	const pointRefs = useMultiRef<HTMLInputElement>()
 	const { width, height } = useSize(svgWrapper)
 	const maxRangeX = width / divideWidth
 	const points = expandPointConfigs(
@@ -69,10 +91,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 		scaleMIDIValueBetween(0, height)
 	).map((config, i) => ({
 		...config,
-		ref: (el: HTMLInputElement) => {
-			pointRefs.current[i] = el
-		},
-		currentRef: pointRefs.current[i]
+		ref: pointRefs[i]
 	}))
 	const [activePointIndex, setActivePointIndex] = useState(-1)
 	const activePointConfig = points[activePointIndex]
@@ -117,8 +136,8 @@ export const InputEnvelope: InputEnvelopeType = props => {
 					break
 
 				case 'active':
-					if (activePointConfig && activePointConfig.currentRef) {
-						activePointConfig.currentRef.focus()
+					if (activePointConfig && activePointConfig.ref.current) {
+						activePointConfig.ref.current.focus()
 					}
 					break
 			}
