@@ -59,13 +59,13 @@ const usePointerStatus = ({
 	relativeToRef,
 	onChange
 }: {
-	wrapperRef: RefObject<Element>
-	relativeToRef?: RefObject<Element>
+	wrapperRef: RefObject<Element>;
+	relativeToRef?: RefObject<Element>;
 	onChange (params: {
-		point: typeof defaultPoint
-		status: Status
-		previousStatus: Status
-		event: Event | React.PointerEvent
+		point: typeof defaultPoint;
+		status: Status;
+		previousStatus: Status;
+		event: Event | React.PointerEvent;
 	}): void;
 }) => {
 	// Setup variables

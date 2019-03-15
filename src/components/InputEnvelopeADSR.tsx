@@ -2,10 +2,10 @@ import { MIDI_MIN, MIDI_MAX } from '../lib/scales'
 import { ADSREnvelope, PointConfig } from '../lib/types'
 import InputEnvelope, { getDivideWidth } from './InputEnvelope'
 
-type Props = {
-	value: ADSREnvelope
-	setValue: (value: ADSREnvelope) => void
-	color?: string
+interface Props {
+	value: ADSREnvelope;
+	setValue: (value: ADSREnvelope) => void;
+	color?: string;
 }
 
 const maxEnvelope: ADSREnvelope = {

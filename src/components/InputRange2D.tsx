@@ -12,8 +12,8 @@ import {
 import InputRange, { Props as InputRangeProps } from './InputRange'
 
 interface Props extends HTMLProps<HTMLInputElement> {
-	xProps?: InputRangeProps
-	yProps?: InputRangeProps
+	xProps?: InputRangeProps;
+	yProps?: InputRangeProps;
 }
 
 const createLabel = (

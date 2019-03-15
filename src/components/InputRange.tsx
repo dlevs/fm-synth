@@ -3,15 +3,15 @@ import useUniqueId from '../hooks/useUniqueId'
 import { provideEventTargetValue } from '../lib/eventUtils'
 
 export interface Props extends HTMLProps<HTMLInputElement> {
-	label: string
-	setValue?: (value: number) => void
-	ref?: Ref<HTMLInputElement>
+	label: string;
+	setValue?: (value: number) => void;
+	ref?: Ref<HTMLInputElement>;
 }
 
 /**
  * A simple range input.
  */
-export const InputRange = ((
+export const InputRange = (
 	{ label, setValue, ...otherProps }: Props,
 	ref: Ref<HTMLInputElement>
 ) => {
@@ -29,6 +29,6 @@ export const InputRange = ((
 			/>
 		</Fragment>
 	)
-})
+}
 
 export default forwardRef(InputRange)

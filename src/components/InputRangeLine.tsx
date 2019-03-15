@@ -2,12 +2,12 @@ import { MIDI_MIN, MIDI_MAX } from '../lib/scales'
 import { PointConfig, Point } from '../lib/types'
 import InputEnvelope from './InputEnvelope'
 
-type Props = {
-	value: number
-	setValue: (value: number) => void
-	label: string
-	orient?: 'vertical' | 'horizontal'
-	color?: string
+interface Props {
+	value: number;
+	setValue: (value: number) => void;
+	label: string;
+	orient?: 'vertical' | 'horizontal';
+	color?: string;
 }
 
 const height = 6

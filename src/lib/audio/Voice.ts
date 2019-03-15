@@ -1,5 +1,5 @@
 import ctx from './audioContext'
-import { ADSREnvelope } from '../types'
+import { ADSREnvelope, Note } from '../types'
 import { midiToFrequency } from '../midiUtils'
 import destination from './destination'
 import store from '../../store'
@@ -12,19 +12,25 @@ const MINIMUM_TIME = 0.1
 const getOscillators = () => store.getState().sound.oscillators
 
 class Voice {
-	oscillator = ctx.createOscillator()
-	ampEnvelope = ctx.createGain()
-	ctx = ctx
-	ampMax: number
+	private oscillator = ctx.createOscillator()
+	private ampEnvelope = ctx.createGain()
+	private ctx = ctx
+	private ampMax: number
 
-	constructor (
-		public note: number,
+	public note: number
+	public envelope: ADSREnvelope
+
+	public constructor (
+		note: number,
 		velocity: number,
 		waveType: OscillatorType,
-		public envelope: ADSREnvelope,
+		envelope: ADSREnvelope,
 		// TODO: Might want to change this later:
 		output: AudioNode = destination
 	) {
+		this.note = note
+		this.envelope = envelope
+
 		// TODO: use logarithmic scale here:
 		this.ampMax = velocity / 127
 		// TODO: What is default gain value? Is it necessary to set to 0?
@@ -39,7 +45,7 @@ class Voice {
 		}
 	}
 
-	triggerAttack () {
+	public triggerAttack () {
 		const { currentTime } = this.ctx
 		const { attack, decay, sustain } = this.envelope
 		const { gain } = this.ampEnvelope
@@ -51,7 +57,7 @@ class Voice {
 		gain.exponentialRampToValueAtTime(sustain * this.ampMax, currentTime + attack + decay)
 	}
 
-	triggerRelease () {
+	public triggerRelease () {
 		const { currentTime } = this.ctx
 		const { release } = this.envelope
 		const { gain } = this.ampEnvelope
@@ -67,10 +73,10 @@ class Voice {
 // TODO: Break out into another file
 // TODO: Potential bad name. May want to use "PolyVoice" for something else. Consider entire synth class structure
 export default class PolyVoice {
-	voices: Voice[]
+	private voices: Voice[]
 
-	constructor (
-		public note: number,
+	public constructor (
+		note: number,
 		velocity: number,
 		// TODO: Might want to change this later:
 		output: AudioNode = destination
@@ -89,11 +95,11 @@ export default class PolyVoice {
 		})
 	}
 
-	triggerAttack () {
+	public triggerAttack () {
 		this.voices.forEach(voice => voice.triggerAttack())
 	}
 
-	triggerRelease () {
+	public triggerRelease () {
 		this.voices.forEach(voice => voice.triggerRelease())
 	}
 }

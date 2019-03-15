@@ -7,7 +7,7 @@ import { Point } from '../lib/types'
 const SAFARI_BUG_OFFSET = 0.00001
 
 interface Props extends SVGProps<SVGLineElement> {
-	point: Point
+	point: Point;
 }
 
 /**

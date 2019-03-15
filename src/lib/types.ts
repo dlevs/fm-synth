@@ -1,10 +1,10 @@
 // Globals
 declare global {
 	interface Window {
-		__REDUX_DEVTOOLS_EXTENSION__: any
-		AudioContext: typeof AudioContext
-		webkitAudioContext: typeof AudioContext
-		TouchEvent: typeof TouchEvent
+		__REDUX_DEVTOOLS_EXTENSION__: any;
+		AudioContext: typeof AudioContext;
+		webkitAudioContext: typeof AudioContext;
+		TouchEvent: typeof TouchEvent;
 	}
 }
 
@@ -12,58 +12,58 @@ declare global {
 export type Point = [number, number]
 
 export interface RelativePoint {
-	constrained: Point
-	unconstrained: Point
+	constrained: Point;
+	unconstrained: Point;
 }
 
 export interface PointConfig {
-	point: Point
-	mapX?: string
-	mapY?: string
+	point: Point;
+	mapX?: string;
+	mapY?: string;
 }
 
 export interface ADSREnvelope {
-	attack: number
-	decay: number
-	sustain: number
-	release: number
+	attack: number;
+	decay: number;
+	sustain: number;
+	release: number;
 }
 
 export interface DX7Envelope {
-	rate1: number
-	rate2: number
-	rate3: number
-	rate4: number
-	level1: number
-	level2: number
-	level3: number
-	level4: number
+	rate1: number;
+	rate2: number;
+	rate3: number;
+	rate4: number;
+	level1: number;
+	level2: number;
+	level3: number;
+	level4: number;
 }
 
 export interface Note {
-	note: number
-	velocity: number
+	note: number;
+	velocity: number;
 }
 
 export interface NoteStatus extends Note {
-	isReleased: boolean
-	isSostenuto: boolean
+	isReleased: boolean;
+	isSostenuto: boolean;
 }
 
 export interface OscillatorBase {
-	id: string
-	waveType: OscillatorType
-	envelope: ADSREnvelope
+	id: string;
+	waveType: OscillatorType;
+	envelope: ADSREnvelope;
 }
 
 export interface OscillatorFixed extends OscillatorBase {
-	mode: 'fixed'
-	frequency: number
+	mode: 'fixed';
+	frequency: number;
 }
 
 export interface OscillatorRatio extends OscillatorBase {
-	mode: 'ratio'
-	ratio: number
+	mode: 'ratio';
+	ratio: number;
 }
 
 export type Oscillator = OscillatorFixed | OscillatorRatio

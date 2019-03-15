@@ -22,8 +22,8 @@ const getInteractivePoints = ({
 	isInteractive,
 	point
 }: {
-	isInteractive: boolean
-	point: Point
+	isInteractive: boolean;
+	point: Point;
 }) => isInteractive ? point : null
 
 export function getDivideWidth<T> (
@@ -89,7 +89,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 
 		activePointStartPrev.current = activePointConfig.point
 		activePointStartClick.current = hoverPoint.current
-	}, [isFineTune])
+	}, [activePointConfig, isFineTune])
 
 	const onPointerStatusChange = useAutoCallback(({
 		point,

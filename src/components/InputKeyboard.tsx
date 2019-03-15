@@ -8,10 +8,10 @@ import { WHITE_KEYS_WITH_BLACK, WHITE_KEYS_PER_OCTAVE } from '../lib/constants'
 import { Note } from '../lib/types'
 
 interface Props {
-	onNoteOn (data: Note): void
-	onNoteOff (data: Note): void
-	activeNotes: Note[]
-	keyWidth?: number
+	onNoteOn (data: Note): void;
+	onNoteOff (data: Note): void;
+	activeNotes: Note[];
+	keyWidth?: number;
 }
 
 const hasBlackKey = (whiteKeyIndex: number) => {
