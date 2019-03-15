@@ -1,4 +1,5 @@
-import { useCallback, useRef, RefObject } from 'react'
+import { useRef, RefObject } from 'react'
+import { useAutoCallback } from 'hooks.macro'
 import useEventListener from './useEventListener'
 import { getRelativePointFromEvent, constrainPoint } from '../lib/pointUtils'
 
@@ -74,8 +75,7 @@ const usePointerStatus = ({
 	const point = useRef(defaultPoint)
 
 	// TODO: Can we use `PointerEvent` type for argument annotation?
-	const eventInputs = [status, wrapperRef, relativeToRef, onChange]
-	const handlePointerEvent = useCallback((event: Event | React.PointerEvent) => {
+	const handlePointerEvent = useAutoCallback((event: Event | React.PointerEvent) => {
 		if (!wrapperRef.current) return
 
 		const eventPoint = getRelativePointFromEvent(
@@ -134,13 +134,11 @@ const usePointerStatus = ({
 		})
 
 		previousStatus.current = status.value
-		// TODO: Pass `wrapper` or `wrapperRef.current` here? What's best practice?
-	}, eventInputs)
+	})
 
 	// Apply event listeners to track events from outside the element
-	// TODO: We pass inputs here as well?
-	useEventListener(document, 'pointerup', handlePointerEvent, eventInputs)
-	useEventListener(document, 'pointermove', handlePointerEvent, eventInputs)
+	useEventListener(document, 'pointerup', handlePointerEvent)
+	useEventListener(document, 'pointermove', handlePointerEvent)
 
 	return {
 		// TODO: Do we need "useCallback" here, or is it OK to just use raw function when not prop drilling?

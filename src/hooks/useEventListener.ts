@@ -1,32 +1,24 @@
-import { useEffect } from 'react'
-
-export const baseUseEventListener = (
-	element: EventTarget,
-	event: string | string[],
-	callback: EventListener
-) => {
-	const events = typeof event === 'string' ? [event] : event
-
-	events.forEach(eventName => {
-		element.addEventListener(eventName, callback)
-	})
-
-	return () => {
-		events.forEach(eventName => {
-			element.removeEventListener(eventName, callback)
-		})
-	}
-}
+import { useAutoEffect } from 'hooks.macro'
 
 const useEventListener = (
 	element: EventTarget,
 	event: string | string[],
-	callback: EventListener,
-	inputs?: any[]
-) => {
-	useEffect(() => {
-		return baseUseEventListener(element, event, callback)
-	}, inputs)
+	callback: EventListener
+): void => {
+	useAutoEffect(() => {
+		console.log('USE EVENT LISTENER!!!')
+		const events = typeof event === 'string' ? [event] : event
+
+		events.forEach(eventName => {
+			element.addEventListener(eventName, callback)
+		})
+
+		return () => {
+			events.forEach(eventName => {
+				element.removeEventListener(eventName, callback)
+			})
+		}
+	})
 }
 
 export default useEventListener

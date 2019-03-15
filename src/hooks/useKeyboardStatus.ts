@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useAutoCallback } from 'hooks.macro'
 import useEventListener from './useEventListener'
 
 const initialStatus = {
@@ -8,22 +9,22 @@ const initialStatus = {
 	altKey: false
 }
 
-const useKeyboardStatus = () => {
+const useKeyboardStatus = (): typeof initialStatus => {
 	const [keyStatus, setKeyStatus] = useState(initialStatus)
 
-	const handleKeyEvent = (event: Event) => {
+	const handleKeyEvent = useAutoCallback((event: Event) => {
 		// if (!shouldTrack) {
-		// 	return;
+		// return;
 		// }
 
 		const { shiftKey, ctrlKey, metaKey, altKey } = event as KeyboardEvent
 		setKeyStatus({ shiftKey, ctrlKey, metaKey, altKey })
-	}
+	})
 
-	useEventListener(document, 'keydown', handleKeyEvent, [/* TODO: shouldTrack */])
-	useEventListener(document, 'keyup', handleKeyEvent, [/* TODO: shouldTrack */])
+	useEventListener(document, 'keydown', handleKeyEvent)
+	useEventListener(document, 'keyup', handleKeyEvent)
 
-	// TODO: tify up
+	// TODO: tidy up
 	// if (shouldTrack) {
 	return keyStatus
 	// }

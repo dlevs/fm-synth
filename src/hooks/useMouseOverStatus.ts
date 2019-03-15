@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
+import { useAutoCallback } from 'hooks.macro'
 
 // TODO: DELETE ME in favour of usePointerStatus
 const useMouseOverStatus = () => {
@@ -7,8 +8,8 @@ const useMouseOverStatus = () => {
 	return {
 		isMouseOver,
 		mouseOverProps: {
-			onMouseEnter: useCallback(() => setMouseOver(true), []),
-			onMouseLeave: useCallback(() => setMouseOver(false), [])
+			onMouseEnter: useAutoCallback(() => setMouseOver(true)),
+			onMouseLeave: useAutoCallback(() => setMouseOver(false))
 		}
 	}
 }

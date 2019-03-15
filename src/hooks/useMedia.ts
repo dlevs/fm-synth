@@ -1,17 +1,20 @@
-import { baseUseEventListener } from './useEventListener'
-import { useState, useLayoutEffect } from 'react'
+import useEventListener from './useEventListener'
+import { useState } from 'react'
+import { useAutoCallback, useAutoLayoutEffect } from 'hooks.macro'
 
-const useMedia = (query: string) => {
+// TODO: I can't even reason with this file anymore. Is this OK? Take another look
+const useMedia = (query: string): boolean => {
 	const [matches, setMatches] = useState(false)
+	const eventListener = useAutoCallback((event: Event) => {
+		setMatches((event as MediaQueryListEvent).matches)
+	})
+	const media = window.matchMedia(query)
 
-	useLayoutEffect(() => {
-		const media = window.matchMedia(query)
+	useAutoLayoutEffect(() => {
 		setMatches(media.matches)
+	})
 
-		return baseUseEventListener(media, 'change', (event: Event) => {
-			setMatches((event as MediaQueryListEvent).matches)
-		})
-	}, [query])
+	useEventListener(media, 'change', eventListener)
 
 	return matches
 }

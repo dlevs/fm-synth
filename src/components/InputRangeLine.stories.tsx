@@ -7,12 +7,12 @@ storiesOf('InputRangeLine', module)
 	.add('Basic usage', enableHooks(() => (
 		<Fragment>
 			<InputRangeLine
-				label='My horizontal input'
 				{...useValue(10)}
+				label='My horizontal input'
 			/>
 			<InputRangeLine
-				label='My vertical input'
 				{...useValue(10)}
+				label='My vertical input'
 				orient='vertical'
 			/>
 		</Fragment>

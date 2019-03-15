@@ -26,4 +26,10 @@ export function useValue <T> (initialValue: T) {
  *
  * Useful for defining storybook stroies inline.
  */
-export const enableHooks = (Fn: ComponentType) => () => <Fn />
+export const enableHooks = (Fn: ComponentType) => {
+	const WrappedFn = () => <Fn />
+
+	WrappedFn.displayName = `HookEnabledFunction(${Fn.name})`
+
+	return WrappedFn
+}

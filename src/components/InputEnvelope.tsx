@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useAutoCallback } from 'hooks.macro'
 import clamp from 'lodash/fp/clamp'
 import { MIDI_MIN, MIDI_MAX, scaleMIDIValueBetween } from '../lib/scales'
 import { getClosestPointIndex, expandPointConfigs, cumulativeX } from '../lib/pointUtils'
@@ -81,95 +82,96 @@ export const InputEnvelope: InputEnvelopeType = props => {
 	const activePointStartClick = useRef(defaultPoint.unconstrained)
 	const hoverPoint = useRef(defaultPoint.unconstrained)
 
-	const keyboardStatus = useKeyboardStatus()
-	const isFineTune = keyboardStatus.shiftKey
+	const { shiftKey: isFineTune } = useKeyboardStatus()
 
 	useEffect(() => {
 		if (!activePointConfig) return
 
 		activePointStartPrev.current = activePointConfig.point
 		activePointStartClick.current = hoverPoint.current
-	}, [keyboardStatus.shiftKey])
+	}, [isFineTune])
+
+	const onPointerStatusChange = useAutoCallback(({
+		point,
+		status,
+		previousStatus,
+		event
+	}) => {
+		// Prevent default on click to not take focus away from input
+		// elements being focused via JS for accessibility.
+		event.preventDefault()
+
+		hoverPoint.current = point.unconstrained
+
+		const [x, y] = point.unconstrained
+		const sensitivity = isFineTune ? 4 : 1
+
+		if (status !== previousStatus) {
+			switch (status) {
+				case 'inactive':
+					setActivePointIndex(-1)
+					break
+
+				case 'active':
+					if (activePointConfig && activePointConfig.ref.current) {
+						activePointConfig.ref.current.focus()
+					}
+					break
+			}
+		}
+
+		switch (status) {
+			case 'hover': {
+				const hoveredPointIndex = getClosestPointIndex(
+					points.map(getInteractivePoints),
+					point.constrained
+				)
+				setActivePointIndex(hoveredPointIndex)
+				break
+			}
+
+			case 'active': {
+				if (!activePointConfig) return
+
+				const { mapX, mapY } = activePointConfig
+				const changes: Partial<typeof value> = {}
+
+				if (previousStatus !== 'active') {
+					activePointStartPrev.current = activePointConfig.point
+					activePointStartClick.current = point.unconstrained
+				} else {
+					const [xPrev, yPrev] = activePointStartPrev.current
+					const [xClick, yClick] = activePointStartClick.current
+
+					if (mapX) {
+						const difference = (x - xClick) / sensitivity
+						const offsetted = xPrev + difference
+
+						changes[mapX] = getValueFromPoint(offsetted, minX, maxRangeX)
+					}
+
+					if (mapY) {
+						const difference = (y - yClick) / sensitivity
+						const offsetted = yPrev + difference
+
+						changes[mapY] = MIDI_MAX - getValueFromPoint(offsetted, 0, height)
+					}
+
+					if (!(mapX || mapY)) return
+
+					setValue({
+						...value,
+						...changes
+					})
+				}
+			}
+		}
+	})
 
 	const pointerStatusProps = usePointerStatus({
 		wrapperRef: wrapper,
 		relativeToRef: svgWrapper,
-		onChange: ({
-			point,
-			status,
-			previousStatus,
-			event
-		}) => {
-			// Prevent default on click to not take focus away from input
-			// elements being focused via JS for accessibility.
-			event.preventDefault()
-
-			hoverPoint.current = point.unconstrained
-
-			const [x, y] = point.unconstrained
-			const sensitivity = isFineTune ? 4 : 1
-
-			if (status !== previousStatus) {
-				switch (status) {
-					case 'inactive':
-						setActivePointIndex(-1)
-						break
-
-					case 'active':
-						if (activePointConfig && activePointConfig.ref.current) {
-							activePointConfig.ref.current.focus()
-						}
-						break
-				}
-			}
-
-			switch (status) {
-				case 'hover': {
-					const hoveredPointIndex = getClosestPointIndex(
-						points.map(getInteractivePoints),
-						point.constrained
-					)
-					setActivePointIndex(hoveredPointIndex)
-					break
-				}
-
-				case 'active': {
-					if (!activePointConfig) return
-
-					const { mapX, mapY } = activePointConfig
-					const changes: Partial<typeof value> = {}
-
-					if (previousStatus !== 'active') {
-						activePointStartPrev.current = activePointConfig.point
-						activePointStartClick.current = point.unconstrained
-					} else {
-						const [xPrev, yPrev] = activePointStartPrev.current
-						const [xClick, yClick] = activePointStartClick.current
-
-						if (mapX) {
-							const difference = (x - xClick) / sensitivity
-							const offsetted = xPrev + difference
-
-							changes[mapX] = getValueFromPoint(offsetted, minX, maxRangeX)
-						}
-
-						if (mapY) {
-							const difference = (y - yClick) / sensitivity
-							const offsetted = yPrev + difference
-
-							changes[mapY] = MIDI_MAX - getValueFromPoint(offsetted, 0, height)
-						}
-
-						if (!(mapX || mapY)) return
-
-						setValue({
-							...value,
-							...changes
-						})
-					}
-				}
-			}
-		}
+		onChange: onPointerStatusChange
 	})
 
 	return (

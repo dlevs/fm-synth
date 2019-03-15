@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
+import { useAutoCallback } from 'hooks.macro'
 
 // TODO: DELETE ME in favour of usePointerStatus
 const useMouseDownStatus = () => {
@@ -7,8 +8,8 @@ const useMouseDownStatus = () => {
 	return {
 		isMouseDown,
 		mouseDownProps: {
-			onPointerDown: useCallback(() => setMouseDown(true), []),
-			onPointerUp: useCallback(() => setMouseDown(false), [])
+			onPointerDown: useAutoCallback(() => setMouseDown(true)),
+			onPointerUp: useAutoCallback(() => setMouseDown(false))
 		}
 	}
 }
