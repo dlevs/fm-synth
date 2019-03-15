@@ -60,15 +60,19 @@ export const InputEnvelope: InputEnvelopeType = props => {
 	} = props
 	const wrapper = useRef(null as null | HTMLDivElement)
 	const svgWrapper = useRef(null as null | HTMLDivElement)
+	const pointRefs = useRef([] as (HTMLInputElement | undefined)[])
 	const { width, height } = useSize(svgWrapper)
 	const maxRangeX = width / divideWidth
 	const points = expandPointConfigs(
 		pointsConfig,
 		scaleMIDIValueBetween(0, maxRangeX),
 		scaleMIDIValueBetween(0, height)
-	).map(config => ({
+	).map((config, i) => ({
 		...config,
-		ref: useRef(null as null | HTMLInputElement)
+		ref: (el: HTMLInputElement) => {
+			pointRefs.current[i] = el
+		},
+		currentRef: pointRefs.current[i]
 	}))
 	const [activePointIndex, setActivePointIndex] = useState(-1)
 	const activePointConfig = points[activePointIndex]
@@ -113,8 +117,8 @@ export const InputEnvelope: InputEnvelopeType = props => {
 					break
 
 				case 'active':
-					if (activePointConfig && activePointConfig.ref.current) {
-						activePointConfig.ref.current.focus()
+					if (activePointConfig && activePointConfig.currentRef) {
+						activePointConfig.currentRef.focus()
 					}
 					break
 			}

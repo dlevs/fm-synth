@@ -1,5 +1,5 @@
 import ctx from './audioContext'
-import { ADSREnvelope, Note } from '../types'
+import { ADSREnvelope } from '../types'
 import { midiToFrequency } from '../midiUtils'
 import destination from './destination'
 import store from '../../store'
@@ -75,12 +75,15 @@ class Voice {
 export default class PolyVoice {
 	private voices: Voice[]
 
+	public note: number
+
 	public constructor (
 		note: number,
 		velocity: number,
 		// TODO: Might want to change this later:
 		output: AudioNode = destination
 	) {
+		this.note = note
 		this.voices = getOscillators().map(oscillator => {
 			const { waveType, envelope } = oscillator
 
