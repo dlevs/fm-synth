@@ -112,7 +112,7 @@ export const InputRange2D = (
 		if (![
 			xRef.current,
 			yRef.current
-		].includes(event.relatedTarget as any)) {
+		].includes(event.relatedTarget as HTMLInputElement)) {
 			setFocusedParam(null)
 		}
 	}

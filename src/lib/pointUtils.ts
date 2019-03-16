@@ -81,15 +81,6 @@ export const getPointFromEvent = ({
 	clientY
 ]
 
-export const getRelativePointFromEvent = (
-	event: PointerEvent,
-	element?: Element
-): RelativePoint =>
-	getPointRelativeToRect(
-		getPointFromEvent(event),
-		(element || event.target as Element).getBoundingClientRect()
-	)
-
 export const getPointRelativeToRect = (
 	[x, y]: Point,
 	{ left, top, width, height }: ClientRect | DOMRect
@@ -97,4 +88,13 @@ export const getPointRelativeToRect = (
 	constrainPoint(
 		[x - left, y - top],
 		[width, height]
+	)
+
+export const getRelativePointFromEvent = (
+	event: PointerEvent,
+	element?: Element
+): RelativePoint =>
+	getPointRelativeToRect(
+		getPointFromEvent(event),
+		(element || event.target as Element).getBoundingClientRect()
 	)

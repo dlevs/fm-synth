@@ -1,8 +1,6 @@
 import { createSlice, PayloadAction } from 'redux-starter-kit'
 import { NoteStatus, ValueOf, Note } from '../../lib/types'
 
-export type Action = ReturnType<ValueOf<typeof actions>>
-
 // TODO: What does all of this achieve? Sound generator will not be as declarative.
 // It may be easier to do this in redux middleware / outside of redux completely
 const notes = createSlice({
@@ -54,3 +52,4 @@ const notes = createSlice({
 
 export default notes.reducer
 export const { actions } = notes
+export type Action = ReturnType<ValueOf<typeof actions>>

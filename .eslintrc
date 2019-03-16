@@ -9,10 +9,24 @@
 		"plugin:@typescript-eslint/recommended",
 		"standard",
 		"plugin:react/recommended"
-  ],
+	],
+	"settings": {
+		"react": {
+			"createClass": "createReactClass",
+			"pragma": "jsx",
+			"version": "detect"
+		}
+	},
+	"globals": {
+		"AudioContext": "readonly",
+		"webkitAudioContext": "readonly",
+		"HTMLInputElement": "readonly"
+	},
 	"rules": {
 		"indent": ["error", "tab", { "SwitchCase": 1 }],
 		"no-tabs": "off",
+		"array-bracket-spacing": ["error", "never"],
+		"standard/array-bracket-even-spacing": "off",
 		"react/react-in-jsx-scope": "off",
 		"react/prop-types": "off",
     "react-hooks/rules-of-hooks": "error",
