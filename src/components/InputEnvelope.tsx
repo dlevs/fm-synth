@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, MutableRefObject } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useAutoCallback } from 'hooks.macro'
 import clamp from 'lodash/fp/clamp'
 import { MIDI_MIN, MIDI_MAX, scaleMIDIValueBetween } from '../lib/scales'
@@ -10,6 +10,7 @@ import SVGLineCircle from './SVGLineCircle'
 import SVGPolyline from './SVGPolyline'
 import usePointerStatus, { defaultPoint } from '../hooks/usePointerStatus'
 import useKeyboardStatus from '../hooks/useKeyboardStatus'
+import useMultiRef from '../hooks/useMultiRef'
 import useSize from '../hooks/useSize'
 
 import * as style from './InputEnvelope.style'
@@ -46,28 +47,6 @@ const getValueFromPoint = (
 }
 
 // TODO: Typing directly on the fn works in "withOwnState.tsx". Why not here?
-
-// TODO: Move me
-function useMultiRef<T> () {
-	const initialValue: {
-		[key: string]: MutableRefObject<T | null>;
-		[key: number]: MutableRefObject<T | null>;
-	} = {}
-	const refs = useRef(initialValue)
-
-	// TODO: Add `useMemo`
-	return new Proxy(refs.current, {
-		get: (obj, prop) => {
-			// TODO: Remove `tsSafeProp` when TypeScript resolves symbol property keys,
-			// and change type of initialValue to `{ [key: PropertyKey]: T }`
-			// https://github.com/Microsoft/TypeScript/issues/1863
-			const tsSafeProp = prop as string
-			obj[tsSafeProp] = obj[tsSafeProp] || { current: null }
-
-			return obj[tsSafeProp]
-		}
-	})
-}
 
 export const InputEnvelope: InputEnvelopeType = props => {
 	// Props
