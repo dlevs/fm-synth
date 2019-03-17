@@ -141,7 +141,7 @@ const usePointerStatus = ({
 	useEventListener(document, 'pointermove', handlePointerEvent)
 
 	return {
-		// TODO: Do we need "useCallback" here, or is it OK to just use raw function when not prop drilling?
+		'touch-action': 'none', // "touch-action" needed for the polyfill, pepjs
 		onPointerDown: handlePointerEvent,
 		onPointerEnter: handlePointerEvent,
 		onPointerLeave: handlePointerEvent

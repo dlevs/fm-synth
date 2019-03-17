@@ -1,3 +1,4 @@
+import 'pepjs' // PointerEvent polyfill
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom'
 import { Provider } from 'react-redux'

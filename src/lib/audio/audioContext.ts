@@ -1,1 +1,1 @@
-export default new (AudioContext || webkitAudioContext)()
+export default new (window.AudioContext || window.webkitAudioContext)()

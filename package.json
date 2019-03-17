@@ -15,6 +15,7 @@
     "@emotion/core": "10.0.7",
     "lodash": "4.17.11",
     "parse-midi": "1.0.6",
+    "pepjs": "0.4.3",
     "polished": "3.0.3",
     "react": "16.8.4",
     "react-dom": "16.8.4",

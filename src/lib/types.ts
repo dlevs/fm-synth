@@ -1,6 +1,10 @@
 // Globals
+
 declare global {
-	var webkitAudioContext: typeof AudioContext
+	interface Window {
+		AudioContext: typeof AudioContext;
+		webkitAudioContext: typeof AudioContext;
+	}
 }
 
 // App-specific types

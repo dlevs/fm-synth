@@ -19,7 +19,6 @@
 	},
 	"globals": {
 		"AudioContext": "readonly",
-		"webkitAudioContext": "readonly",
 		"HTMLInputElement": "readonly"
 	},
 	"rules": {
