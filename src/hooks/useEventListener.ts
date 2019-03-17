@@ -2,21 +2,15 @@ import { useAutoEffect } from 'hooks.macro'
 
 const useEventListener = (
 	element: EventTarget,
-	event: string | string[],
-	callback: EventListener
+	event: string,
+	callback: EventListener,
+	options?: boolean | AddEventListenerOptions
 ): void => {
 	useAutoEffect(() => {
-		console.log('USE EVENT LISTENER!!!')
-		const events = typeof event === 'string' ? [event] : event
-
-		events.forEach(eventName => {
-			element.addEventListener(eventName, callback)
-		})
+		element.addEventListener(event, callback, options)
 
 		return () => {
-			events.forEach(eventName => {
-				element.removeEventListener(eventName, callback)
-			})
+			element.removeEventListener(event, callback, options)
 		}
 	})
 }

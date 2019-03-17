@@ -1,4 +1,5 @@
-import { MutableRefObject, useRef, useMemo } from 'react'
+import { MutableRefObject, useRef } from 'react'
+import { useAutoMemo } from 'hooks.macro'
 
 /**
  * Get an object which dynamically creates a RefObject for any property queried.
@@ -22,7 +23,7 @@ const useMultiRef = <T> () => {
 	} = {}
 	const refs = useRef(initialValue)
 
-	return useMemo(() => new Proxy(refs.current, {
+	return useAutoMemo(() => new Proxy(refs.current, {
 		get: (obj, prop) => {
 			// TODO: Remove `tsSafeProp` when TypeScript resolves symbol property
 			// keys, and change type of initialValue to `{ [key: PropertyKey]: T }`
@@ -32,7 +33,7 @@ const useMultiRef = <T> () => {
 
 			return obj[tsSafeProp]
 		}
-	}), [])
+	}))
 }
 
 export default useMultiRef
