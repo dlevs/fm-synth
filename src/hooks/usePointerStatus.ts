@@ -141,7 +141,7 @@ const usePointerStatus = ({
 	useEventListener(document, 'pointermove', handlePointerEvent)
 
 	return {
-		'touch-action': 'none', // "touch-action" needed for the polyfill, pepjs
+		'touch-action': 'none',
 		onPointerDown: handlePointerEvent,
 		onPointerEnter: handlePointerEvent,
 		onPointerLeave: handlePointerEvent

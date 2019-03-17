@@ -1,5 +1,6 @@
 import { css } from '@emotion/core'
 import { useState, useRef } from 'react'
+import { useAutoCallback } from 'hooks.macro'
 import { storiesOf } from '@storybook/react'
 import { enableHooks } from '../lib/storybookUtils'
 import usePointerStatus, { defaultStatus, defaultPoint } from '../hooks/usePointerStatus'
@@ -18,11 +19,7 @@ const styleDemoWrapper = css([
 		margin: '2rem auto',
 		cursor: 'grab',
 		whiteSpace: 'pre-wrap',
-		userSelect: 'none',
-
-		/* "touch-action: none;" needed to make use of pointermove on mobile */
-		touchAction: 'none'
-
+		userSelect: 'none'
 		/* Data attributes applied by usePointerStatus */
 	}
 ])
@@ -73,10 +70,10 @@ storiesOf('usePointerStatus', module)
 		const wrapperRef = useRef(null as null | HTMLPreElement)
 		const pointerStatusProps = usePointerStatus({
 			wrapperRef,
-			onChange: data => {
+			onChange: useAutoCallback(data => {
 				setPoint(data.point)
 				setStatus(data.status)
-			}
+			})
 		})
 		const [left, top] = point.constrained
 		const [leftUnconstrianed, topUnconstrained] = point.unconstrained

@@ -80,8 +80,10 @@ export const InputEnvelope: InputEnvelopeType = props => {
 	const [minX] = previousPointConfig.point
 
 	/** TODO: Test comment. Foo bar. Add comments to this file. */
-	const activePointStartPrev = useRef(defaultPoint.unconstrained)
-	const activePointStartClick = useRef(defaultPoint.unconstrained)
+	const activePointStart = useRef({
+		prev: defaultPoint.unconstrained,
+		click: defaultPoint.unconstrained
+	})
 	const hoverPoint = useRef(defaultPoint.unconstrained)
 
 	const { shiftKey: isFineTune } = useKeyboardStatus()
@@ -89,8 +91,10 @@ export const InputEnvelope: InputEnvelopeType = props => {
 	useEffect(() => {
 		if (!activePointConfig) return
 
-		activePointStartPrev.current = activePointConfig.point
-		activePointStartClick.current = hoverPoint.current
+		activePointStart.current = {
+			prev: activePointConfig.point,
+			click: hoverPoint.current
+		}
 	}, [activePointConfig, isFineTune])
 
 	const onPointerStatusChange = useAutoCallback(({
@@ -139,11 +143,15 @@ export const InputEnvelope: InputEnvelopeType = props => {
 				const changes: Partial<typeof value> = {}
 
 				if (previousStatus !== 'active') {
-					activePointStartPrev.current = activePointConfig.point
-					activePointStartClick.current = point.unconstrained
+					activePointStart.current = {
+						prev: activePointConfig.point,
+						click: point.unconstrained
+					}
 				} else {
-					const [xPrev, yPrev] = activePointStartPrev.current
-					const [xClick, yClick] = activePointStartClick.current
+					const {
+						prev: [xPrev, yPrev],
+						click: [xClick, yClick]
+					} = activePointStart.current
 
 					if (mapX) {
 						const difference = (x - xClick) / sensitivity

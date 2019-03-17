@@ -1,3 +1,5 @@
+// TODO: Use emotion global styles instead of a CSS file
+
 body {
   margin: 0;
   padding: 0;
@@ -8,4 +10,11 @@ body {
 
 * {
   box-sizing: inherit;
+}
+
+// The "touch-action" property must be defined on an element for the pointer event
+// polyfill (pepjs) to work.
+// The "touch-action: none;" CSS rule is needed to make use of pointermove on mobile.
+[touch-action="none"] {
+	touch-action: none;
 }
