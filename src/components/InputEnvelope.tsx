@@ -178,6 +178,8 @@ export const InputEnvelope: InputEnvelopeType = props => {
 		}
 	})
 
+	// TODO: Performance is very bad in IOS Safari due to adding and removing event
+	// listeners since `onPointerStatusChange` deps change too often. Refactor.
 	const pointerStatusProps = usePointerStatus({
 		wrapperRef: wrapper,
 		relativeToRef: svgWrapper,
