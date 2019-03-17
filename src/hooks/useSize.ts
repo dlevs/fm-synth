@@ -2,32 +2,22 @@ import { useState, useLayoutEffect, RefObject } from 'react'
 import { useAutoCallback } from 'hooks.macro'
 import useEventListener from './useEventListener'
 
-interface Size {
-	width: number;
-	height: number;
-}
+const useSize = (ref: RefObject<Element | null>) => {
+	const getSizeFromRef = useAutoCallback(() => {
+		const { clientWidth = 0, clientHeight = 0 } = ref.current || {}
 
-const getSizeFromRef = (
-	ref: RefObject<Element | null>
-): Size => {
-	const { clientWidth = 0, clientHeight = 0 } = ref.current || {}
-
-	return {
-		width: clientWidth,
-		height: clientHeight
-	}
-}
-
-const useSize = (
-	ref: RefObject<Element | null>
-): Size => {
-	const [size, setSize] = useState(getSizeFromRef(ref))
+		return {
+			width: clientWidth,
+			height: clientHeight
+		}
+	})
+	const [size, setSize] = useState(getSizeFromRef)
 	const setSizeFromRef = useAutoCallback(() => {
-		setSize(getSizeFromRef(ref))
+		setSize(getSizeFromRef())
 	})
 
 	// Run on mount to trigger a re-render once ref is updated with mounted element.
-	useLayoutEffect(setSizeFromRef, [])
+	useLayoutEffect(setSizeFromRef, [setSizeFromRef])
 
 	// Attach listener
 	useEventListener(window, 'resize', setSizeFromRef)
