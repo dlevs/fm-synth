@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react'
-import { useAutoCallback } from 'hooks.macro'
+import { useState, useRef } from 'react'
+import { useAutoCallback, useAutoEffect } from 'hooks.macro'
 import clamp from 'lodash/fp/clamp'
 import { MIDI_MIN, MIDI_MAX, scaleMIDIValueBetween } from '../lib/scales'
 import { getClosestPointIndex, expandPointConfigs, cumulativeX } from '../lib/pointUtils'
@@ -47,7 +47,7 @@ const getValueFromPoint = (
 }
 
 // TODO: Typing directly on the fn works in "withOwnState.tsx". Why not here?
-
+// TODO: This component is not just about Envelopes anymore (InputRangeLine). Rename.
 export const InputEnvelope: InputEnvelopeType = props => {
 	// Props
 	const {
@@ -79,7 +79,7 @@ export const InputEnvelope: InputEnvelopeType = props => {
 	const previousPointConfig = points[activePointIndex - 1] || defaultPointConfig
 	const [minX] = previousPointConfig.point
 
-	/** TODO: Test comment. Foo bar. Add comments to this file. */
+	/** TODO: Test comment. Foo bar. Add comments to this file and tidy. */
 	const activePointStart = useRef({
 		prev: defaultPoint.unconstrained,
 		click: defaultPoint.unconstrained
@@ -87,15 +87,19 @@ export const InputEnvelope: InputEnvelopeType = props => {
 	const hoverPoint = useRef(defaultPoint.unconstrained)
 
 	const { shiftKey: isFineTune } = useKeyboardStatus()
+	const lastIsFineTune = useRef(isFineTune)
 
-	useEffect(() => {
+	// Update the reference point when sensitivity changes
+	useAutoEffect(() => {
 		if (!activePointConfig) return
+		if (isFineTune === lastIsFineTune.current) return
 
 		activePointStart.current = {
 			prev: activePointConfig.point,
 			click: hoverPoint.current
 		}
-	}, [activePointConfig, isFineTune])
+		lastIsFineTune.current = isFineTune
+	})
 
 	const onPointerStatusChange = useAutoCallback(({
 		point,
