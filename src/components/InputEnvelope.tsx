@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react'
-import { useAutoCallback, useAutoEffect } from 'hooks.macro'
+import { useState, useRef, useMemo } from 'react'
+import { useAutoEffect } from 'hooks.macro'
 import clamp from 'lodash/fp/clamp'
 import { MIDI_MIN, MIDI_MAX, scaleMIDIValueBetween } from '../lib/scales'
 import { getClosestPointIndex, expandPointConfigs, cumulativeX } from '../lib/pointUtils'
@@ -8,7 +8,7 @@ import { styleVisuallyHidden } from '../lib/utilityStyles'
 import InputRange2D from './InputRange2D'
 import SVGLineCircle from './SVGLineCircle'
 import SVGPolyline from './SVGPolyline'
-import usePointerStatus, { defaultPoint } from '../hooks/usePointerStatus'
+import usePointerStatus, { defaultPoint, PointerStatusChangeEvent } from '../hooks/usePointerStatus'
 import useKeyboardStatus from '../hooks/useKeyboardStatus'
 import useMultiRef from '../hooks/useMultiRef'
 import useSize from '../hooks/useSize'
@@ -44,6 +44,103 @@ const getValueFromPoint = (
 ) => {
 	const ratio = clampBetween0And1((value - minValue) / range)
 	return clampInMIDIRange(ratio * MIDI_MAX)
+}
+
+// TODO: Type "ref" properly if POC works
+const createOnPointerStatusChange = (ref: any) => ({
+	point,
+	status,
+	previousStatus,
+	event
+}: PointerStatusChangeEvent) => {
+	if (!ref.current) return
+	const {
+		value,
+		setValue,
+		points,
+		activePointConfig,
+		setActivePointIndex,
+		activePointStart,
+		hoverPoint,
+		minX,
+		maxRangeX,
+		isFineTune,
+		height
+	} = ref.current
+
+	// Prevent default on click to not take focus away from input
+	// elements being focused via JS for accessibility.
+	event.preventDefault()
+
+	hoverPoint.current = point.unconstrained
+
+	const [x, y] = point.unconstrained
+	const sensitivity = isFineTune ? 4 : 1
+
+	if (status !== previousStatus) {
+		switch (status) {
+			case 'inactive':
+				setActivePointIndex(-1)
+				break
+
+			case 'active':
+				if (activePointConfig && activePointConfig.ref.current) {
+					activePointConfig.ref.current.focus()
+				}
+				break
+		}
+	}
+
+	switch (status) {
+		case 'hover': {
+			const hoveredPointIndex = getClosestPointIndex(
+				points.map(getInteractivePoints),
+				point.constrained
+			)
+			setActivePointIndex(hoveredPointIndex)
+			break
+		}
+
+		case 'active': {
+			if (!activePointConfig) return
+
+			const { mapX, mapY } = activePointConfig
+			const changes: Partial<typeof value> = {}
+
+			if (previousStatus !== 'active') {
+				activePointStart.current = {
+					prev: activePointConfig.point,
+					click: point.unconstrained
+				}
+			} else {
+				const {
+					prev: [xPrev, yPrev],
+					click: [xClick, yClick]
+				} = activePointStart.current
+
+				if (mapX) {
+					const difference = (x - xClick) / sensitivity
+					const offsetted = xPrev + difference
+
+					changes[mapX] = getValueFromPoint(offsetted, minX, maxRangeX)
+				}
+
+				if (mapY) {
+					const difference = (y - yClick) / sensitivity
+					const offsetted = yPrev + difference
+
+					changes[mapY] = MIDI_MAX - getValueFromPoint(offsetted, 0, height)
+				}
+
+				if (!(mapX || mapY)) return
+
+				setValue({
+					...value,
+					...changes
+				})
+			}
+		}
+	}
 }
 
 // TODO: Typing directly on the fn works in "withOwnState.tsx". Why not here?
@@ -101,93 +198,32 @@ export const InputEnvelope: InputEnvelopeType = props => {
 		lastIsFineTune.current = isFineTune
 	})
 
-	const onPointerStatusChange = useAutoCallback(({
-		point,
-		status,
-		previousStatus,
-		event
-	}) => {
-		// Prevent default on click to not take focus away from input
-		// elements being focused via JS for accessibility.
-		event.preventDefault()
-
-		hoverPoint.current = point.unconstrained
-
-		const [x, y] = point.unconstrained
-		const sensitivity = isFineTune ? 4 : 1
-
-		if (status !== previousStatus) {
-			switch (status) {
-				case 'inactive':
-					setActivePointIndex(-1)
-					break
-
-				case 'active':
-					if (activePointConfig && activePointConfig.ref.current) {
-						activePointConfig.ref.current.focus()
-					}
-					break
-			}
-		}
-
-		switch (status) {
-			case 'hover': {
-				const hoveredPointIndex = getClosestPointIndex(
-					points.map(getInteractivePoints),
-					point.constrained
-				)
-				setActivePointIndex(hoveredPointIndex)
-				break
-			}
-
-			case 'active': {
-				if (!activePointConfig) return
-
-				const { mapX, mapY } = activePointConfig
-				const changes: Partial<typeof value> = {}
-
-				if (previousStatus !== 'active') {
-					activePointStart.current = {
-						prev: activePointConfig.point,
-						click: point.unconstrained
-					}
-				} else {
-					const {
-						prev: [xPrev, yPrev],
-						click: [xClick, yClick]
-					} = activePointStart.current
-
-					if (mapX) {
-						const difference = (x - xClick) / sensitivity
-						const offsetted = xPrev + difference
-
-						changes[mapX] = getValueFromPoint(offsetted, minX, maxRangeX)
-					}
-
-					if (mapY) {
-						const difference = (y - yClick) / sensitivity
-						const offsetted = yPrev + difference
-
-						changes[mapY] = MIDI_MAX - getValueFromPoint(offsetted, 0, height)
-					}
-
-					if (!(mapX || mapY)) return
-
-					setValue({
-						...value,
-						...changes
-					})
-				}
-			}
-		}
-	})
+	// TODO: Abstract this:
+	const pointerStatusVars = useRef({})
+	pointerStatusVars.current = {
+		value,
+		setValue,
+		points,
+		activePointConfig,
+		setActivePointIndex,
+		activePointStart,
+		hoverPoint,
+		minX,
+		maxRangeX,
+		isFineTune,
+		height
+	}
 
 	// TODO: Performance is very bad in IOS Safari due to adding and removing event
 	// listeners since `onPointerStatusChange` deps change too often. Refactor.
 	const pointerStatusProps = usePointerStatus({
 		wrapperRef: wrapper,
 		relativeToRef: svgWrapper,
-		onChange: onPointerStatusChange
+		onChange: useMemo(
+			// TODO: Abstract this
+			() => createOnPointerStatusChange(pointerStatusVars),
+			[pointerStatusVars]
+		)
 	})
 
 	return (

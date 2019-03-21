@@ -13,6 +13,13 @@ export const defaultStatus = {
 
 export const defaultPoint = constrainPoint([0, 0], [0, 0])
 
+export interface PointerStatusChangeEvent {
+	point: typeof defaultPoint;
+	status: Status;
+	previousStatus: Status;
+	event: Event | React.PointerEvent;
+}
+
 const getStatus = (
 	isPointerOver: boolean,
 	isPointerDown: boolean
@@ -61,12 +68,7 @@ const usePointerStatus = ({
 }: {
 	wrapperRef: RefObject<Element>;
 	relativeToRef?: RefObject<Element>;
-	onChange (params: {
-		point: typeof defaultPoint;
-		status: Status;
-		previousStatus: Status;
-		event: Event | React.PointerEvent;
-	}): void;
+	onChange (event: PointerStatusChangeEvent): void;
 }) => {
 	// Setup variables
 	const isPointerOver = useRef(false)

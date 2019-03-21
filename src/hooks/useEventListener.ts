@@ -7,6 +7,7 @@ const useEventListener = (
 	options?: boolean | AddEventListenerOptions
 ): void => {
 	useAutoEffect(() => {
+		console.log(`Registering ${event} event on ${element}`)
 		element.addEventListener(event, callback, options)
 
 		return () => {
