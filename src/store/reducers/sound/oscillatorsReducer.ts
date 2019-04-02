@@ -7,7 +7,7 @@ const initialState: Oscillator[] = [
 		ratio: 0,
 		waveType: 'sawtooth',
 		envelope: {
-			attack: 0.01,
+			attack: 0.1,
 			decay: 0.1,
 			sustain: 0.5,
 			release: 2
@@ -19,10 +19,10 @@ const initialState: Oscillator[] = [
 		ratio: 1,
 		waveType: 'sawtooth',
 		envelope: {
-			attack: 0.01,
-			decay: 0.1,
-			sustain: 0.5,
-			release: 2
+			attack: 0.001,
+			decay: 0.3,
+			sustain: 0.05,
+			release: 1
 		}
 	}
 ]

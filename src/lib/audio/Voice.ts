@@ -4,9 +4,9 @@ import { midiToFrequency } from '../midiUtils'
 import destination from './destination'
 import store from '../../store'
 
-// Smallest gain for 16 bit system. TODO: Is that a good value? Reasoning correct?
-const MINIMUM_GAIN = 1 / (2 ** 16)
-const MINIMUM_TIME = 0.1
+// TODO: See if this number is OK, or can be reduced:
+const OSCILLATOR_STOP_TIMEOUT_SECONDS = 5
+const TIME_CONSTANT_MULTIPLIER = 0.5
 
 // TODO: Reselect?
 const getOscillators = () => store.getState().sound.oscillators
@@ -52,21 +52,30 @@ class Voice {
 
 		this.oscillator.start()
 		gain.cancelScheduledValues(currentTime)
-		gain.setValueAtTime(MINIMUM_GAIN, currentTime)
-		gain.exponentialRampToValueAtTime(this.ampMax, currentTime + attack)
-		gain.exponentialRampToValueAtTime(sustain * this.ampMax, currentTime + attack + decay)
+		gain.setTargetAtTime(
+			this.ampMax,
+			currentTime,
+			attack * TIME_CONSTANT_MULTIPLIER
+		)
+		gain.setTargetAtTime(
+			sustain * this.ampMax,
+			currentTime + attack,
+			decay * TIME_CONSTANT_MULTIPLIER
+		)
 	}
 
 	public triggerRelease () {
 		const { currentTime } = this.ctx
 		const { release } = this.envelope
 		const { gain } = this.ampEnvelope
-		const stopTime = currentTime + release
 
 		gain.cancelScheduledValues(currentTime)
-		gain.exponentialRampToValueAtTime(MINIMUM_GAIN, stopTime)
-		gain.linearRampToValueAtTime(0, stopTime + MINIMUM_TIME)
-		this.oscillator.stop(stopTime + (MINIMUM_TIME * 2))
+		gain.setTargetAtTime(
+			0,
+			currentTime,
+			release * TIME_CONSTANT_MULTIPLIER
+		)
+		this.oscillator.stop(currentTime + release + OSCILLATOR_STOP_TIMEOUT_SECONDS)
 	}
 }
 
