@@ -52,6 +52,10 @@ class Voice {
 
 		this.oscillator.start()
 		gain.cancelScheduledValues(currentTime)
+
+		// TODO: Break this out into an ADSREnvelope / generic envelope class:
+		// new Envelope(...).applyTrigger(audioParam). Can also use on other params
+		// like frequency, and also potentially use DX7Envelope
 		gain.setTargetAtTime(
 			this.ampMax,
 			currentTime,
