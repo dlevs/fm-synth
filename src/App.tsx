@@ -1,4 +1,4 @@
-import { useState, Fragment } from 'react'
+import { StrictMode, useState } from 'react'
 import InputADSR from './components/InputEnvelopeADSR'
 import KeyboardMain from './containers/KeyboardMain'
 
@@ -12,13 +12,13 @@ const App = () => {
 	})
 
 	return (
-		<Fragment>
+		<StrictMode>
 			<InputADSR
 				value={ADSRValue}
 				setValue={setADSRValue}
 			/>
 			<KeyboardMain />
-		</Fragment>
+		</StrictMode>
 	)
 }
 
