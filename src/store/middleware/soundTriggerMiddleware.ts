@@ -1,7 +1,7 @@
-import { Middleware } from 'redux-starter-kit'
-import { actions, Action } from '../reducers/notesReducer'
-import PolyVoice from '../../lib/audio/Voice'
-import { Note } from '../../lib/types'
+import { Middleware } from '@reduxjs/toolkit'
+import { actions, Action } from '../reducers/notesReducer.js'
+import PolyVoice from '../../lib/audio/Voice.js'
+import { Note } from '../../lib/types.js'
 
 let voices: PolyVoice[] = []
 

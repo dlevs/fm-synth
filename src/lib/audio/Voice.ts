@@ -1,8 +1,8 @@
-import ctx from './audioContext'
-import { ADSREnvelope } from '../types'
-import { midiToFrequency } from '../midiUtils'
-import destination from './destination'
-import store from '../../store'
+import ctx from './audioContext.js'
+import { ADSREnvelope } from '../types.js'
+import { midiToFrequency } from '../midiUtils.js'
+import destination from './destination.js'
+import store from '../../store/index.js'
 
 // TODO: See if this number is OK, or can be reduced:
 const OSCILLATOR_STOP_TIMEOUT_SECONDS = 5

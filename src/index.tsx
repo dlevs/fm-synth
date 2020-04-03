@@ -1,12 +1,10 @@
-import 'pepjs' // PointerEvent polyfill
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom'
 import { Provider } from 'react-redux'
-import App from './App'
-import store from './store'
-import './index.css'
-import midiRespond from './lib/midiRespond'
-import registerServiceWorker from './registerServiceWorker'
+import App from './App.js'
+import store from './store/index.js'
+import midiRespond from './lib/midiRespond.js'
+// import registerServiceWorker from './registerServiceWorker'
 
 // TODO: rename
 midiRespond(store)
@@ -19,4 +17,4 @@ ReactDOM.render(
 	</StrictMode>,
 	document.getElementById('root') as HTMLElement
 )
-registerServiceWorker()
+// registerServiceWorker()

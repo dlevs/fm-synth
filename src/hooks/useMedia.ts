@@ -1,6 +1,6 @@
-import useEventListener from './useEventListener'
 import { useState } from 'react'
 import { useAutoCallback, useAutoLayoutEffect } from 'hooks.macro'
+import useEventListener from './useEventListener.js'
 
 // TODO: I can't even reason with this file anymore. Is this OK? Take another look
 const useMedia = (query: string): boolean => {

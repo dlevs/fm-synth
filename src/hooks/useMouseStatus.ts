@@ -1,5 +1,5 @@
-import useMouseDownStatus from './useMouseDownStatus'
-import useMouseOverStatus from './useMouseOverStatus'
+import useMouseDownStatus from './useMouseDownStatus.js'
+import useMouseOverStatus from './useMouseOverStatus.js'
 
 // TODO: DELETE ME in favour of usePointerStatus
 const useMouseStatus = () => {

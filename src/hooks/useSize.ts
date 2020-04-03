@@ -1,6 +1,6 @@
 import { useState, RefObject } from 'react'
 import { useAutoCallback, useAutoLayoutEffect } from 'hooks.macro'
-import useEventListener from './useEventListener'
+import useEventListener from './useEventListener.js'
 
 const useSize = (ref: RefObject<Element | null>) => {
 	const getSizeFromRef = useAutoCallback(() => {

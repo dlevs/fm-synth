@@ -1,4 +1,4 @@
-import { DEFAULT_TUNING_IN_HERTZ, NOTE_OFFSET, NOTES_PER_OCTAVE } from './constants'
+import { DEFAULT_TUNING_IN_HERTZ, NOTE_OFFSET, NOTES_PER_OCTAVE } from './constants.js'
 
 export const midiToFrequency = (
 	note: number,

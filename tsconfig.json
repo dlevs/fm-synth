@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "outDir": "build/dist",
     "module": "esnext",
     "target": "es5",
     "lib": [
@@ -38,5 +37,5 @@
   ],
   "include": [
     "src"
-  ]
+	]
 }

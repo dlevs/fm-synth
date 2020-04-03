@@ -1,7 +1,7 @@
 import { storiesOf } from '@storybook/react'
 import { color } from '@storybook/addon-knobs'
-import { useValue, enableHooks } from '../lib/storybookUtils'
-import InputEnvelopeDX7 from './InputEnvelopeDX7'
+import { useValue, enableHooks } from '../lib/storybookUtils.js'
+import InputEnvelopeDX7 from './InputEnvelopeDX7.js'
 
 storiesOf(InputEnvelopeDX7.name, module)
 	.add('Basic usage', enableHooks(() => (

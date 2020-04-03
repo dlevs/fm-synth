@@ -1,6 +1,6 @@
 import { HTMLProps, forwardRef, Ref, Fragment } from 'react'
-import useUniqueId from '../hooks/useUniqueId'
-import { provideEventTargetValue } from '../lib/eventUtils'
+import useUniqueId from '../hooks/useUniqueId.js'
+import { provideEventTargetValue } from '../lib/eventUtils.js'
 
 export interface Props extends HTMLProps<HTMLInputElement> {
 	label: string;

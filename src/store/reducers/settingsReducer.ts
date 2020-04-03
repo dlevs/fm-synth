@@ -1,7 +1,7 @@
-import { createSlice, PayloadAction } from 'redux-starter-kit'
+import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
 const settings = createSlice({
-	slice: 'settings',
+	name: 'settings',
 	initialState: {
 		baseFrequency: 440,
 		polyphony: 8

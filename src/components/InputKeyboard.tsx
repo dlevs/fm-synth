@@ -1,11 +1,10 @@
 import { MouseEvent, RefObject, useRef, useState } from 'react'
-import findLast from 'lodash/findLast'
-import range from 'lodash/range'
-import InputKeyboardKey from './InputKeyboardKey'
-import useSize from '../hooks/useSize'
-import useMouseDownStatus from '../hooks/useMouseDownStatus'
-import { WHITE_KEYS_WITH_BLACK, WHITE_KEYS_PER_OCTAVE } from '../lib/constants'
-import { Note } from '../lib/types'
+import { findLast, range } from 'lodash-es'
+import InputKeyboardKey from './InputKeyboardKey.js'
+import useSize from '../hooks/useSize.js'
+import useMouseDownStatus from '../hooks/useMouseDownStatus.js'
+import { WHITE_KEYS_WITH_BLACK, WHITE_KEYS_PER_OCTAVE } from '../lib/constants.js'
+import { Note } from '../lib/types.js'
 
 interface Props {
 	onNoteOn (data: Note): void;

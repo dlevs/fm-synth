@@ -1,7 +1,5 @@
-import last from 'lodash/last'
-import flow from 'lodash/flow'
-import clamp from 'lodash/clamp'
-import { Point, RelativePoint, PointConfig } from '../lib/types'
+import { last, flow, clamp } from 'lodash-es'
+import { Point, RelativePoint, PointConfig } from '../lib/types.js'
 
 type NumberTransform = (value: number) => number
 

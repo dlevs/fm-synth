@@ -2,12 +2,13 @@
 
 # dependencies
 /node_modules
+/web_modules
 
 # testing
 /coverage
 
 # production
-/build
+/dist
 /storybook-static
 
 # misc

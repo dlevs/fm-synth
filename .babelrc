@@ -1,0 +1,15 @@
+{
+  "presets": [
+		"@babel/preset-typescript",
+		"@emotion/babel-preset-css-prop"
+  ],
+  "plugins": [
+		"snowpack/assets/babel-plugin.js",
+		["@babel/plugin-transform-react-jsx", {
+			"pragma": "___EmotionJSX"
+		}],
+		"polished",
+		"macros",
+		"transform-node-env-inline"
+  ]
+}

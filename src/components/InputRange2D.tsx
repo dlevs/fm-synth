@@ -9,7 +9,7 @@ import {
 	forwardRef,
 	Fragment
 } from 'react'
-import InputRange, { Props as InputRangeProps } from './InputRange'
+import InputRange, { Props as InputRangeProps } from './InputRange.js'
 
 interface Props extends HTMLProps<HTMLInputElement> {
 	xProps?: InputRangeProps;

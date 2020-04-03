@@ -2,7 +2,7 @@ import { css } from '@emotion/core'
 import { MouseEvent } from 'react'
 import { darken, lighten } from 'polished'
 // import { velocityColorMixScale } from '../lib/scales'
-import { KEY_INDEX_TO_KEYBOARD_KEY_MAP } from '../lib/constants'
+import { KEY_INDEX_TO_KEYBOARD_KEY_MAP } from '../lib/constants.js'
 
 // const COLOR_ACTIVE_KEY = Color('#2c76ec')
 const COLOR_WHITE_KEY = '#fff'

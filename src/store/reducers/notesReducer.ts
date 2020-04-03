@@ -1,10 +1,10 @@
-import { createSlice, PayloadAction } from 'redux-starter-kit'
-import { NoteStatus, ValueOf, Note } from '../../lib/types'
+import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { NoteStatus, ValueOf, Note } from '../../lib/types.js'
 
 // TODO: What does all of this achieve? Sound generator will not be as declarative.
 // It may be easier to do this in redux middleware / outside of redux completely
 const notes = createSlice({
-	slice: 'notes',
+	name: 'notes',
 	initialState: {
 		activeNotes: [] as NoteStatus[],
 		isSustainActive: false,

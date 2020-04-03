@@ -1,6 +1,6 @@
 import { StrictMode, useState } from 'react'
-import InputADSR from './components/InputEnvelopeADSR'
-import KeyboardMain from './containers/KeyboardMain'
+import InputADSR from './components/InputEnvelopeADSR.js'
+import KeyboardMain from './containers/KeyboardMain.js'
 
 // TODO: Move state to redux:
 const App = () => {

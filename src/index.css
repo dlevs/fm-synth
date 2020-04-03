@@ -1,5 +1,5 @@
 /* TODO: Use emotion global styles instead of a CSS file */
-
+/* TODO: This file is not even imported anymore since transitioning to snowpack */
 body {
   margin: 0;
   padding: 0;

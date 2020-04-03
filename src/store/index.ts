@@ -1,6 +1,6 @@
-import { configureStore, getDefaultMiddleware } from 'redux-starter-kit'
-import reducer from './reducers'
-import soundTriggerMiddleware from './middleware/soundTriggerMiddleware'
+import { configureStore, getDefaultMiddleware } from '@reduxjs/toolkit'
+import reducer from './reducers/index.js'
+import soundTriggerMiddleware from './middleware/soundTriggerMiddleware.js'
 
 export type Store = ReturnType<typeof reducer>
 

@@ -1,7 +1,7 @@
 import { useRef, RefObject } from 'react'
 import { useAutoCallback } from 'hooks.macro'
-import useEventListener from './useEventListener'
-import { getRelativePointFromEvent, constrainPoint } from '../lib/pointUtils'
+import useEventListener from './useEventListener.js'
+import { getRelativePointFromEvent, constrainPoint } from '../lib/pointUtils.js'
 
 type Status = 'inactive' | 'hover' | 'active'
 

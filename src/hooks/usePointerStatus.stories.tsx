@@ -2,8 +2,8 @@ import { css } from '@emotion/core'
 import { useState, useRef } from 'react'
 import { useAutoCallback } from 'hooks.macro'
 import { storiesOf } from '@storybook/react'
-import { enableHooks } from '../lib/storybookUtils'
-import usePointerStatus, { defaultStatus, defaultPoint } from '../hooks/usePointerStatus'
+import { enableHooks } from '../lib/storybookUtils.js'
+import usePointerStatus, { defaultStatus, defaultPoint } from '../hooks/usePointerStatus.js'
 
 const styleDemoBorder = css({
 	margin: 0,

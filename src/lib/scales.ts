@@ -1,4 +1,4 @@
-import flow from 'lodash/flow'
+import { flow } from 'lodash-es'
 
 export const MIDI_MIN = 0
 export const MIDI_MAX = 127

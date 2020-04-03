@@ -1,7 +1,7 @@
-import { combineReducers } from 'redux-starter-kit'
-import notes from './notesReducer'
-import settings from './settingsReducer'
-import sound from './sound'
+import { combineReducers } from '@reduxjs/toolkit'
+import notes from './notesReducer.js'
+import settings from './settingsReducer.js'
+import sound from './sound/index.js'
 
 export default combineReducers({
 	notes,

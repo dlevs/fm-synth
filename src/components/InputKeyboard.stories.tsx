@@ -1,7 +1,7 @@
 import { storiesOf } from '@storybook/react'
 import { action } from '@storybook/addon-actions'
 import { number } from '@storybook/addon-knobs'
-import InputKeyboard from './InputKeyboard'
+import InputKeyboard from './InputKeyboard.js'
 
 storiesOf('InputKeyboard', module)
 	.add('Basic usage', () => (

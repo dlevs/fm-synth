@@ -1,5 +1,5 @@
-import { combineReducers } from 'redux-starter-kit'
-import oscillators from './oscillatorsReducer'
+import { combineReducers } from '@reduxjs/toolkit'
+import oscillators from './oscillatorsReducer.js'
 
 export default combineReducers({
 	oscillators

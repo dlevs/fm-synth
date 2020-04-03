@@ -1,4 +1,4 @@
-import ctx from './audioContext'
+import ctx from './audioContext.js'
 
 // TODO: Make more functional approach. Connect to redux store and have gain value come from there.
 const destination = ctx.createGain()

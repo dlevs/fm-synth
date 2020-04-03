@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAutoCallback } from 'hooks.macro'
-import useEventListener from './useEventListener'
+import useEventListener from './useEventListener.js'
 
 const initialStatus = {
 	shiftKey: false,

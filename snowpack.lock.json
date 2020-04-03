@@ -1,0 +1,8 @@
+{
+  "imports": {
+    "react-dom": "https://cdn.pika.dev/pin/react-dom@v16.13.1-qv1YB4ZAVXJG84jEgino/react-dom.js",
+    "lodash-es": "https://cdn.pika.dev/pin/lodash-es@v4.17.11-eOoQLmswwucdDfBJi9LT/lodash-es.js",
+    "react": "https://cdn.pika.dev/pin/react@v16.13.1-ByypZEPVPs6cpkpGdpQK/react.js",
+    "react-redux": "https://cdn.pika.dev/pin/react-redux@v6.0.1-XJo24w9t1jbgf4BPOePu/react-redux.js"
+  }
+}

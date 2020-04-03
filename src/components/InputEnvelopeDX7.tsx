@@ -1,6 +1,6 @@
-import { MIDI_MIN, MIDI_MAX } from '../lib/scales'
-import { DX7Envelope, PointConfig } from '../lib/types'
-import InputEnvelope, { getDivideWidth } from './InputEnvelope'
+import { MIDI_MIN, MIDI_MAX } from '../lib/scales.js'
+import { DX7Envelope, PointConfig } from '../lib/types.js'
+import InputEnvelope, { getDivideWidth } from './InputEnvelope.js'
 
 interface Props {
 	value: DX7Envelope;

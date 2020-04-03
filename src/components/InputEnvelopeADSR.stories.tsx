@@ -1,7 +1,7 @@
 import { storiesOf } from '@storybook/react'
 import { color } from '@storybook/addon-knobs'
-import { useValue, enableHooks } from '../lib/storybookUtils'
-import InputEnvelopeADSR from './InputEnvelopeADSR'
+import { useValue, enableHooks } from '../lib/storybookUtils.js'
+import InputEnvelopeADSR from './InputEnvelopeADSR.js'
 
 storiesOf(InputEnvelopeADSR.name, module)
 	.add('Basic usage', enableHooks(() => (
