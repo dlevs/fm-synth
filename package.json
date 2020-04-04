@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "servor . null 3000 --reload & babel src/ --out-dir dist --watch --extensions .ts,.tsx,.js,.jsx",
+    "start": "npm run build:watch & (sleep 2 && npm run serve:watch)",
+    "build:watch": "babel src/ --out-dir dist --watch --extensions .ts,.tsx,.js,.jsx",
+    "serve:watch": "live-server --ignore='**/*.tsx'",
     "pack": "snowpack --source pika",
     "storybook": "start-storybook -p 9009 -s public",
     "build-storybook": "npm run lint && build-storybook -s public",
@@ -52,8 +54,8 @@
     "eslint-plugin-react-hooks": "1.5.1",
     "eslint-plugin-standard": "4.0.0",
     "hooks.macro": "1.0.1",
+    "live-server": "1.2.1",
     "require-context.macro": "1.0.4",
-    "servor": "3.2.0",
     "snowpack": "1.6.0",
     "typescript": "3.3.3333"
   }

@@ -28,4 +28,3 @@ This project was bootstrapped with:
 
 - Add useRedux when implemented https://github.com/reduxjs/react-redux/issues/1063
 - Check tsconfig.json to see if can be tidied more
-- "servor" should have ability to have no fallback for non-root paths. Maybe raise a PR.
