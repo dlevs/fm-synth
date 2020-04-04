@@ -16,8 +16,8 @@ import useSize from '../hooks/useSize.js'
 import * as style from './InputEnvelope.style.js'
 import { InputEnvelopeType } from './InputEnvelope.types'
 
-const clampInMIDIRange = clamp(MIDI_MIN, MIDI_MAX)
-const clampBetween0And1 = clamp(0, 1)
+const clampInMIDIRange = (n: number) => clamp(n, MIDI_MIN, MIDI_MAX)
+const clampBetween0And1 = (n: number) => clamp(n, 0, 1)
 const defaultPointConfig: Partial<PointConfig> = { point: [0, 0] }
 const getInteractivePoints = ({
 	isInteractive,
