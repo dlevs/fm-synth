@@ -1,8 +1,10 @@
 {
   "imports": {
-    "react-dom": "https://cdn.pika.dev/pin/react-dom@v16.13.1-qv1YB4ZAVXJG84jEgino/react-dom.js",
-    "lodash-es": "https://cdn.pika.dev/pin/lodash-es@v4.17.11-eOoQLmswwucdDfBJi9LT/lodash-es.js",
+    "@emotion/core": "https://cdn.pika.dev/pin/@emotion/core@v10.0.28-QgWH9haHkP8YKYIc6Q5P/core.js",
     "react": "https://cdn.pika.dev/pin/react@v16.13.1-ByypZEPVPs6cpkpGdpQK/react.js",
-    "react-redux": "https://cdn.pika.dev/pin/react-redux@v6.0.1-XJo24w9t1jbgf4BPOePu/react-redux.js"
+    "react-dom": "https://cdn.pika.dev/pin/react-dom@v16.13.1-qv1YB4ZAVXJG84jEgino/react-dom.js",
+    "lodash-es": "https://cdn.pika.dev/pin/lodash-es@v4.17.15-qeW53uFTv9ypL4vECP8U/lodash-es.js",
+    "polished": "https://cdn.pika.dev/pin/polished@v3.5.1-jrVlgwDGg94xWk6S7d0v/polished.js",
+    "react-redux": "https://cdn.pika.dev/pin/react-redux@v7.2.0-Db61y9AIxNifBsgCkacF/react-redux.js"
   }
 }

@@ -9,5 +9,5 @@ function loadStories() {
 }
 
 addDecorator(withKnobs)
-
+// TODO: Can babel-loader be removed?
 configure(loadStories, module)

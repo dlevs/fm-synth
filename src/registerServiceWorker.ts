@@ -83,9 +83,15 @@ function checkValidServiceWorker (swUrl: string) {
 
 export default function register () {
 	if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
+		const url = process.env.PUBLIC_URL
+
+		if (url == null) {
+			throw new Error('PUBLIC_URL env varaible not defined')
+		}
+
 		// The URL constructor is available in all browsers that support SW.
 		const publicUrl = new URL(
-			process.env.PUBLIC_URL,
+			url,
 			window.location.toString()
 		)
 		if (publicUrl.origin !== window.location.origin) {
